@@ -1,1 +1,17 @@
 .superpowers/
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Editor/OS
+*.local
+.DS_Store
+
+# Logs
+npm-debug.log*
+
