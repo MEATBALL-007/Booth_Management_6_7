@@ -1,0 +1,61 @@
+import { vi, beforeEach, test, expect } from 'vitest'
+import { render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import type { Order } from '../domain/types'
+
+const { updateOrderStatus } = vi.hoisted(() => ({
+  updateOrderStatus: vi.fn().mockResolvedValue(undefined),
+}))
+let emit: (orders: Order[]) => void = () => {}
+vi.mock('../order/ordersRepo', () => ({
+  subscribeBoothOrders: (_booth: string, cb: (o: Order[]) => void) => { emit = cb; return () => {} },
+  updateOrderStatus,
+  createOrder: vi.fn(),
+}))
+
+import { QueuePanel } from './QueuePanel'
+import { act } from 'react'
+
+const order = (over: Partial<Order>): Order => ({
+  id: 'x', boothId: 'drinks', queueNumber: 'A1', station: 'A', items: [], total: 30,
+  paymentMethod: 'cash', paymentStatus: 'paid', status: 'waiting', createdAt: 1, ...over,
+})
+
+beforeEach(() => updateOrderStatus.mockClear())
+
+test('call next moves the first waiting order of this station to serving', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([
+    order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'waiting', createdAt: 1 }),
+    order({ id: 'o2', queueNumber: 'A2', station: 'A', status: 'waiting', createdAt: 2 }),
+    order({ id: 'oB', queueNumber: 'B1', station: 'B', status: 'waiting', createdAt: 1 }),
+  ]))
+
+  await user.click(screen.getByRole('button', { name: /เรียกคิวถัดไป/ }))
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'serving' }))
+})
+
+test('done moves a serving order to done', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving' })]))
+
+  await user.click(screen.getByRole('button', { name: /เสร็จ/ }))
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'done' }))
+})
+
+test('cancel requires a reason and records it', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'waiting' })]))
+
+  await user.click(screen.getByRole('button', { name: /ยกเลิก/ }))
+  // reason input appears; empty submit is blocked
+  await user.click(screen.getByRole('button', { name: /ยืนยันยกเลิก/ }))
+  expect(updateOrderStatus).not.toHaveBeenCalled()
+
+  await user.type(screen.getByLabelText(/เหตุผล/), 'ลูกค้าเปลี่ยนใจ')
+  await user.click(screen.getByRole('button', { name: /ยืนยันยกเลิก/ }))
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'cancelled', cancelReason: 'ลูกค้าเปลี่ยนใจ' }))
+})
