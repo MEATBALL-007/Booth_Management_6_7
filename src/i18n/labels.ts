@@ -16,6 +16,11 @@ const LABELS = {
   'queue.waiting': { th: 'คิวรอ', en: 'Waiting' },
   'queue.serving': { th: 'กำลังทำ', en: 'Now serving' },
   'queue.reasonPrompt': { th: 'เหตุผลที่ยกเลิก', en: 'Cancel reason' },
+  'order.total': { th: 'ยอดรวม', en: 'Total' },
+  'order.cash': { th: 'เงินสด', en: 'Cash' },
+  'order.qr': { th: 'คิวอาร์', en: 'QR' },
+  'order.cashConfirm': { th: 'รับเงินแล้ว', en: 'Cash received' },
+  'order.qrConfirm': { th: 'ยืนยันชำระ', en: 'Confirm payment' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
