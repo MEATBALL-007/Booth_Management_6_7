@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { SetupScreen } from './screens/SetupScreen'
 import { OrderStation } from './screens/OrderStation'
+import { DisplayScreen } from './screens/DisplayScreen'
 import { loadDeviceConfig, clearDeviceConfig, type DeviceConfig } from './device/deviceConfig'
 
 export default function App() {
@@ -26,6 +27,15 @@ export default function App() {
       <div className="min-h-screen flex flex-col">
         <OrderStation booth={config.booth} station={config.station} />
         <div className="p-4">{ResetButton}</div>
+      </div>
+    )
+  }
+
+  if (config.mode === 'display') {
+    return (
+      <div className="min-h-screen">
+        <DisplayScreen booth={config.booth} />
+        <div className="fixed bottom-2 right-2 opacity-40 hover:opacity-100">{ResetButton}</div>
       </div>
     )
   }
