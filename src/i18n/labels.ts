@@ -21,6 +21,9 @@ const LABELS = {
   'order.qr': { th: 'คิวอาร์', en: 'QR' },
   'order.cashConfirm': { th: 'รับเงินแล้ว', en: 'Cash received' },
   'order.qrConfirm': { th: 'ยืนยันชำระ', en: 'Confirm payment' },
+  'display.nowServing': { th: 'กำลังทำ', en: 'Now Serving' },
+  'display.upNext': { th: 'คิวถัดไป', en: 'Up Next' },
+  'display.noQueue': { th: 'ยังไม่มีคิว', en: 'No orders yet' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
