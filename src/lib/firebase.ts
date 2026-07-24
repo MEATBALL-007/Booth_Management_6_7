@@ -16,10 +16,14 @@ export function getFirebaseConfig() {
   }
 }
 
-const app = initializeApp(getFirebaseConfig())
+let _db: ReturnType<typeof initializeFirestore> | null = null
 
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({
-    tabManager: persistentMultipleTabManager(),
-  }),
-})
+export function getDb() {
+  if (!_db) {
+    const app = initializeApp(getFirebaseConfig())
+    _db = initializeFirestore(app, {
+      localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }),
+    })
+  }
+  return _db
+}
