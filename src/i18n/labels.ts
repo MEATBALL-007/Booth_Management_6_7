@@ -10,6 +10,12 @@ const LABELS = {
   'mode.order': { th: 'รับออเดอร์', en: 'Order station' },
   'mode.display': { th: 'จอโชว์คิว', en: 'Display' },
   'mode.dashboard': { th: 'แดชบอร์ด', en: 'Dashboard' },
+  'queue.callNext': { th: 'เรียกคิวถัดไป', en: 'Call next' },
+  'queue.done': { th: 'เสร็จ', en: 'Done' },
+  'queue.cancel': { th: 'ยกเลิก/แก้ไข', en: 'Cancel/Edit' },
+  'queue.waiting': { th: 'คิวรอ', en: 'Waiting' },
+  'queue.serving': { th: 'กำลังทำ', en: 'Now serving' },
+  'queue.reasonPrompt': { th: 'เหตุผลที่ยกเลิก', en: 'Cancel reason' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
