@@ -49,11 +49,21 @@ test('QR order: choosing QR shows a QR image, then confirm persists a qr order',
   render(<OrderStation booth="photo" station="B" />)
 
   await user.click(screen.getByRole('button', { name: /ถ่าย 3 ช็อต/ })) // 35
-  await user.click(screen.getByRole('button', { name: /^QR/ }))
+  await user.click(screen.getByRole('button', { name: /คิวอาร์/ }))
   expect(await screen.findByAltText('PromptPay QR')).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: /ยืนยันชำระ/ }))
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1))
   expect(createOrder.mock.calls[0][0].paymentMethod).toBe('qr')
   expect(createOrder.mock.calls[0][0].queueNumber).toBe('B1')
+})
+
+test('shows an error alert if saving the order is rejected', async () => {
+  const user = userEvent.setup()
+  createOrder.mockRejectedValueOnce(new Error('nope'))
+  render(<OrderStation booth="drinks" station="A" />)
+  await user.click(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ }))
+  await user.click(screen.getByRole('button', { name: /เงินสด/ }))
+  await user.click(screen.getByRole('button', { name: /รับเงินแล้ว/ }))
+  expect(await screen.findByRole('alert')).toHaveTextContent('A1')
 })

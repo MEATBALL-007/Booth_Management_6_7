@@ -1,4 +1,4 @@
-import { collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore'
 import { getDb } from '../lib/firebase'
 import type { Order, BoothId } from '../domain/types'
 
@@ -8,9 +8,10 @@ export async function createOrder(order: Omit<Order, 'id'>): Promise<string> {
 }
 
 export function subscribeBoothOrders(boothId: BoothId, cb: (orders: Order[]) => void): () => void {
-  const q = query(collection(getDb(), 'orders'), where('boothId', '==', boothId), orderBy('createdAt', 'asc'))
+  const q = query(collection(getDb(), 'orders'), where('boothId', '==', boothId))
   return onSnapshot(q, (snap) => {
-    cb(snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Order, 'id'>) })))
+    const orders = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Order, 'id'>) }))
+    cb(orders.sort((a, b) => a.createdAt - b.createdAt))
   })
 }
 

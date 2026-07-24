@@ -18,26 +18,28 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
   const [cart, setCart] = useState<Cart>([])
   const [pay, setPay] = useState<Pay>('none')
   const [issued, setIssued] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
 
   const total = cartTotal(cart, products)
 
-  const finalize = async (method: 'cash' | 'qr') => {
+  const finalize = (method: 'cash' | 'qr') => {
     const queueNumber = nextQueueNumber(booth, station)
     const order = buildOrder({
       boothId: booth, station, queueNumber,
       items: cartToOrderItems(cart, products), paymentMethod: method, now: Date.now(),
     })
-    await createOrder(order)
     setIssued(queueNumber)
     setCart([])
     setPay('none')
+    setError(null)
+    createOrder(order).catch(() => setError(queueNumber))
   }
 
   return (
     <div className="min-h-screen p-4 flex flex-col gap-4">
       <header className="flex items-center justify-between">
         <span className="font-kanit text-phantom-yellow">
-          {L(`booth.${booth}`).th} · station {station}
+          {L(`booth.${booth}`).th} · {L(`booth.${booth}`).en} · station {station}
         </span>
         {issued && (
           <span data-testid="issued-queue" className="font-mono text-4xl text-phantom-orange">
@@ -45,6 +47,12 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
           </span>
         )}
       </header>
+
+      {error && (
+        <div role="alert" className="rounded-lg bg-red-600/80 px-3 py-2 font-kanit">
+          บันทึกออเดอร์ {error} ไม่สำเร็จ · Failed to save order {error}
+        </div>
+      )}
 
       <section className="grid grid-cols-2 gap-3">
         {products.map((p) => (
@@ -85,7 +93,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
             {L('order.cash').th} · {L('order.cash').en}
           </button>
           <button onClick={() => setPay('qr')} className="flex-1 rounded-xl py-3 bg-white/10 font-kanit">
-            QR · {L('order.qr').en}
+            {L('order.qr').th} · {L('order.qr').en}
           </button>
         </div>
       )}

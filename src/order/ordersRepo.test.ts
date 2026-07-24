@@ -1,18 +1,17 @@
 import { vi, beforeEach, test, expect } from 'vitest'
 
-const { addDoc, onSnapshot, updateDoc, collection, query, where, orderBy, doc } = vi.hoisted(() => ({
+const { addDoc, onSnapshot, updateDoc, collection, query, where, doc } = vi.hoisted(() => ({
   addDoc: vi.fn(),
   onSnapshot: vi.fn(),
   updateDoc: vi.fn(),
   collection: vi.fn((_db, path) => ({ __collection: path })),
   query: vi.fn((...args) => ({ __query: args })),
   where: vi.fn((f, op, v) => ({ __where: [f, op, v] })),
-  orderBy: vi.fn((f, dir) => ({ __orderBy: [f, dir] })),
   doc: vi.fn((_db, path, id) => ({ __doc: [path, id] })),
 }))
 
 vi.mock('firebase/firestore', () => ({
-  collection, addDoc, onSnapshot, query, where, orderBy, doc, updateDoc,
+  collection, addDoc, onSnapshot, query, where, doc, updateDoc,
 }))
 vi.mock('../lib/firebase', () => ({ getDb: () => ({ __db: true }) }))
 
@@ -28,17 +27,22 @@ test('createOrder writes to the orders collection and returns the new id', async
   expect(id).toBe('order123')
 })
 
-test('subscribeBoothOrders queries orders for the booth ordered by createdAt and maps docs', () => {
+test('subscribeBoothOrders queries orders for the booth and delivers docs sorted by createdAt ascending', () => {
   let handler: (snap: unknown) => void = () => {}
   onSnapshot.mockImplementation((_q, cb) => { handler = cb; return () => {} })
   const received: unknown[] = []
   const unsub = subscribeBoothOrders('drinks', (orders) => received.push(orders))
 
   expect(where).toHaveBeenCalledWith('boothId', '==', 'drinks')
-  expect(orderBy).toHaveBeenCalledWith('createdAt', 'asc')
 
-  handler({ docs: [{ id: 'o1', data: () => ({ boothId: 'drinks', total: 30 }) }] })
-  expect(received[0]).toEqual([{ id: 'o1', boothId: 'drinks', total: 30 }])
+  handler({ docs: [
+    { id: 'o2', data: () => ({ boothId: 'drinks', createdAt: 2 }) },
+    { id: 'o1', data: () => ({ boothId: 'drinks', createdAt: 1 }) },
+  ] })
+  expect(received[0]).toEqual([
+    { id: 'o1', boothId: 'drinks', createdAt: 1 },
+    { id: 'o2', boothId: 'drinks', createdAt: 2 },
+  ])
   expect(typeof unsub).toBe('function')
 })
 
