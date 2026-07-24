@@ -7,6 +7,7 @@ const FLASH_MS = 2500
 export function useServingAlert(servingNumbers: string[]): boolean {
   const prev = useRef<string[]>(servingNumbers)
   const first = useRef(true)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [flashing, setFlashing] = useState(false)
   const key = servingNumbers.join('|')
 
@@ -21,11 +22,13 @@ export function useServingAlert(servingNumbers: string[]): boolean {
     if (fresh.length > 0) {
       playChime()
       setFlashing(true)
-      const t = setTimeout(() => setFlashing(false), FLASH_MS)
-      return () => clearTimeout(t)
+      if (timer.current) clearTimeout(timer.current)
+      timer.current = setTimeout(() => setFlashing(false), FLASH_MS)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key])
+
+  useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
 
   return flashing
 }
