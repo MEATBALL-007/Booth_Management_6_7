@@ -16,15 +16,15 @@ test('shows Setup when no device config', () => {
   expect(screen.getByText(/ตั้งค่าเครื่อง/)).toBeInTheDocument()
 })
 
-test('after setup, shows the chosen mode placeholder and can reset', async () => {
+test('display mode renders the Display screen and can reset', async () => {
   const user = userEvent.setup()
   render(<App />)
-
   await user.click(screen.getByRole('button', { name: /น้ำปั่น/ }))
   await user.click(screen.getByRole('button', { name: /จอโชว์คิว/ }))
   await user.click(screen.getByRole('button', { name: /ยืนยัน/ }))
 
-  expect(screen.getByText(/โหมด: display/)).toBeInTheDocument()
+  // Display screen shows the Now Serving heading
+  expect(screen.getByText(/กำลังทำ/)).toBeInTheDocument()
 
   await user.click(screen.getByRole('button', { name: /เปลี่ยนค่า/ }))
   expect(screen.getByText(/ตั้งค่าเครื่อง/)).toBeInTheDocument()
