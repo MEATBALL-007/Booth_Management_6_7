@@ -1,5 +1,9 @@
 import { CATALOG, productsForBooth } from './catalog'
 
+test('CATALOG is keyed by the three booths', () => {
+  expect(Object.keys(CATALOG).sort()).toEqual(['drinks', 'photo', 'portrait'])
+})
+
 test('catalog has the spec prices and costs per booth', () => {
   expect(productsForBooth('photo')).toEqual([
     { sku: 'photo-set', boothId: 'photo', name: 'ถ่าย 3 ช็อต (2 ใบ)', nameEn: 'Photo set (2 prints)', price: 35, cost: 7.86, active: true },
