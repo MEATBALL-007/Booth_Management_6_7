@@ -33,14 +33,15 @@ test('renders serving numbers big and up-next sorted by createdAt', () => {
   expect(screen.getAllByTestId('upnext').map((e) => e.textContent)).toEqual(['B1', 'A2'])
 })
 
-test('chimes when an order newly starts serving (after the baseline snapshot)', () => {
+test('does not chime for the first snapshot, but chimes when a new order starts serving after', () => {
   render(<DisplayScreen booth="drinks" />)
-  act(() => emit([o({ id: 's1', queueNumber: 'A1', status: 'serving' })])) // first snapshot after mount → chime for A1
+  act(() => emit([o({ id: 's1', queueNumber: 'A1', status: 'serving' })])) // first snapshot = baseline
+  expect(playChimeSpy).not.toHaveBeenCalled()
   act(() => emit([
     o({ id: 's1', queueNumber: 'A1', status: 'serving' }),
     o({ id: 's2', queueNumber: 'A2', status: 'serving' }),
-  ]))
-  expect(playChimeSpy).toHaveBeenCalledTimes(2) // A1 then A2
+  ])) // A2 newly serving
+  expect(playChimeSpy).toHaveBeenCalledTimes(1)
 })
 
 test('shows the no-queue placeholder when nothing is serving', () => {

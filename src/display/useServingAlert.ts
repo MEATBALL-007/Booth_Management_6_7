@@ -4,7 +4,7 @@ import { playChime } from './chime'
 
 const FLASH_MS = 2500
 
-export function useServingAlert(servingNumbers: string[]): boolean {
+export function useServingAlert(servingNumbers: string[], primed = true): boolean {
   const prev = useRef<string[]>(servingNumbers)
   const first = useRef(true)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -12,6 +12,7 @@ export function useServingAlert(servingNumbers: string[]): boolean {
   const key = servingNumbers.join('|')
 
   useEffect(() => {
+    if (!primed) return
     if (first.current) {
       first.current = false
       prev.current = servingNumbers
@@ -26,7 +27,7 @@ export function useServingAlert(servingNumbers: string[]): boolean {
       timer.current = setTimeout(() => setFlashing(false), FLASH_MS)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key])
+  }, [key, primed])
 
   useEffect(() => () => { if (timer.current) clearTimeout(timer.current) }, [])
 

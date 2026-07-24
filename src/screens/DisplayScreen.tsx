@@ -7,11 +7,12 @@ import { L } from '../i18n/labels'
 
 export function DisplayScreen({ booth }: { booth: BoothId }) {
   const [orders, setOrders] = useState<Order[]>([])
-  useEffect(() => subscribeBoothOrders(booth, setOrders), [booth])
+  const [ready, setReady] = useState(false)
+  useEffect(() => subscribeBoothOrders(booth, (o) => { setOrders(o); setReady(true) }), [booth])
 
   const serving = servingOrders(orders)
   const upNext = upNextOrders(orders)
-  const flashing = useServingAlert(serving.map((s) => s.queueNumber))
+  const flashing = useServingAlert(serving.map((s) => s.queueNumber), ready)
 
   return (
     <div
