@@ -1,0 +1,22 @@
+.superpowers/
+
+# Dependencies
+node_modules/
+
+# Env (keep .env.example tracked)
+.env
+.env.local
+.env.*.local
+
+# Build output
+dist/
+dist-ssr/
+*.tsbuildinfo
+
+# Editor/OS
+*.local
+.DS_Store
+
+# Logs
+npm-debug.log*
+
