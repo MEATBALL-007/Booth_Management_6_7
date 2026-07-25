@@ -6,7 +6,13 @@ import App from './App'
 vi.mock('./order/ordersRepo', () => ({
   createOrder: vi.fn().mockResolvedValue('id'),
   subscribeBoothOrders: () => () => {},
+  subscribeAllOrders: () => () => {},
   updateOrderStatus: vi.fn(),
+}))
+
+vi.mock('./expense/expensesRepo', () => ({
+  subscribeAllExpenses: () => () => {},
+  addExpense: vi.fn(),
 }))
 
 beforeEach(() => localStorage.clear())
@@ -40,4 +46,13 @@ test('order mode renders the Order Station with the booth catalog', async () => 
 
   // OrderStation shows the drinks catalog
   expect(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ })).toBeInTheDocument()
+})
+
+test('dashboard mode shows the PIN gate', async () => {
+  const user = userEvent.setup()
+  render(<App />)
+  await user.click(screen.getByRole('button', { name: /โฟโต้บูธ/ }))
+  await user.click(screen.getByRole('button', { name: /แดชบอร์ด/ }))
+  await user.click(screen.getByRole('button', { name: /ยืนยัน/ }))
+  expect(screen.getByText(/ใส่ PIN/)).toBeInTheDocument()
 })

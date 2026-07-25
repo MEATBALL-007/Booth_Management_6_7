@@ -15,6 +15,13 @@ export function subscribeBoothOrders(boothId: BoothId, cb: (orders: Order[]) => 
   })
 }
 
+export function subscribeAllOrders(cb: (orders: Order[]) => void): () => void {
+  return onSnapshot(collection(getDb(), 'orders'), (snap) => {
+    const orders = snap.docs.map((d) => ({ id: d.id, ...(d.data() as Omit<Order, 'id'>) }))
+    cb(orders.sort((a, b) => a.createdAt - b.createdAt))
+  })
+}
+
 export async function updateOrderStatus(id: string, patch: Partial<Order>): Promise<void> {
   await updateDoc(doc(getDb(), 'orders', id), patch)
 }
