@@ -24,6 +24,9 @@ const LABELS = {
   'display.nowServing': { th: 'กำลังทำ', en: 'Now Serving' },
   'display.upNext': { th: 'คิวถัดไป', en: 'Up Next' },
   'display.noQueue': { th: 'ยังไม่มีคิว', en: 'No orders yet' },
+  'dashboard.pinPrompt': { th: 'ใส่ PIN', en: 'Enter PIN' },
+  'dashboard.pinWrong': { th: 'PIN ไม่ถูกต้อง', en: 'Wrong PIN' },
+  'dashboard.unlock': { th: 'ปลดล็อก', en: 'Unlock' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
