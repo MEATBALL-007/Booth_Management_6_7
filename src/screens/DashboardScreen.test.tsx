@@ -56,3 +56,14 @@ test('the expense form calls addExpense with the entered values', async () => {
     expect.objectContaining({ description: 'ยาคูลท์ 5 แพ็ค', amount: 250 }),
   )
 })
+
+test('shows an error alert if saving the expense is rejected', async () => {
+  localStorage.setItem('phantom.dashboardPin', 'unlocked')
+  addExpenseSpy.mockRejectedValueOnce(new Error('nope'))
+  const user = userEvent.setup()
+  render(<DashboardScreen />)
+  await user.type(screen.getByLabelText(/รายการ/), 'ยาคูลท์')
+  await user.type(screen.getByLabelText(/จำนวนเงิน/), '250')
+  await user.click(screen.getByRole('button', { name: /บันทึก/ }))
+  expect(await screen.findByRole('alert')).toBeInTheDocument()
+})

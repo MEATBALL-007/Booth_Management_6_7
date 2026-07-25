@@ -42,6 +42,7 @@ const LABELS = {
   'dashboard.expenseDesc': { th: 'รายการ', en: 'Description' },
   'dashboard.expenseAmount': { th: 'จำนวนเงิน', en: 'Amount' },
   'dashboard.save': { th: 'บันทึก', en: 'Save' },
+  'dashboard.expenseError': { th: 'บันทึกต้นทุนไม่สำเร็จ', en: 'Failed to save expense' },
 } as const
 
 export type LabelKey = keyof typeof LABELS

@@ -24,6 +24,7 @@ export function DashboardScreen() {
   const [booth, setBooth] = useState<BoothId>('photo')
   const [desc, setDesc] = useState('')
   const [amount, setAmount] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!unlocked) return
@@ -39,7 +40,9 @@ export function DashboardScreen() {
   const saveExpense = () => {
     const value = Number(amount)
     if (!desc.trim() || !Number.isFinite(value) || value <= 0) return
-    addExpense({ boothId: booth, description: desc.trim(), amount: value, createdAt: Date.now() })
+    const payload = { boothId: booth, description: desc.trim(), amount: value, createdAt: Date.now() }
+    setError(null)
+    addExpense(payload).catch(() => setError(payload.description))
     setDesc('')
     setAmount('')
   }
@@ -83,6 +86,11 @@ export function DashboardScreen() {
 
       <section className="rounded-xl bg-white/5 p-4 flex flex-col gap-3 max-w-md">
         <h2 className="font-kanit">{L('dashboard.addExpense').th} · {L('dashboard.addExpense').en}</h2>
+        {error && (
+          <p role="alert" className="text-red-400 font-kanit">
+            {L('dashboard.expenseError').th} · {L('dashboard.expenseError').en}: {error}
+          </p>
+        )}
         <select value={booth} onChange={(e) => setBooth(e.target.value as BoothId)} aria-label={L('dashboard.byBooth').th}
           className="rounded bg-black/40 px-2 py-2 text-white font-kanit">
           {BOOTH_IDS.map((b) => <option key={b} value={b}>{L(`booth.${b}`).th}</option>)}
