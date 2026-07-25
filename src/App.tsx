@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { SetupScreen } from './screens/SetupScreen'
 import { OrderStation } from './screens/OrderStation'
 import { DisplayScreen } from './screens/DisplayScreen'
+import { DashboardScreen } from './screens/DashboardScreen'
 import { loadDeviceConfig, clearDeviceConfig, type DeviceConfig } from './device/deviceConfig'
 
 export default function App() {
@@ -40,13 +41,19 @@ export default function App() {
     )
   }
 
+  if (config.mode === 'dashboard') {
+    return (
+      <div className="min-h-screen">
+        <DashboardScreen />
+        <div className="fixed bottom-2 right-2 opacity-40 hover:opacity-100">{ResetButton}</div>
+      </div>
+    )
+  }
+
+  // Safety fallback (e.g. order mode with no station — prevented by isConfigValid).
   return (
     <div className="min-h-screen p-6 flex flex-col gap-4">
-      <p className="font-mono">
-        ซุ้ม: {config.booth} · โหมด: {config.mode}
-        {config.station ? ` · station ${config.station}` : ''}
-      </p>
-      <p className="opacity-60">หน้าจริงของโหมดนี้จะถูกสร้างในแผนถัดไป</p>
+      <p className="font-mono">ซุ้ม: {config.booth} · โหมด: {config.mode}</p>
       {ResetButton}
     </div>
   )
