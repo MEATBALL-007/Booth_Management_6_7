@@ -27,6 +27,21 @@ const LABELS = {
   'dashboard.pinPrompt': { th: 'ใส่ PIN', en: 'Enter PIN' },
   'dashboard.pinWrong': { th: 'PIN ไม่ถูกต้อง', en: 'Wrong PIN' },
   'dashboard.unlock': { th: 'ปลดล็อก', en: 'Unlock' },
+  'dashboard.title': { th: 'แดชบอร์ดรวม', en: 'Dashboard' },
+  'dashboard.totalSales': { th: 'ยอดขายรวม', en: 'Total sales' },
+  'dashboard.netDonation': { th: 'ยอดบริจาคสุทธิ', en: 'Net donation' },
+  'dashboard.cash': { th: 'เงินสด', en: 'Cash' },
+  'dashboard.qr': { th: 'โอน/QR', en: 'QR' },
+  'dashboard.orders': { th: 'ออเดอร์ที่จ่ายแล้ว', en: 'Paid orders' },
+  'dashboard.done': { th: 'คิวเสร็จ', en: 'Done' },
+  'dashboard.bestSellers': { th: 'ขายดี', en: 'Best sellers' },
+  'dashboard.totalCost': { th: 'ต้นทุนรวม', en: 'Total cost' },
+  'dashboard.expectedCash': { th: 'เงินสดที่ควรมี', en: 'Expected cash' },
+  'dashboard.byBooth': { th: 'แยกตามซุ้ม', en: 'By booth' },
+  'dashboard.addExpense': { th: 'เพิ่มต้นทุน', en: 'Add expense' },
+  'dashboard.expenseDesc': { th: 'รายการ', en: 'Description' },
+  'dashboard.expenseAmount': { th: 'จำนวนเงิน', en: 'Amount' },
+  'dashboard.save': { th: 'บันทึก', en: 'Save' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
