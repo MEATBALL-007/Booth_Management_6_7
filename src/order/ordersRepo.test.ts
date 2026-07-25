@@ -15,7 +15,7 @@ vi.mock('firebase/firestore', () => ({
 }))
 vi.mock('../lib/firebase', () => ({ getDb: () => ({ __db: true }) }))
 
-import { createOrder, subscribeBoothOrders, updateOrderStatus } from './ordersRepo'
+import { createOrder, subscribeBoothOrders, subscribeAllOrders, updateOrderStatus } from './ordersRepo'
 
 beforeEach(() => vi.clearAllMocks())
 
@@ -51,4 +51,25 @@ test('updateOrderStatus updates the order doc with the patch', async () => {
   await updateOrderStatus('o1', { status: 'serving', servingAt: 42 })
   expect(doc).toHaveBeenCalledWith({ __db: true }, 'orders', 'o1')
   expect(updateDoc).toHaveBeenCalledWith({ __doc: ['orders', 'o1'] }, { status: 'serving', servingAt: 42 })
+})
+
+test('subscribeAllOrders subscribes to the whole orders collection (no filter) and sorts by createdAt', () => {
+  let handler: (snap: unknown) => void = () => {}
+  onSnapshot.mockImplementation((_ref, cb) => { handler = cb; return () => {} })
+  const received: unknown[] = []
+  const unsub = subscribeAllOrders((orders) => received.push(orders))
+
+  expect(collection).toHaveBeenCalledWith({ __db: true }, 'orders')
+  expect(where).not.toHaveBeenCalled()
+  expect(query).not.toHaveBeenCalled()
+
+  handler({ docs: [
+    { id: 'o2', data: () => ({ boothId: 'drinks', createdAt: 2 }) },
+    { id: 'o1', data: () => ({ boothId: 'photo', createdAt: 1 }) },
+  ] })
+  expect(received[0]).toEqual([
+    { id: 'o1', boothId: 'photo', createdAt: 1 },
+    { id: 'o2', boothId: 'drinks', createdAt: 2 },
+  ])
+  expect(typeof unsub).toBe('function')
 })
