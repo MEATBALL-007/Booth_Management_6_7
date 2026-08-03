@@ -2,6 +2,9 @@ import { useEffect, useState } from 'react'
 import type { BoothId, Station, Order } from '../domain/types'
 import { subscribeBoothOrders, updateOrderStatus } from '../order/ordersRepo'
 import { L } from '../i18n/labels'
+import { Button } from '../ui/Button'
+import { Panel } from '../ui/Panel'
+import { QueueNumber } from '../ui/QueueNumber'
 
 export function QueuePanel({ booth, station }: { booth: BoothId; station: Station }) {
   const [orders, setOrders] = useState<Order[]>([])
@@ -34,50 +37,75 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   }
 
   return (
-    <section className="mt-4 border-t border-white/20 pt-4 flex flex-col gap-3">
-      <div className="flex items-center justify-between">
-        <span className="font-kanit">{L('queue.serving').th} ({serving.length}) · {L('queue.waiting').th} ({waiting.length})</span>
-        <button onClick={callNext} disabled={waiting.length === 0}
-          className="rounded-xl px-4 py-2 bg-phantom-orange font-kanit disabled:opacity-40">
+    <section className="mt-6 flex flex-col gap-4 border-t border-phantom-line pt-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <span className="font-kanit text-sm text-phantom-muted">
+          {L('queue.serving').th} ({serving.length}) · {L('queue.waiting').th} ({waiting.length})
+        </span>
+        <Button variant="primary" onClick={callNext} disabled={waiting.length === 0} className="min-h-[44px]">
           {L('queue.callNext').th} · {L('queue.callNext').en}
-        </button>
+        </Button>
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {serving.map((o) => (
-          <div key={o.id} className="rounded-lg bg-white/10 px-3 py-2 flex items-center gap-2">
-            <div className="flex flex-col">
-              <span className="font-mono text-xl text-phantom-yellow">{o.queueNumber}</span>
-              {o.items.length > 0 && <span className="text-xs opacity-70">{itemSummary(o)}</span>}
+          <div
+            key={o.id}
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-phantom-yellow/30 bg-phantom-surface2 px-4 py-3"
+          >
+            <div className="flex flex-col gap-1">
+              <QueueNumber value={o.queueNumber} size="card" />
+              {o.items.length > 0 && <span className="font-kanit text-xs text-phantom-muted">{itemSummary(o)}</span>}
             </div>
-            <button onClick={() => markDone(o.id)} className="text-sm rounded bg-phantom-yellow text-phantom-bg px-2 py-1 font-kanit">{L('queue.done').th}</button>
-            <button onClick={() => setCancelId(o.id)} className="text-sm rounded border border-white/30 px-2 py-1 font-kanit">{L('queue.cancel').th}</button>
+            <div className="flex gap-2">
+              <Button variant="ghost" onClick={() => markDone(o.id)} className="min-h-[44px]">
+                {L('queue.done').th}
+              </Button>
+              <Button variant="danger" onClick={() => setCancelId(o.id)} className="min-h-[44px]">
+                {L('queue.cancel').th}
+              </Button>
+            </div>
           </div>
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap gap-3">
         {waiting.map((o) => (
-          <div key={o.id} className="rounded-lg border border-white/20 px-3 py-2 flex items-center gap-2">
-            <div className="flex flex-col">
-              <span className="font-mono text-lg">{o.queueNumber}</span>
-              {o.items.length > 0 && <span className="text-xs opacity-70">{itemSummary(o)}</span>}
+          <div
+            key={o.id}
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-phantom-line bg-phantom-surface px-4 py-3"
+          >
+            <div className="flex flex-col gap-1">
+              <span className="font-mono text-2xl font-bold text-phantom-text">{o.queueNumber}</span>
+              {o.items.length > 0 && <span className="font-kanit text-xs text-phantom-muted">{itemSummary(o)}</span>}
             </div>
-            <button onClick={() => setCancelId(o.id)} className="text-sm rounded border border-white/30 px-2 py-1 font-kanit">{L('queue.cancel').th}</button>
+            <Button variant="danger" onClick={() => setCancelId(o.id)} className="min-h-[44px]">
+              {L('queue.cancel').th}
+            </Button>
           </div>
         ))}
       </div>
 
       {cancelId && (
-        <div className="rounded-lg bg-white/5 p-3 flex flex-col gap-2">
-          <label htmlFor="cancel-reason" className="font-kanit text-sm">{L('queue.reasonPrompt').th} · {L('queue.reasonPrompt').en}</label>
-          <input id="cancel-reason" value={reason} onChange={(e) => setReason(e.target.value)}
-            className="rounded bg-black/40 px-2 py-1 text-white" />
-          <div className="flex gap-2">
-            <button onClick={confirmCancel} className="rounded bg-phantom-orange px-3 py-1 font-kanit">ยืนยันยกเลิก · Confirm cancel</button>
-            <button onClick={() => { setCancelId(null); setReason('') }} className="rounded border border-white/30 px-3 py-1 font-kanit">ปิด · Close</button>
+        <Panel className="flex flex-col gap-3 border-phantom-orange/40">
+          <label htmlFor="cancel-reason" className="font-kanit text-sm text-phantom-muted">
+            {L('queue.reasonPrompt').th} · {L('queue.reasonPrompt').en}
+          </label>
+          <input
+            id="cancel-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            className="min-h-[44px] rounded-lg border border-phantom-line bg-phantom-bg px-3 py-2 font-kanit text-phantom-text"
+          />
+          <div className="flex gap-3">
+            <Button variant="danger" onClick={confirmCancel} className="min-h-[44px] flex-1">
+              ยืนยันยกเลิก · Confirm cancel
+            </Button>
+            <Button variant="ghost" onClick={() => { setCancelId(null); setReason('') }} className="min-h-[44px] flex-1">
+              ปิด · Close
+            </Button>
           </div>
-        </div>
+        </Panel>
       )}
     </section>
   )

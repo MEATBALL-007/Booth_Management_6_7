@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { unlockDashboard } from './pinStore'
 import { L } from '../i18n/labels'
+import { Panel } from '../ui/Panel'
+import { Button } from '../ui/Button'
 
 export function PinGate({ onUnlock }: { onUnlock: () => void }) {
   const [pin, setPin] = useState('')
@@ -16,26 +18,30 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-4 p-6">
-      <h1 className="font-kanit text-2xl text-phantom-yellow">
-        {L('dashboard.pinPrompt').th} · {L('dashboard.pinPrompt').en}
-      </h1>
-      <input
-        type="password"
-        inputMode="numeric"
-        value={pin}
-        onChange={(e) => setPin(e.target.value)}
-        aria-label={L('dashboard.pinPrompt').th}
-        className="rounded-lg bg-black/40 px-4 py-3 text-center font-mono text-2xl text-white"
-      />
-      {error && (
-        <p role="alert" className="text-red-400 font-kanit">
-          {L('dashboard.pinWrong').th} · {L('dashboard.pinWrong').en}
-        </p>
-      )}
-      <button onClick={submit} className="rounded-xl px-6 py-3 bg-phantom-yellow text-phantom-bg font-kanit">
-        {L('dashboard.unlock').th} · {L('dashboard.unlock').en}
-      </button>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-6 p-6">
+      <Panel className="flex w-full max-w-sm flex-col items-center gap-5 text-center">
+        <span className="text-4xl">🔒</span>
+        <h1 className="font-kanit text-2xl text-phantom-yellow">
+          {L('dashboard.pinPrompt').th} · {L('dashboard.pinPrompt').en}
+        </h1>
+        <input
+          type="password"
+          inputMode="numeric"
+          value={pin}
+          onChange={(e) => setPin(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') submit() }}
+          aria-label={L('dashboard.pinPrompt').th}
+          className="w-full min-h-[44px] rounded-xl border border-phantom-line bg-phantom-surface2 px-4 py-4 text-center font-mono text-3xl tracking-[0.3em] text-phantom-text focus:border-phantom-yellow/60 focus:outline-none"
+        />
+        {error && (
+          <p role="alert" className="font-kanit text-phantom-danger">
+            {L('dashboard.pinWrong').th} · {L('dashboard.pinWrong').en}
+          </p>
+        )}
+        <Button variant="primary" onClick={submit} className="min-h-[44px] w-full text-lg">
+          {L('dashboard.unlock').th} · {L('dashboard.unlock').en}
+        </Button>
+      </Panel>
     </div>
   )
 }

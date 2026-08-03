@@ -4,6 +4,7 @@ import type { PresetCode, Message } from './types'
 import { sendMessage } from './commsRepo'
 import { getDeviceId } from '../device/deviceId'
 import { L } from '../i18n/labels'
+import { Button } from '../ui/Button'
 
 const PRESETS: { code: PresetCode; labelKey: 'comms.needHelp' | 'comms.lowStock' | 'comms.cleared'; icon: string }[] = [
   { code: 'need_help', labelKey: 'comms.needHelp', icon: '🆘' },
@@ -26,24 +27,35 @@ export function AlertButtons({ booth, mode }: { booth: BoothId; mode: Mode }) {
   }
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-3">
       <div className="flex flex-wrap gap-2">
         {PRESETS.map((p) => (
-          <button key={p.code} onClick={() => fire({ ...base(), kind: 'alert', presetCode: p.code })}
-            className="rounded-lg px-3 py-2 bg-white/10 font-kanit">
+          <button
+            key={p.code}
+            onClick={() => fire({ ...base(), kind: 'alert', presetCode: p.code })}
+            className="min-h-[44px] rounded-full border border-phantom-line bg-phantom-surface2 px-4 py-2 font-kanit font-semibold text-phantom-text transition hover:border-phantom-yellow/50 hover:bg-phantom-surface"
+          >
             {p.icon} {L(p.labelKey).th}
           </button>
         ))}
       </div>
       <div className="flex gap-2">
-        <input value={text} onChange={(e) => setText(e.target.value)} aria-label={L('comms.message').th}
-          className="flex-1 rounded bg-black/40 px-2 py-2 text-white" />
-        <button onClick={() => { if (text.trim()) { fire({ ...base(), kind: 'text', text: text.trim() }); setText('') } }}
-          className="rounded-lg px-4 py-2 bg-phantom-yellow text-phantom-bg font-kanit">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          aria-label={L('comms.message').th}
+          placeholder={L('comms.message').th}
+          className="min-h-[44px] flex-1 rounded-lg border border-phantom-line bg-phantom-surface2 px-3 py-2 text-phantom-text focus:border-phantom-yellow/60 focus:outline-none"
+        />
+        <Button
+          variant="primary"
+          onClick={() => { if (text.trim()) { fire({ ...base(), kind: 'text', text: text.trim() }); setText('') } }}
+          className="min-h-[44px] px-5"
+        >
           {L('comms.send').th}
-        </button>
+        </Button>
       </div>
-      {error && <p role="alert" className="text-red-400 font-kanit text-sm">{L('comms.sendError').th} · {L('comms.sendError').en}</p>}
+      {error && <p role="alert" className="font-kanit text-sm text-phantom-danger">{L('comms.sendError').th} · {L('comms.sendError').en}</p>}
     </div>
   )
 }

@@ -2,4 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-body { @apply bg-phantom-bg text-white font-sarabun; }
+html { font-size: 120%; }   /* +20% base scale — rem utilities scale automatically */
+body { @apply bg-phantom-bg text-phantom-text font-sarabun antialiased; }
+
+/* glow helper for numbers (queue / money) */
+.glow-o { filter: drop-shadow(0 0 18px rgba(250,70,22,0.5)); }
+.glow-y { text-shadow: 0 0 18px rgba(255,199,44,0.4); }
