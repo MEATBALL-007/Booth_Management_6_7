@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import type { BoothId, Station } from '../domain/types'
 import { productsForBooth } from '../domain/catalog'
-import { addToCart, setQty, cartTotal, cartToOrderItems, type Cart } from '../order/cart'
+import { addToCart, setQty, cartTotal, cartToOrderItems, lineKey, type Cart } from '../order/cart'
+import { defaultSelections } from '../order/options'
 import { nextQueueNumber } from '../order/queueNumber'
 import { buildOrder } from '../order/buildOrder'
 import { createOrder } from '../order/ordersRepo'
@@ -65,7 +66,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
         {products.map((p) => (
           <button
             key={p.sku}
-            onClick={() => { setCart((c) => addToCart(c, p.sku)); setIssued(null) }}
+            onClick={() => { setCart((c) => addToCart(c, p.sku, defaultSelections(p))); setIssued(null) }}
             className="rounded-xl border-2 border-white/20 p-4 text-left font-kanit"
           >
             <div>{p.name}</div>
@@ -78,12 +79,13 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
       <section className="flex flex-col gap-2">
         {cart.map((line) => {
           const p = products.find((x) => x.sku === line.sku)!
+          const key = lineKey(line.sku, line.selections)
           return (
-            <div key={line.sku} className="flex items-center gap-3">
+            <div key={key} className="flex items-center gap-3">
               <span className="flex-1 font-kanit">{p.name}</span>
-              <button onClick={() => setCart((c) => setQty(c, line.sku, line.qty - 1))} className="px-3 rounded bg-white/10">−</button>
+              <button onClick={() => setCart((c) => setQty(c, key, line.qty - 1))} className="px-3 rounded bg-white/10">−</button>
               <span className="font-mono w-6 text-center">{line.qty}</span>
-              <button onClick={() => setCart((c) => setQty(c, line.sku, line.qty + 1))} className="px-3 rounded bg-white/10">+</button>
+              <button onClick={() => setCart((c) => setQty(c, key, line.qty + 1))} className="px-3 rounded bg-white/10">+</button>
               <span className="font-mono w-16 text-right">{p.price * line.qty}฿</span>
             </div>
           )

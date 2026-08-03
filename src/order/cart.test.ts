@@ -1,39 +1,58 @@
-import { addToCart, setQty, removeFromCart, cartTotal, cartToOrderItems, type Cart } from './cart'
+import { addToCart, setQty, removeFromCart, cartTotal, cartToOrderItems, lineKey, type Cart } from './cart'
 import type { Product } from '../domain/types'
 
-const PRODUCTS: Product[] = [
-  { sku: 'a', boothId: 'drinks', name: 'A', nameEn: 'A', price: 30, cost: 12, active: true },
-  { sku: 'b', boothId: 'drinks', name: 'B', nameEn: 'B', price: 25, cost: 9, active: true },
-]
+const DRINK: Product = {
+  sku: 'd', boothId: 'drinks', name: 'โยเกิร์ต', nameEn: 'Yogurt', price: 35, cost: 14, active: true,
+  optionGroups: [
+    { id: 'topping', name: 'ท็อปปิ้ง', nameEn: 'Topping', required: false, choices: [
+      { id: 'topping-none', name: 'ไม่ใส่', nameEn: 'None', priceDelta: 0 },
+      { id: 'topping-boba', name: 'ไข่มุกป็อป', nameEn: 'Popping boba', priceDelta: 10 },
+    ] },
+  ],
+}
+const PLAIN: Product = { sku: 'p', boothId: 'photo', name: 'ภาพ', nameEn: 'Photo', price: 35, cost: 8, active: true }
+const PRODUCTS = [DRINK, PLAIN]
 
-test('addToCart adds new sku at qty 1 then increments', () => {
+test('same sku + same selections stacks into one line', () => {
   let cart: Cart = []
-  cart = addToCart(cart, 'a')
-  expect(cart).toEqual([{ sku: 'a', qty: 1 }])
-  cart = addToCart(cart, 'a')
-  expect(cart).toEqual([{ sku: 'a', qty: 2 }])
+  cart = addToCart(cart, 'p', {})
+  cart = addToCart(cart, 'p', {})
+  expect(cart).toEqual([{ sku: 'p', qty: 2, selections: {} }])
 })
 
-test('setQty updates qty and removes at qty <= 0', () => {
-  let cart: Cart = [{ sku: 'a', qty: 3 }]
-  cart = setQty(cart, 'a', 5)
-  expect(cart).toEqual([{ sku: 'a', qty: 5 }])
-  cart = setQty(cart, 'a', 0)
-  expect(cart).toEqual([])
+test('same sku + different selections are separate lines', () => {
+  let cart: Cart = []
+  cart = addToCart(cart, 'd', { topping: 'topping-none' })
+  cart = addToCart(cart, 'd', { topping: 'topping-boba' })
+  expect(cart).toHaveLength(2)
 })
 
-test('removeFromCart drops the sku', () => {
-  expect(removeFromCart([{ sku: 'a', qty: 2 }, { sku: 'b', qty: 1 }], 'a')).toEqual([{ sku: 'b', qty: 1 }])
+test('cartTotal applies option price deltas', () => {
+  const cart: Cart = [
+    { sku: 'd', qty: 1, selections: { topping: 'topping-boba' } }, // 35 + 10
+    { sku: 'p', qty: 2, selections: {} },                           // 35 * 2
+  ]
+  expect(cartTotal(cart, PRODUCTS)).toBe(45 + 70)
 })
 
-test('cartTotal sums qty * price, ignoring unknown skus', () => {
-  const cart: Cart = [{ sku: 'a', qty: 2 }, { sku: 'b', qty: 1 }, { sku: 'zzz', qty: 9 }]
-  expect(cartTotal(cart, PRODUCTS)).toBe(85) // 2*30 + 1*25
-})
-
-test('cartToOrderItems maps to snapshot line items with subtotal', () => {
-  const cart: Cart = [{ sku: 'a', qty: 2 }]
+test('cartToOrderItems bakes option price into subtotal and records non-default options', () => {
+  const cart: Cart = [{ sku: 'd', qty: 2, selections: { topping: 'topping-boba' } }]
   expect(cartToOrderItems(cart, PRODUCTS)).toEqual([
-    { sku: 'a', name: 'A', qty: 2, unitPrice: 30, subtotal: 60 },
+    { sku: 'd', name: 'โยเกิร์ต', qty: 2, unitPrice: 45, subtotal: 90, options: [{ label: 'ไข่มุกป็อป', priceDelta: 10 }] },
   ])
+})
+
+test('a default (no-option) line records no options field', () => {
+  const cart: Cart = [{ sku: 'd', qty: 1, selections: { topping: 'topping-none' } }]
+  const items = cartToOrderItems(cart, PRODUCTS)
+  expect('options' in items[0]).toBe(false)
+})
+
+test('setQty and removeFromCart operate by line key', () => {
+  const key = lineKey('d', { topping: 'topping-boba' })
+  let cart: Cart = [{ sku: 'd', qty: 1, selections: { topping: 'topping-boba' } }]
+  cart = setQty(cart, key, 4)
+  expect(cart[0].qty).toBe(4)
+  cart = removeFromCart(cart, key)
+  expect(cart).toEqual([])
 })

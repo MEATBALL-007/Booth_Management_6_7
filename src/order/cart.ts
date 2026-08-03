@@ -1,32 +1,43 @@
-import type { Product, OrderItem } from '../domain/types'
+import type { Product, OrderItem, Selections } from '../domain/types'
+import { lineUnitPrice, selectedOptionLabels } from './options'
 
-export type Cart = { sku: string; qty: number }[]
+export interface CartLine {
+  sku: string
+  qty: number
+  selections: Selections
+}
+export type Cart = CartLine[]
 
-export function addToCart(cart: Cart, sku: string): Cart {
-  const existing = cart.find((l) => l.sku === sku)
-  if (existing) return cart.map((l) => (l.sku === sku ? { ...l, qty: l.qty + 1 } : l))
-  return [...cart, { sku, qty: 1 }]
+export function lineKey(sku: string, selections: Selections): string {
+  const parts = Object.keys(selections).sort().map((k) => `${k}=${selections[k]}`)
+  return `${sku}|${parts.join('&')}`
 }
 
-export function setQty(cart: Cart, sku: string, qty: number): Cart {
-  if (qty <= 0) return removeFromCart(cart, sku)
-  return cart.map((l) => (l.sku === sku ? { ...l, qty } : l))
+export function addToCart(cart: Cart, sku: string, selections: Selections = {}): Cart {
+  const key = lineKey(sku, selections)
+  const existing = cart.find((l) => lineKey(l.sku, l.selections) === key)
+  if (existing) return cart.map((l) => (lineKey(l.sku, l.selections) === key ? { ...l, qty: l.qty + 1 } : l))
+  return [...cart, { sku, qty: 1, selections }]
 }
 
-export function removeFromCart(cart: Cart, sku: string): Cart {
-  return cart.filter((l) => l.sku !== sku)
+export function setQty(cart: Cart, key: string, qty: number): Cart {
+  if (qty <= 0) return removeFromCart(cart, key)
+  return cart.map((l) => (lineKey(l.sku, l.selections) === key ? { ...l, qty } : l))
 }
 
-function priceOf(products: Product[], sku: string): Product | undefined {
-  return products.find((p) => p.sku === sku)
+export function removeFromCart(cart: Cart, key: string): Cart {
+  return cart.filter((l) => lineKey(l.sku, l.selections) !== key)
 }
 
 export function cartToOrderItems(cart: Cart, products: Product[]): OrderItem[] {
   return cart
     .map((l) => {
-      const p = priceOf(products, l.sku)
+      const p = products.find((x) => x.sku === l.sku)
       if (!p) return null
-      return { sku: p.sku, name: p.name, qty: l.qty, unitPrice: p.price, subtotal: p.price * l.qty }
+      const unitPrice = lineUnitPrice(p, l.selections)
+      const options = selectedOptionLabels(p, l.selections)
+      const item: OrderItem = { sku: p.sku, name: p.name, qty: l.qty, unitPrice, subtotal: unitPrice * l.qty }
+      return options.length > 0 ? { ...item, options } : item
     })
     .filter((x): x is OrderItem => x !== null)
 }
