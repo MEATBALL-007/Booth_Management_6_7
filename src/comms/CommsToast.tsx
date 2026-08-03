@@ -5,6 +5,8 @@ import { subscribeMessages, ackMessage } from './commsRepo'
 import { getDeviceId } from '../device/deviceId'
 import { visibleMessages } from './commsLogic'
 import { L } from '../i18n/labels'
+import { Panel } from '../ui/Panel'
+import { Button } from '../ui/Button'
 
 const PRESET_LABEL: Record<PresetCode, 'comms.needHelp' | 'comms.lowStock' | 'comms.cleared'> = {
   need_help: 'comms.needHelp',
@@ -28,13 +30,16 @@ export function CommsToast({ booth }: { booth: BoothId }) {
   if (!top) return null
 
   return (
-    <div role="status" className="fixed top-3 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-phantom-orange px-4 py-3 flex items-center gap-3 shadow-lg">
-      <span className="font-kanit">
-        {L(`booth.${top.fromBooth}`).th} · {body(top)}
+    <Panel
+      role="status"
+      className="fixed top-3 left-1/2 -translate-x-1/2 z-50 flex items-center gap-3 border-phantom-yellow/40 py-3 shadow-lg"
+    >
+      <span className="font-kanit text-phantom-text">
+        <span className="text-phantom-yellow">{L(`booth.${top.fromBooth}`).th}</span> · {body(top)}
       </span>
-      <button onClick={() => ackMessage(top.id, me)} className="rounded bg-black/30 px-3 py-1 font-kanit">
+      <Button variant="ghost" onClick={() => ackMessage(top.id, me)} className="min-h-[44px] px-4 py-2 text-sm">
         {L('comms.ack').th}
-      </button>
-    </div>
+      </Button>
+    </Panel>
   )
 }

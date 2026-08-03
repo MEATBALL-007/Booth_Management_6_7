@@ -3,6 +3,7 @@ import type { BoothId } from '../domain/types'
 import { sendMessage } from './commsRepo'
 import { getDeviceId } from '../device/deviceId'
 import { L } from '../i18n/labels'
+import { Button } from '../ui/Button'
 
 export function BroadcastBar({ booth }: { booth: BoothId }) {
   const [text, setText] = useState('')
@@ -19,16 +20,23 @@ export function BroadcastBar({ booth }: { booth: BoothId }) {
   }
 
   return (
-    <section className="flex flex-col gap-2 max-w-md">
-      <h2 className="font-kanit opacity-80">{L('comms.broadcastSend').th} · {L('comms.broadcastSend').en}</h2>
+    <section className="flex max-w-md flex-col gap-2">
+      <h2 className="font-kanit text-sm uppercase tracking-wide text-phantom-muted">
+        {L('comms.broadcastSend').th} · {L('comms.broadcastSend').en}
+      </h2>
       <div className="flex gap-2">
-        <input value={text} onChange={(e) => setText(e.target.value)} aria-label={L('comms.broadcastSend').th}
-          className="flex-1 rounded bg-black/40 px-2 py-2 text-white" />
-        <button onClick={send} className="rounded-lg px-4 py-2 bg-phantom-yellow text-phantom-bg font-kanit">
+        <input
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          aria-label={L('comms.broadcastSend').th}
+          placeholder={L('comms.broadcastSend').th}
+          className="min-h-[44px] flex-1 rounded-lg border border-phantom-line bg-phantom-surface2 px-3 py-2 text-phantom-text focus:border-phantom-yellow/60 focus:outline-none"
+        />
+        <Button variant="primary" onClick={send} className="min-h-[44px] px-5">
           {L('comms.send').th}
-        </button>
+        </Button>
       </div>
-      {error && <p role="alert" className="text-red-400 font-kanit text-sm">{L('comms.sendError').th}</p>}
+      {error && <p role="alert" className="font-kanit text-sm text-phantom-orange">{L('comms.sendError').th}</p>}
     </section>
   )
 }

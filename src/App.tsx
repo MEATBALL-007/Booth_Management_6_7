@@ -5,6 +5,8 @@ import { DisplayScreen } from './screens/DisplayScreen'
 import { DashboardScreen } from './screens/DashboardScreen'
 import { loadDeviceConfig, clearDeviceConfig, type DeviceConfig } from './device/deviceConfig'
 import { L } from './i18n/labels'
+import { Button } from './ui/Button'
+import { Panel } from './ui/Panel'
 
 export default function App() {
   const [config, setConfig] = useState<DeviceConfig | null>(() => loadDeviceConfig())
@@ -27,7 +29,7 @@ export default function App() {
       <button
         onClick={() => setConfirming(true)}
         aria-label={L('nav.backToSetup').th}
-        className="fixed bottom-3 right-3 z-40 rounded-full bg-phantom-bg/90 border border-white/40 px-4 py-2 font-kanit text-sm text-white shadow-lg"
+        className="fixed bottom-3 right-3 z-40 flex min-h-[44px] items-center gap-1.5 rounded-full border border-phantom-line bg-phantom-surface/90 px-4 py-2 font-kanit text-sm font-semibold text-phantom-text shadow-lg transition hover:border-phantom-yellow/50 hover:bg-phantom-surface2"
       >
         ← {L('nav.setup').th} / {L('nav.setup').en}
       </button>
@@ -37,21 +39,18 @@ export default function App() {
           aria-modal="true"
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-6"
         >
-          <div className="w-full max-w-sm rounded-2xl border border-white/20 bg-phantom-bg p-6 flex flex-col gap-4">
+          <Panel className="flex w-full max-w-sm flex-col gap-4 border-phantom-yellow/30 shadow-lg">
             <p className="font-kanit text-lg text-phantom-yellow">{L('nav.confirmBack').th}</p>
-            <p className="text-sm opacity-70">{L('nav.confirmBack').en}</p>
+            <p className="text-sm text-phantom-muted">{L('nav.confirmBack').en}</p>
             <div className="flex gap-3">
-              <button onClick={reset} className="flex-1 rounded-xl py-3 bg-phantom-orange font-kanit">
+              <Button variant="primary" onClick={reset} className="min-h-[44px] flex-1">
                 {L('nav.confirm').th} / {L('nav.confirm').en}
-              </button>
-              <button
-                onClick={() => setConfirming(false)}
-                className="flex-1 rounded-xl py-3 border border-white/30 font-kanit"
-              >
+              </Button>
+              <Button variant="ghost" onClick={() => setConfirming(false)} className="min-h-[44px] flex-1">
                 {L('nav.cancel').th} / {L('nav.cancel').en}
-              </button>
+              </Button>
             </div>
-          </div>
+          </Panel>
         </div>
       )}
     </>
