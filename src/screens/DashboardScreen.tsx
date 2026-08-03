@@ -13,15 +13,9 @@ import { BroadcastBar } from '../comms/BroadcastBar'
 import { useHeartbeat } from '../comms/useHeartbeat'
 import { getDeviceId } from '../device/deviceId'
 import { loadDeviceConfig } from '../device/deviceConfig'
-
-function Card({ testid, labelTh, labelEn, value }: { testid: string; labelTh: string; labelEn: string; value: string }) {
-  return (
-    <div className="rounded-xl border border-white/15 p-4 flex flex-col gap-1">
-      <span className="font-kanit text-sm opacity-70">{labelTh} · {labelEn}</span>
-      <span data-testid={testid} className="font-mono text-3xl text-phantom-orange">{value}</span>
-    </div>
-  )
-}
+import { StatTile } from '../ui/StatTile'
+import { Panel } from '../ui/Panel'
+import { Button } from '../ui/Button'
 
 export function DashboardScreen() {
   const [unlocked, setUnlocked] = useState(() => isDashboardUnlocked())
@@ -57,50 +51,56 @@ export function DashboardScreen() {
   }
 
   return (
-    <div className="min-h-screen p-6 flex flex-col gap-6">
+    <div className="min-h-screen p-4 md:p-6 flex flex-col gap-6 text-phantom-text">
       <CommsToast booth={hqBooth} />
       <h1 className="font-kanit text-2xl text-phantom-yellow">
         {L('dashboard.title').th} · {L('dashboard.title').en}
       </h1>
 
-      <section className="rounded-xl bg-white/5 p-4 flex flex-col gap-4">
+      <Panel className="flex flex-col gap-4">
         <h2 className="font-kanit text-lg text-phantom-yellow">HQ</h2>
         <PresenceBoard />
         <BroadcastBar booth={hqBooth} />
-      </section>
+      </Panel>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <Card testid="total-sales" labelTh={L('dashboard.totalSales').th} labelEn={L('dashboard.totalSales').en} value={`${m.totalSales}฿`} />
-        <Card testid="net-donation" labelTh={L('dashboard.netDonation').th} labelEn={L('dashboard.netDonation').en} value={`${m.netDonation}฿`} />
-        <Card testid="cash-total" labelTh={L('dashboard.cash').th} labelEn={L('dashboard.cash').en} value={`${m.cashTotal}฿`} />
-        <Card testid="qr-total" labelTh={L('dashboard.qr').th} labelEn={L('dashboard.qr').en} value={`${m.qrTotal}฿`} />
-        <Card testid="total-cost" labelTh={L('dashboard.totalCost').th} labelEn={L('dashboard.totalCost').en} value={`${m.totalCost}฿`} />
-        <Card testid="expected-cash" labelTh={L('dashboard.expectedCash').th} labelEn={L('dashboard.expectedCash').en} value={`${m.expectedCash}฿`} />
-        <Card testid="paid-orders" labelTh={L('dashboard.orders').th} labelEn={L('dashboard.orders').en} value={`${m.paidOrderCount}`} />
-        <Card testid="done-count" labelTh={L('dashboard.done').th} labelEn={L('dashboard.done').en} value={`${m.doneCount}`} />
+        <StatTile testid="total-sales" label={`${L('dashboard.totalSales').th} · ${L('dashboard.totalSales').en}`} value={`${m.totalSales}฿`} />
+        <StatTile testid="net-donation" label={`${L('dashboard.netDonation').th} · ${L('dashboard.netDonation').en}`} value={`${m.netDonation}฿`} accent />
+        <StatTile testid="cash-total" label={`${L('dashboard.cash').th} · ${L('dashboard.cash').en}`} value={`${m.cashTotal}฿`} />
+        <StatTile testid="qr-total" label={`${L('dashboard.qr').th} · ${L('dashboard.qr').en}`} value={`${m.qrTotal}฿`} />
+        <StatTile testid="total-cost" label={`${L('dashboard.totalCost').th} · ${L('dashboard.totalCost').en}`} value={`${m.totalCost}฿`} />
+        <StatTile testid="expected-cash" label={`${L('dashboard.expectedCash').th} · ${L('dashboard.expectedCash').en}`} value={`${m.expectedCash}฿`} />
+        <StatTile testid="paid-orders" label={`${L('dashboard.orders').th} · ${L('dashboard.orders').en}`} value={`${m.paidOrderCount}`} />
+        <StatTile testid="done-count" label={`${L('dashboard.done').th} · ${L('dashboard.done').en}`} value={`${m.doneCount}`} />
       </section>
 
-      <section>
-        <h2 className="font-kanit opacity-80 mb-2">{L('dashboard.byBooth').th} · {L('dashboard.byBooth').en}</h2>
-        <div className="flex flex-wrap gap-4">
-          {BOOTH_IDS.map((b) => (
-            <div key={b} className="font-mono">
-              {L(`booth.${b}`).th}: <span className="text-phantom-yellow">{m.byBooth[b]}฿</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Panel>
+          <h2 className="font-kanit text-sm uppercase tracking-wide text-phantom-muted mb-3">
+            {L('dashboard.byBooth').th} · {L('dashboard.byBooth').en}
+          </h2>
+          <div className="flex flex-wrap gap-4">
+            {BOOTH_IDS.map((b) => (
+              <div key={b} className="font-mono">
+                {L(`booth.${b}`).th}: <span className="text-phantom-yellow">{m.byBooth[b]}฿</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
 
-      <section>
-        <h2 className="font-kanit opacity-80 mb-2">{L('dashboard.bestSellers').th} · {L('dashboard.bestSellers').en}</h2>
-        <ul className="flex flex-col gap-1">
-          {m.bestSellers.map((s) => (
-            <li key={s.sku} className="font-mono">{s.name} × {s.qty} = {s.sales}฿</li>
-          ))}
-        </ul>
-      </section>
+        <Panel>
+          <h2 className="font-kanit text-sm uppercase tracking-wide text-phantom-muted mb-3">
+            {L('dashboard.bestSellers').th} · {L('dashboard.bestSellers').en}
+          </h2>
+          <ul className="flex flex-col gap-1">
+            {m.bestSellers.map((s) => (
+              <li key={s.sku} className="font-mono text-sm">{s.name} × {s.qty} = {s.sales}฿</li>
+            ))}
+          </ul>
+        </Panel>
+      </div>
 
-      <section className="rounded-xl bg-white/5 p-4 flex flex-col gap-3 max-w-md">
+      <Panel className="flex flex-col gap-3 max-w-md">
         <h2 className="font-kanit">{L('dashboard.addExpense').th} · {L('dashboard.addExpense').en}</h2>
         {error && (
           <p role="alert" className="text-red-400 font-kanit">
@@ -108,17 +108,19 @@ export function DashboardScreen() {
           </p>
         )}
         <select value={booth} onChange={(e) => setBooth(e.target.value as BoothId)} aria-label={L('dashboard.byBooth').th}
-          className="rounded bg-black/40 px-2 py-2 text-white font-kanit">
+          className="min-h-[44px] rounded-lg border border-phantom-line bg-phantom-surface2 px-3 py-2 text-phantom-text font-kanit">
           {BOOTH_IDS.map((b) => <option key={b} value={b}>{L(`booth.${b}`).th}</option>)}
         </select>
         <input value={desc} onChange={(e) => setDesc(e.target.value)} aria-label={L('dashboard.expenseDesc').th}
-          className="rounded bg-black/40 px-2 py-2 text-white" />
+          placeholder={L('dashboard.expenseDesc').th}
+          className="min-h-[44px] rounded-lg border border-phantom-line bg-phantom-surface2 px-3 py-2 text-phantom-text focus:border-phantom-yellow/60 focus:outline-none" />
         <input value={amount} onChange={(e) => setAmount(e.target.value)} inputMode="numeric" aria-label={L('dashboard.expenseAmount').th}
-          className="rounded bg-black/40 px-2 py-2 text-white font-mono" />
-        <button onClick={saveExpense} className="rounded-lg px-4 py-2 bg-phantom-yellow text-phantom-bg font-kanit">
+          placeholder={L('dashboard.expenseAmount').th}
+          className="min-h-[44px] rounded-lg border border-phantom-line bg-phantom-surface2 px-3 py-2 text-phantom-text font-mono focus:border-phantom-yellow/60 focus:outline-none" />
+        <Button variant="primary" onClick={saveExpense} className="min-h-[44px]">
           {L('dashboard.save').th} · {L('dashboard.save').en}
-        </button>
-      </section>
+        </Button>
+      </Panel>
     </div>
   )
 }
