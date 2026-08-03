@@ -10,6 +10,10 @@ import { QrCode } from '../order/QrCode'
 import { QueuePanel } from './QueuePanel'
 import { APP_CONFIG } from '../domain/appConfig'
 import { L } from '../i18n/labels'
+import { AlertButtons } from '../comms/AlertButtons'
+import { CommsToast } from '../comms/CommsToast'
+import { useHeartbeat } from '../comms/useHeartbeat'
+import { getDeviceId } from '../device/deviceId'
 
 type Pay = 'none' | 'cash' | 'qr'
 
@@ -19,6 +23,8 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
   const [pay, setPay] = useState<Pay>('none')
   const [issued, setIssued] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+
+  useHeartbeat({ id: getDeviceId(), deviceId: getDeviceId(), booth, mode: 'order', station })
 
   const total = cartTotal(cart, products)
 
@@ -37,6 +43,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
 
   return (
     <div className="min-h-screen p-4 flex flex-col gap-4">
+      <CommsToast booth={booth} />
       <header className="flex items-center justify-between">
         <span className="font-kanit text-phantom-yellow">
           {L(`booth.${booth}`).th} · {L(`booth.${booth}`).en} · station {station}
@@ -112,6 +119,10 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
           </button>
         </div>
       )}
+
+      <footer className="border-t border-white/20 pt-4">
+        <AlertButtons booth={booth} mode="order" />
+      </footer>
 
       <QueuePanel booth={booth} station={station} />
     </div>

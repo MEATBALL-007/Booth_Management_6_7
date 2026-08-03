@@ -13,6 +13,13 @@ vi.mock('../order/ordersRepo', () => ({
   updateOrderStatus: vi.fn(),
 }))
 vi.mock('./QueuePanel', () => ({ QueuePanel: () => null }))
+vi.mock('../comms/commsRepo', () => ({
+  sendMessage: vi.fn().mockResolvedValue('m1'),
+  subscribeMessages: () => () => {},
+  ackMessage: vi.fn(),
+  upsertPresence: vi.fn().mockResolvedValue(undefined),
+  subscribePresence: () => () => {},
+}))
 
 import { OrderStation } from './OrderStation'
 
@@ -66,4 +73,9 @@ test('shows an error alert if saving the order is rejected', async () => {
   await user.click(screen.getByRole('button', { name: /เงินสด/ }))
   await user.click(screen.getByRole('button', { name: /รับเงินแล้ว/ }))
   expect(await screen.findByRole('alert')).toHaveTextContent('A1')
+})
+
+test('order station shows the inter-booth alert buttons', () => {
+  render(<OrderStation booth="drinks" station="A" />)
+  expect(screen.getByRole('button', { name: /ขอคนช่วย/ })).toBeInTheDocument()
 })
