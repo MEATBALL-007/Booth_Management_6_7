@@ -52,6 +52,10 @@ const LABELS = {
   'comms.ack': { th: 'รับทราบ', en: 'Got it' },
   'comms.from': { th: 'จาก', en: 'from' },
   'comms.broadcast': { th: 'ประกาศ HQ', en: 'HQ broadcast' },
+  'comms.presence': { th: 'อุปกรณ์ออนไลน์', en: 'Devices online' },
+  'comms.online': { th: 'ออนไลน์', en: 'online' },
+  'comms.offline': { th: 'หลุด', en: 'offline' },
+  'comms.broadcastSend': { th: 'ประกาศถึงทุกซุ้ม', en: 'Broadcast to all' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
