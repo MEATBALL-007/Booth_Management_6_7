@@ -45,7 +45,7 @@ test('order mode renders the Order Station with the booth catalog', async () => 
   await user.click(screen.getByRole('button', { name: /ยืนยัน/ }))
 
   // OrderStation shows the drinks catalog
-  expect(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ })).toBeInTheDocument()
+  expect(screen.getByRole('button', { name: /สตรอเบอร์รี่โยเกิร์ตปั่น/ })).toBeInTheDocument()
 })
 
 test('dashboard mode shows the PIN gate', async () => {

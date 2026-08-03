@@ -32,16 +32,16 @@ test('cash order: add product, pay cash, issues queue number and persists a paid
   const user = userEvent.setup()
   render(<OrderStation booth="drinks" station="A" />)
 
-  // add one Yakult-Pipo (30)
-  await user.click(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ }))
-  expect(screen.getByTestId('cart-total')).toHaveTextContent('30')
+  // add one Strawberry yogurt smoothie (35)
+  await user.click(screen.getByRole('button', { name: /สตรอเบอร์รี่โยเกิร์ตปั่น/ }))
+  expect(screen.getByTestId('cart-total')).toHaveTextContent('35')
 
   await user.click(screen.getByRole('button', { name: /เงินสด/ }))
   await user.click(screen.getByRole('button', { name: /รับเงินแล้ว/ }))
 
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1))
   const persisted = createOrder.mock.calls[0][0]
-  expect(persisted.total).toBe(30)
+  expect(persisted.total).toBe(35)
   expect(persisted.paymentMethod).toBe('cash')
   expect(persisted.paymentStatus).toBe('paid')
   expect(persisted.status).toBe('waiting')
@@ -69,7 +69,7 @@ test('shows an error alert if saving the order is rejected', async () => {
   const user = userEvent.setup()
   createOrder.mockRejectedValueOnce(new Error('nope'))
   render(<OrderStation booth="drinks" station="A" />)
-  await user.click(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ }))
+  await user.click(screen.getByRole('button', { name: /สตรอเบอร์รี่โยเกิร์ตปั่น/ }))
   await user.click(screen.getByRole('button', { name: /เงินสด/ }))
   await user.click(screen.getByRole('button', { name: /รับเงินแล้ว/ }))
   expect(await screen.findByRole('alert')).toHaveTextContent('A1')
