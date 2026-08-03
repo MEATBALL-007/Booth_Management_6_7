@@ -82,7 +82,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
       {issued && (
         <div
           data-testid="issued-queue"
-          className="flex items-center gap-4 rounded-2xl border border-phantom-yellow/40 bg-phantom-surface2 px-6 py-4 shadow-glow-y"
+          className="flex flex-wrap items-center gap-4 rounded-2xl border border-phantom-yellow/40 bg-phantom-surface2 px-6 py-4"
         >
           <span className="font-kanit text-sm text-phantom-muted">คิวที่ออก · Queue issued</span>
           <QueueNumber value={issued} size="card" />

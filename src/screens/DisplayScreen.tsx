@@ -30,7 +30,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
         flashing ? 'bg-phantom-orange/30 animate-pulse' : 'bg-phantom-bg'
       }`}
     >
-      <header className="flex items-center justify-between gap-4">
+      <header className="flex flex-wrap items-center justify-between gap-4">
         <span className="font-kanit text-3xl md:text-5xl font-bold text-phantom-yellow">
           {L(`booth.${booth}`).th} <span className="text-phantom-muted font-normal">· {L(`booth.${booth}`).en}</span>
         </span>
