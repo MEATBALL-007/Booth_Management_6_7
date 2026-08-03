@@ -1,0 +1,40 @@
+import { useEffect, useState } from 'react'
+import type { BoothId } from '../domain/types'
+import type { Message, PresetCode } from './types'
+import { subscribeMessages, ackMessage } from './commsRepo'
+import { getDeviceId } from '../device/deviceId'
+import { visibleMessages } from './commsLogic'
+import { L } from '../i18n/labels'
+
+const PRESET_LABEL: Record<PresetCode, 'comms.needHelp' | 'comms.lowStock' | 'comms.cleared'> = {
+  need_help: 'comms.needHelp',
+  low_stock: 'comms.lowStock',
+  cleared: 'comms.cleared',
+}
+
+function body(msg: Message): string {
+  if (msg.kind === 'broadcast') return `${L('comms.broadcast').th}: ${msg.text ?? ''}`
+  if (msg.kind === 'alert' && msg.presetCode) return L(PRESET_LABEL[msg.presetCode]).th
+  return msg.text ?? ''
+}
+
+export function CommsToast({ booth }: { booth: BoothId }) {
+  const [messages, setMessages] = useState<Message[]>([])
+  const me = getDeviceId()
+
+  useEffect(() => subscribeMessages(setMessages), [])
+
+  const top = visibleMessages(messages, booth, me)[0]
+  if (!top) return null
+
+  return (
+    <div role="status" className="fixed top-3 left-1/2 -translate-x-1/2 z-50 rounded-xl bg-phantom-orange px-4 py-3 flex items-center gap-3 shadow-lg">
+      <span className="font-kanit">
+        {L(`booth.${top.fromBooth}`).th} · {body(top)}
+      </span>
+      <button onClick={() => ackMessage(top.id, me)} className="rounded bg-black/30 px-3 py-1 font-kanit">
+        {L('comms.ack').th}
+      </button>
+    </div>
+  )
+}

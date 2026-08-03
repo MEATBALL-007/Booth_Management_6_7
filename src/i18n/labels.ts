@@ -49,6 +49,9 @@ const LABELS = {
   'comms.message': { th: 'ข้อความ', en: 'Message' },
   'comms.send': { th: 'ส่ง', en: 'Send' },
   'comms.sendError': { th: 'ส่งไม่สำเร็จ', en: 'Send failed' },
+  'comms.ack': { th: 'รับทราบ', en: 'Got it' },
+  'comms.from': { th: 'จาก', en: 'from' },
+  'comms.broadcast': { th: 'ประกาศ HQ', en: 'HQ broadcast' },
 } as const
 
 export type LabelKey = keyof typeof LABELS
