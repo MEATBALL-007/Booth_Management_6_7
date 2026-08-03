@@ -3,8 +3,10 @@ import { BOOTH_IDS, MODES, STATIONS, type BoothId, type Mode, type Station } fro
 import { saveDeviceConfig, isConfigValid, type DeviceConfig } from '../device/deviceConfig'
 import { L } from '../i18n/labels'
 import { BiLabel } from '../i18n/BiLabel'
+import { Button } from '../ui/Button'
+import { Panel } from '../ui/Panel'
 
-const Chip = ({
+const ChoiceChip = ({
   active,
   onClick,
   children,
@@ -15,14 +17,20 @@ const Chip = ({
 }) => (
   <button
     onClick={onClick}
-    className={`rounded-xl px-4 py-3 font-kanit border-2 ${
+    className={`min-h-[44px] min-w-[44px] rounded-xl px-5 py-3 font-kanit border-2 transition-colors ${
       active
-        ? 'bg-phantom-orange border-phantom-orange text-white'
-        : 'border-white/20 text-white'
+        ? 'bg-phantom-orange/15 border-phantom-orange text-phantom-text'
+        : 'border-phantom-line text-phantom-text hover:border-phantom-orange/40'
     }`}
   >
     {children}
   </button>
+)
+
+const SectionLabel = ({ children }: { children: React.ReactNode }) => (
+  <p className="mb-3 font-kanit text-sm font-semibold uppercase tracking-wide text-phantom-muted">
+    {children}
+  </p>
 )
 
 export function SetupScreen({ onDone }: { onDone: () => void }) {
@@ -41,66 +49,71 @@ export function SetupScreen({ onDone }: { onDone: () => void }) {
   }
 
   return (
-    <div className="min-h-screen p-6 flex flex-col gap-6 max-w-xl mx-auto">
-      <h1 className="font-kanit text-2xl text-phantom-yellow">
-        {L('setup.title').th} · {L('setup.title').en}
-      </h1>
+    <div className="min-h-screen flex items-center justify-center p-6">
+      <div className="w-full max-w-xl flex flex-col gap-8">
+        <h1 className="font-kanit text-3xl text-phantom-yellow text-center">
+          {L('setup.title').th} · {L('setup.title').en}
+        </h1>
 
-      <section>
-        <p className="mb-2 opacity-80">
-          <BiLabel k="setup.chooseBooth" />
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {BOOTH_IDS.map((b) => (
-            <Chip key={b} active={booth === b} onClick={() => setBooth(b)}>
-              <BiLabel k={`booth.${b}`} />
-            </Chip>
-          ))}
-        </div>
-      </section>
+        <Panel className="flex flex-col gap-8">
+          <section>
+            <SectionLabel>
+              <BiLabel k="setup.chooseBooth" />
+            </SectionLabel>
+            <div className="flex flex-wrap gap-3">
+              {BOOTH_IDS.map((b) => (
+                <ChoiceChip key={b} active={booth === b} onClick={() => setBooth(b)}>
+                  <BiLabel k={`booth.${b}`} />
+                </ChoiceChip>
+              ))}
+            </div>
+          </section>
 
-      <section>
-        <p className="mb-2 opacity-80">
-          <BiLabel k="setup.chooseMode" />
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {MODES.map((m) => (
-            <Chip
-              key={m}
-              active={mode === m}
-              onClick={() => {
-                setMode(m)
-                if (m !== 'order') setStation(undefined)
-              }}
-            >
-              <BiLabel k={`mode.${m}`} />
-            </Chip>
-          ))}
-        </div>
-      </section>
+          <section>
+            <SectionLabel>
+              <BiLabel k="setup.chooseMode" />
+            </SectionLabel>
+            <div className="flex flex-wrap gap-3">
+              {MODES.map((m) => (
+                <ChoiceChip
+                  key={m}
+                  active={mode === m}
+                  onClick={() => {
+                    setMode(m)
+                    if (m !== 'order') setStation(undefined)
+                  }}
+                >
+                  <BiLabel k={`mode.${m}`} />
+                </ChoiceChip>
+              ))}
+            </div>
+          </section>
 
-      {mode === 'order' && (
-        <section>
-          <p className="mb-2 opacity-80">
-            <BiLabel k="setup.chooseStation" />
-          </p>
-          <div className="flex gap-3">
-            {STATIONS.map((s) => (
-              <Chip key={s} active={station === s} onClick={() => setStation(s)}>
-                {s}
-              </Chip>
-            ))}
-          </div>
-        </section>
-      )}
+          {mode === 'order' && (
+            <section>
+              <SectionLabel>
+                <BiLabel k="setup.chooseStation" />
+              </SectionLabel>
+              <div className="flex flex-wrap gap-3">
+                {STATIONS.map((s) => (
+                  <ChoiceChip key={s} active={station === s} onClick={() => setStation(s)}>
+                    {s}
+                  </ChoiceChip>
+                ))}
+              </div>
+            </section>
+          )}
 
-      <button
-        onClick={confirm}
-        disabled={!valid}
-        className="mt-auto rounded-xl py-4 font-kanit text-lg bg-phantom-yellow text-phantom-bg disabled:opacity-40"
-      >
-        {L('setup.confirm').th} · {L('setup.confirm').en}
-      </button>
+          <Button
+            variant="primary"
+            onClick={confirm}
+            disabled={!valid}
+            className="w-full text-lg"
+          >
+            {L('setup.confirm').th} · {L('setup.confirm').en}
+          </Button>
+        </Panel>
+      </div>
     </div>
   )
 }
