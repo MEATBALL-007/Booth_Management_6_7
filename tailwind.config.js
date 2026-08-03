@@ -13,6 +13,7 @@ export default {
         'phantom-text': '#f4f4f6',
         'phantom-muted': '#9a9aa2',
         'phantom-success': '#3ad35a',
+        'phantom-danger': '#ff5a4d',
       },
       fontFamily: {
         kanit: ['Kanit', 'sans-serif'],

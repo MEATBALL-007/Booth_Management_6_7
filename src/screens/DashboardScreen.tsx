@@ -103,7 +103,7 @@ export function DashboardScreen() {
       <Panel className="flex flex-col gap-3 max-w-md">
         <h2 className="font-kanit">{L('dashboard.addExpense').th} · {L('dashboard.addExpense').en}</h2>
         {error && (
-          <p role="alert" className="text-red-400 font-kanit">
+          <p role="alert" className="text-phantom-danger font-kanit">
             {L('dashboard.expenseError').th} · {L('dashboard.expenseError').en}: {error}
           </p>
         )}

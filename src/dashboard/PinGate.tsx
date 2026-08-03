@@ -34,7 +34,7 @@ export function PinGate({ onUnlock }: { onUnlock: () => void }) {
           className="w-full min-h-[44px] rounded-xl border border-phantom-line bg-phantom-surface2 px-4 py-4 text-center font-mono text-3xl tracking-[0.3em] text-phantom-text focus:border-phantom-yellow/60 focus:outline-none"
         />
         {error && (
-          <p role="alert" className="font-kanit text-red-400">
+          <p role="alert" className="font-kanit text-phantom-danger">
             {L('dashboard.pinWrong').th} · {L('dashboard.pinWrong').en}
           </p>
         )}

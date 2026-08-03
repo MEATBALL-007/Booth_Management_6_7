@@ -90,7 +90,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
       )}
 
       {error && (
-        <div role="alert" className="rounded-lg bg-red-600/80 px-3 py-2 font-kanit">
+        <div role="alert" className="rounded-lg bg-phantom-danger/80 px-3 py-2 font-kanit">
           บันทึกออเดอร์ {error} ไม่สำเร็จ · Failed to save order {error}
         </div>
       )}
@@ -104,7 +104,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
               className="flex min-h-[44px] flex-col gap-2 rounded-2xl border border-phantom-line bg-phantom-surface p-4 text-left transition-transform hover:-translate-y-0.5 hover:border-phantom-orange/40"
             >
               {p.optionGroups && p.optionGroups.length > 0 && (
-                <Chip tone="neutral" className="self-start text-xs">มีตัวเลือก</Chip>
+                <Chip tone="neutral" className="self-start text-xs">{L('order.hasOptions').th}</Chip>
               )}
               <div className="font-kanit">{p.name}</div>
               <div className="text-xs text-phantom-muted">{p.nameEn}</div>

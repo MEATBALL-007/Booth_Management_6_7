@@ -36,7 +36,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
         </span>
         <span className="flex items-center gap-2 shrink-0 rounded-full border border-phantom-success/40 bg-phantom-success/10 px-4 py-1.5">
           <span className="h-2.5 w-2.5 rounded-full bg-phantom-success animate-pulse" />
-          <span className="font-kanit text-sm md:text-base font-semibold tracking-wide text-phantom-success">LIVE</span>
+          <span className="font-kanit text-sm md:text-base font-semibold tracking-wide text-phantom-success">{L('display.live').en}</span>
         </span>
       </header>
 

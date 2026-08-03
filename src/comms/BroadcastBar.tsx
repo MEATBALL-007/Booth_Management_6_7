@@ -36,7 +36,7 @@ export function BroadcastBar({ booth }: { booth: BoothId }) {
           {L('comms.send').th}
         </Button>
       </div>
-      {error && <p role="alert" className="font-kanit text-sm text-phantom-orange">{L('comms.sendError').th}</p>}
+      {error && <p role="alert" className="font-kanit text-sm text-phantom-danger">{L('comms.sendError').th}</p>}
     </section>
   )
 }

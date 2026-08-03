@@ -55,7 +55,7 @@ export function AlertButtons({ booth, mode }: { booth: BoothId; mode: Mode }) {
           {L('comms.send').th}
         </Button>
       </div>
-      {error && <p role="alert" className="font-kanit text-sm text-phantom-orange">{L('comms.sendError').th} · {L('comms.sendError').en}</p>}
+      {error && <p role="alert" className="font-kanit text-sm text-phantom-danger">{L('comms.sendError').th} · {L('comms.sendError').en}</p>}
     </div>
   )
 }
