@@ -19,6 +19,13 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
     if (next) updateOrderStatus(next.id, { status: 'serving', servingAt: Date.now() })
   }
   const markDone = (id: string) => updateOrderStatus(id, { status: 'done', doneAt: Date.now() })
+  const itemSummary = (o: Order) =>
+    o.items
+      .map((item) => {
+        const opts = item.options?.length ? ` · ${item.options.map((op) => op.label).join(' · ')}` : ''
+        return `${item.name} ×${item.qty}${opts}`
+      })
+      .join(' , ')
   const confirmCancel = () => {
     if (!cancelId || !reason.trim()) return
     updateOrderStatus(cancelId, { status: 'cancelled', cancelReason: reason.trim() })
@@ -39,7 +46,10 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
       <div className="flex flex-wrap gap-2">
         {serving.map((o) => (
           <div key={o.id} className="rounded-lg bg-white/10 px-3 py-2 flex items-center gap-2">
-            <span className="font-mono text-xl text-phantom-yellow">{o.queueNumber}</span>
+            <div className="flex flex-col">
+              <span className="font-mono text-xl text-phantom-yellow">{o.queueNumber}</span>
+              {o.items.length > 0 && <span className="text-xs opacity-70">{itemSummary(o)}</span>}
+            </div>
             <button onClick={() => markDone(o.id)} className="text-sm rounded bg-phantom-yellow text-phantom-bg px-2 py-1 font-kanit">{L('queue.done').th}</button>
             <button onClick={() => setCancelId(o.id)} className="text-sm rounded border border-white/30 px-2 py-1 font-kanit">{L('queue.cancel').th}</button>
           </div>
@@ -49,7 +59,10 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
       <div className="flex flex-wrap gap-2">
         {waiting.map((o) => (
           <div key={o.id} className="rounded-lg border border-white/20 px-3 py-2 flex items-center gap-2">
-            <span className="font-mono text-lg">{o.queueNumber}</span>
+            <div className="flex flex-col">
+              <span className="font-mono text-lg">{o.queueNumber}</span>
+              {o.items.length > 0 && <span className="text-xs opacity-70">{itemSummary(o)}</span>}
+            </div>
             <button onClick={() => setCancelId(o.id)} className="text-sm rounded border border-white/30 px-2 py-1 font-kanit">{L('queue.cancel').th}</button>
           </div>
         ))}

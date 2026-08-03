@@ -10,10 +10,20 @@ test('catalog has the spec prices and costs per booth', () => {
   ])
   expect(productsForBooth('portrait')[0].price).toBe(25)
   expect(productsForBooth('portrait')[0].cost).toBe(3)
+})
 
+test('drinks menu is the strawberry line-up with option groups', () => {
   const drinks = productsForBooth('drinks')
-  expect(drinks.map((d) => d.price)).toEqual([30, 25])
-  expect(drinks.map((d) => d.cost)).toEqual([12, 9])
+  expect(drinks.map((d) => d.sku)).toEqual(['drink-strawberry-yogurt', 'drink-strawberry-milk'])
+  expect(drinks.map((d) => d.price)).toEqual([35, 25])
+  expect(drinks.map((d) => d.cost)).toEqual([14, 10])
+  // both drinks carry sweetness + topping groups
+  for (const d of drinks) {
+    expect(d.optionGroups?.map((g) => g.id)).toEqual(['sweet', 'topping'])
+  }
+  // topping deltas
+  const topping = drinks[0].optionGroups!.find((g) => g.id === 'topping')!
+  expect(topping.choices.map((c) => c.priceDelta)).toEqual([0, 10, 10])
 })
 
 test('productsForBooth returns only active products', () => {

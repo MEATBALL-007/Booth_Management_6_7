@@ -1,4 +1,22 @@
-import type { Product, BoothId } from './types'
+import type { Product, BoothId, OptionGroup } from './types'
+
+const SWEET: OptionGroup = {
+  id: 'sweet', name: 'ความหวาน', nameEn: 'Sweetness', required: true,
+  choices: [
+    { id: 'sweet-normal', name: 'หวานปกติ', nameEn: 'Normal', priceDelta: 0 },
+    { id: 'sweet-low', name: 'หวานน้อย', nameEn: 'Less sweet', priceDelta: 0 },
+    { id: 'sweet-high', name: 'หวานมาก', nameEn: 'Extra sweet', priceDelta: 0 },
+  ],
+}
+
+const TOPPING: OptionGroup = {
+  id: 'topping', name: 'ท็อปปิ้ง', nameEn: 'Topping', required: false,
+  choices: [
+    { id: 'topping-none', name: 'ไม่ใส่', nameEn: 'None', priceDelta: 0 },
+    { id: 'topping-boba', name: 'ไข่มุกป็อป', nameEn: 'Popping boba', priceDelta: 10 },
+    { id: 'topping-whip', name: 'วิปครีม', nameEn: 'Whipped cream', priceDelta: 10 },
+  ],
+}
 
 export const CATALOG: Record<BoothId, Product[]> = {
   photo: [
@@ -8,8 +26,8 @@ export const CATALOG: Record<BoothId, Product[]> = {
     { sku: 'portrait-caricature', boothId: 'portrait', name: 'วาดล้อเลียน', nameEn: 'Caricature', price: 25, cost: 3, active: true },
   ],
   drinks: [
-    { sku: 'drink-yakult-pipo', boothId: 'drinks', name: 'ยาคูลท์ปีโป้ปั่น', nameEn: 'Yakult-Pipo blended', price: 30, cost: 12, active: true },
-    { sku: 'drink-soda', boothId: 'drinks', name: 'น้ำอัดลมปั่น', nameEn: 'Soda blended', price: 25, cost: 9, active: true },
+    { sku: 'drink-strawberry-yogurt', boothId: 'drinks', name: 'สตรอเบอร์รี่โยเกิร์ตปั่น', nameEn: 'Strawberry yogurt smoothie', price: 35, cost: 14, active: true, optionGroups: [SWEET, TOPPING] },
+    { sku: 'drink-strawberry-milk', boothId: 'drinks', name: 'สตรอเบอร์รี่นมสดปั่น', nameEn: 'Strawberry milk smoothie', price: 25, cost: 10, active: true, optionGroups: [SWEET, TOPPING] },
   ],
 }
 

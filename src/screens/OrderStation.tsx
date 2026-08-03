@@ -1,7 +1,8 @@
 import { useState } from 'react'
-import type { BoothId, Station } from '../domain/types'
+import type { BoothId, Station, Selections } from '../domain/types'
 import { productsForBooth } from '../domain/catalog'
-import { addToCart, setQty, cartTotal, cartToOrderItems, type Cart } from '../order/cart'
+import { addToCart, setQty, cartTotal, cartToOrderItems, lineKey, type Cart } from '../order/cart'
+import { defaultSelections, lineUnitPrice, selectedOptionLabels } from '../order/options'
 import { nextQueueNumber } from '../order/queueNumber'
 import { buildOrder } from '../order/buildOrder'
 import { createOrder } from '../order/ordersRepo'
@@ -23,10 +24,31 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
   const [pay, setPay] = useState<Pay>('none')
   const [issued, setIssued] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [picking, setPicking] = useState<string | null>(null)
+  const [pick, setPick] = useState<Selections>({})
 
   useHeartbeat({ id: getDeviceId(), deviceId: getDeviceId(), booth, mode: 'order', station })
 
   const total = cartTotal(cart, products)
+
+  const onProductTap = (p: (typeof products)[number]) => {
+    setIssued(null)
+    if (p.optionGroups && p.optionGroups.length > 0) {
+      setPicking(p.sku)
+      setPick(defaultSelections(p))
+    } else {
+      setCart((c) => addToCart(c, p.sku, {}))
+    }
+  }
+
+  const confirmPick = () => {
+    if (!picking) return
+    setCart((c) => addToCart(c, picking, pick))
+    setPicking(null)
+    setPick({})
+  }
+
+  const pickingProduct = picking ? products.find((p) => p.sku === picking) : undefined
 
   const finalize = (method: 'cash' | 'qr') => {
     const queueNumber = nextQueueNumber(booth, station)
@@ -65,7 +87,7 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
         {products.map((p) => (
           <button
             key={p.sku}
-            onClick={() => { setCart((c) => addToCart(c, p.sku)); setIssued(null) }}
+            onClick={() => onProductTap(p)}
             className="rounded-xl border-2 border-white/20 p-4 text-left font-kanit"
           >
             <div>{p.name}</div>
@@ -75,16 +97,57 @@ export function OrderStation({ booth, station }: { booth: BoothId; station: Stat
         ))}
       </section>
 
+      {pickingProduct && (
+        <section className="flex flex-col gap-3 rounded-xl border-2 border-phantom-yellow/50 p-4">
+          <span className="font-kanit text-phantom-yellow">
+            {L('order.chooseOptions').th} · {L('order.chooseOptions').en} — {pickingProduct.name}
+          </span>
+          {(pickingProduct.optionGroups ?? []).map((group) => (
+            <div key={group.id} className="flex flex-col gap-1">
+              <span className="text-xs opacity-70 font-kanit">{group.name} · {group.nameEn}</span>
+              <div className="flex flex-wrap gap-2">
+                {group.choices.map((choice) => {
+                  const active = pick[group.id] === choice.id
+                  return (
+                    <button
+                      key={choice.id}
+                      onClick={() => setPick((s) => ({ ...s, [group.id]: choice.id }))}
+                      className={`rounded-lg px-3 py-2 font-kanit ${active ? 'bg-phantom-yellow text-phantom-bg' : 'bg-white/10'}`}
+                    >
+                      {choice.name}
+                      {choice.priceDelta !== 0 ? ` (+${choice.priceDelta}฿)` : ''}
+                    </button>
+                  )
+                })}
+              </div>
+            </div>
+          ))}
+          <div className="flex gap-3">
+            <button onClick={confirmPick} className="flex-1 rounded-xl py-3 bg-phantom-yellow text-phantom-bg font-kanit">
+              {L('order.add').th}
+            </button>
+            <button onClick={() => { setPicking(null); setPick({}) }} className="flex-1 rounded-xl py-3 bg-white/10 font-kanit">
+              {L('order.cancelPick').th}
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="flex flex-col gap-2">
         {cart.map((line) => {
           const p = products.find((x) => x.sku === line.sku)!
+          const key = lineKey(line.sku, line.selections)
+          const optionLabels = selectedOptionLabels(p, line.selections)
+          const displayName = optionLabels.length > 0
+            ? `${p.name} · ${optionLabels.map((o) => o.label).join(' · ')}`
+            : p.name
           return (
-            <div key={line.sku} className="flex items-center gap-3">
-              <span className="flex-1 font-kanit">{p.name}</span>
-              <button onClick={() => setCart((c) => setQty(c, line.sku, line.qty - 1))} className="px-3 rounded bg-white/10">−</button>
+            <div key={key} className="flex items-center gap-3">
+              <span className="flex-1 font-kanit">{displayName}</span>
+              <button onClick={() => setCart((c) => setQty(c, key, line.qty - 1))} className="px-3 rounded bg-white/10">−</button>
               <span className="font-mono w-6 text-center">{line.qty}</span>
-              <button onClick={() => setCart((c) => setQty(c, line.sku, line.qty + 1))} className="px-3 rounded bg-white/10">+</button>
-              <span className="font-mono w-16 text-right">{p.price * line.qty}฿</span>
+              <button onClick={() => setCart((c) => setQty(c, key, line.qty + 1))} className="px-3 rounded bg-white/10">+</button>
+              <span className="font-mono w-16 text-right">{lineUnitPrice(p, line.selections) * line.qty}฿</span>
             </div>
           )
         })}

@@ -59,3 +59,13 @@ test('cancel requires a reason and records it', async () => {
   await user.click(screen.getByRole('button', { name: /ยืนยันยกเลิก/ }))
   expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'cancelled', cancelReason: 'ลูกค้าเปลี่ยนใจ' }))
 })
+
+test('serving card shows the item summary with options for the maker', () => {
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({
+    id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving',
+    items: [{ sku: 'd', name: 'โยเกิร์ต', qty: 1, unitPrice: 45, subtotal: 45, options: [{ label: 'ไข่มุกป็อป', priceDelta: 10 }] }],
+  })]))
+  const card = screen.getByText(/โยเกิร์ต/)
+  expect(card).toHaveTextContent('ไข่มุกป็อป')
+})

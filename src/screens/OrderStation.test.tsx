@@ -28,27 +28,35 @@ beforeEach(() => {
   createOrder.mockClear()
 })
 
-test('cash order: add product, pay cash, issues queue number and persists a paid waiting order', async () => {
+test('adding a drink with a topping opens the picker and prices the option in', async () => {
   const user = userEvent.setup()
   render(<OrderStation booth="drinks" station="A" />)
 
-  // add one Yakult-Pipo (30)
-  await user.click(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ }))
-  expect(screen.getByTestId('cart-total')).toHaveTextContent('30')
+  await user.click(screen.getByRole('button', { name: /สตรอเบอร์รี่โยเกิร์ตปั่น/ })) // 35, has options
+  // picker appears
+  await user.click(screen.getByRole('button', { name: /ไข่มุกป็อป/ }))               // +10
+  await user.click(screen.getByRole('button', { name: /เพิ่มลงตะกร้า/ }))
+  expect(screen.getByTestId('cart-total')).toHaveTextContent('45')
 
   await user.click(screen.getByRole('button', { name: /เงินสด/ }))
   await user.click(screen.getByRole('button', { name: /รับเงินแล้ว/ }))
-
   await waitFor(() => expect(createOrder).toHaveBeenCalledTimes(1))
   const persisted = createOrder.mock.calls[0][0]
-  expect(persisted.total).toBe(30)
+  expect(persisted.total).toBe(45)
+  expect(persisted.items[0].options).toEqual([{ label: 'ไข่มุกป็อป', priceDelta: 10 }])
   expect(persisted.paymentMethod).toBe('cash')
   expect(persisted.paymentStatus).toBe('paid')
   expect(persisted.status).toBe('waiting')
   expect(persisted.queueNumber).toBe('A1')
-
-  // queue number shown to staff/customer
   expect(screen.getByTestId('issued-queue')).toHaveTextContent('A1')
+})
+
+test('a default drink (no option changes) adds at base price with no recorded options', async () => {
+  const user = userEvent.setup()
+  render(<OrderStation booth="drinks" station="A" />)
+  await user.click(screen.getByRole('button', { name: /สตรอเบอร์รี่นมสดปั่น/ })) // 25
+  await user.click(screen.getByRole('button', { name: /เพิ่มลงตะกร้า/ }))
+  expect(screen.getByTestId('cart-total')).toHaveTextContent('25')
 })
 
 test('QR order: choosing QR shows a QR image, then confirm persists a qr order', async () => {
@@ -69,7 +77,8 @@ test('shows an error alert if saving the order is rejected', async () => {
   const user = userEvent.setup()
   createOrder.mockRejectedValueOnce(new Error('nope'))
   render(<OrderStation booth="drinks" station="A" />)
-  await user.click(screen.getByRole('button', { name: /ยาคูลท์ปีโป้ปั่น/ }))
+  await user.click(screen.getByRole('button', { name: /สตรอเบอร์รี่โยเกิร์ตปั่น/ }))
+  await user.click(screen.getByRole('button', { name: /เพิ่มลงตะกร้า/ }))
   await user.click(screen.getByRole('button', { name: /เงินสด/ }))
   await user.click(screen.getByRole('button', { name: /รับเงินแล้ว/ }))
   expect(await screen.findByRole('alert')).toHaveTextContent('A1')

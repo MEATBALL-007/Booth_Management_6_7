@@ -10,12 +10,30 @@ export type PaymentMethod = 'cash' | 'qr'
 export type PaymentStatus = 'pending' | 'paid'
 export type OrderStatus = 'waiting' | 'serving' | 'done' | 'cancelled'
 
+export interface OptionChoice {
+  id: string
+  name: string
+  nameEn: string
+  priceDelta: number
+}
+
+export interface OptionGroup {
+  id: string
+  name: string
+  nameEn: string
+  required: boolean
+  choices: OptionChoice[]
+}
+
+export type Selections = Record<string, string>
+
 export interface OrderItem {
   sku: string
   name: string
   qty: number
   unitPrice: number
   subtotal: number
+  options?: { label: string; priceDelta: number }[]
 }
 
 export interface Order {
@@ -45,6 +63,7 @@ export interface Product {
   price: number
   cost: number
   active: boolean
+  optionGroups?: OptionGroup[]
 }
 
 export interface Expense {
