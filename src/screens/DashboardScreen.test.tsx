@@ -14,6 +14,16 @@ vi.mock('../expense/expensesRepo', () => ({
   subscribeAllExpenses: (cb: (e: unknown[]) => void) => { emitExpenses = cb; return () => {} },
   addExpense: addExpenseSpy,
 }))
+vi.mock('../comms/commsRepo', () => ({
+  sendMessage: vi.fn().mockResolvedValue('m1'),
+  subscribeMessages: () => () => {},
+  ackMessage: vi.fn(),
+  upsertPresence: vi.fn().mockResolvedValue(undefined),
+  subscribePresence: () => () => {},
+}))
+vi.mock('../device/deviceConfig', () => ({
+  loadDeviceConfig: () => ({ booth: 'photo', mode: 'dashboard' }),
+}))
 
 import { DashboardScreen } from './DashboardScreen'
 
@@ -66,4 +76,10 @@ test('shows an error alert if saving the expense is rejected', async () => {
   await user.type(screen.getByLabelText(/จำนวนเงิน/), '250')
   await user.click(screen.getByRole('button', { name: /บันทึก/ }))
   expect(await screen.findByRole('alert')).toBeInTheDocument()
+})
+
+test('unlocked dashboard shows the HQ presence board', () => {
+  localStorage.setItem('phantom.dashboardPin', 'unlocked')
+  render(<DashboardScreen />)
+  expect(screen.getByText(/อุปกรณ์ออนไลน์/)).toBeInTheDocument()
 })

@@ -7,6 +7,12 @@ import { computeDashboardMetrics } from '../dashboard/metrics'
 import { isDashboardUnlocked } from '../dashboard/pinStore'
 import { PinGate } from '../dashboard/PinGate'
 import { L } from '../i18n/labels'
+import { CommsToast } from '../comms/CommsToast'
+import { PresenceBoard } from '../comms/PresenceBoard'
+import { BroadcastBar } from '../comms/BroadcastBar'
+import { useHeartbeat } from '../comms/useHeartbeat'
+import { getDeviceId } from '../device/deviceId'
+import { loadDeviceConfig } from '../device/deviceConfig'
 
 function Card({ testid, labelTh, labelEn, value }: { testid: string; labelTh: string; labelEn: string; value: string }) {
   return (
@@ -25,6 +31,9 @@ export function DashboardScreen() {
   const [desc, setDesc] = useState('')
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const hqBooth = loadDeviceConfig()?.booth ?? 'photo'
+
+  useHeartbeat(unlocked ? { id: getDeviceId(), deviceId: getDeviceId(), booth: hqBooth, mode: 'dashboard' } : null)
 
   useEffect(() => {
     if (!unlocked) return
@@ -49,9 +58,16 @@ export function DashboardScreen() {
 
   return (
     <div className="min-h-screen p-6 flex flex-col gap-6">
+      <CommsToast booth={hqBooth} />
       <h1 className="font-kanit text-2xl text-phantom-yellow">
         {L('dashboard.title').th} · {L('dashboard.title').en}
       </h1>
+
+      <section className="rounded-xl bg-white/5 p-4 flex flex-col gap-4">
+        <h2 className="font-kanit text-lg text-phantom-yellow">HQ</h2>
+        <PresenceBoard />
+        <BroadcastBar booth={hqBooth} />
+      </section>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <Card testid="total-sales" labelTh={L('dashboard.totalSales').th} labelEn={L('dashboard.totalSales').en} value={`${m.totalSales}฿`} />
