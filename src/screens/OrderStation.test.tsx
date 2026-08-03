@@ -44,6 +44,11 @@ test('adding a drink with a topping opens the picker and prices the option in', 
   const persisted = createOrder.mock.calls[0][0]
   expect(persisted.total).toBe(45)
   expect(persisted.items[0].options).toEqual([{ label: 'ไข่มุกป็อป', priceDelta: 10 }])
+  expect(persisted.paymentMethod).toBe('cash')
+  expect(persisted.paymentStatus).toBe('paid')
+  expect(persisted.status).toBe('waiting')
+  expect(persisted.queueNumber).toBe('A1')
+  expect(screen.getByTestId('issued-queue')).toHaveTextContent('A1')
 })
 
 test('a default drink (no option changes) adds at base price with no recorded options', async () => {
