@@ -1,0 +1,21 @@
+rules_version = '2';
+
+// Booth system — Firestore security rules
+//
+// This app intentionally has NO Firebase Authentication (per the spec: booth
+// devices open straight in; the Dashboard PIN REDACTED-PIN is a lightweight CLIENT-side
+// gate only). So these rules grant open read/write to the whole database —
+// which is fine for a short, low-stakes school event — BUT they AUTO-LOCK after
+// the date below so the database can't be written to forever.
+//
+// 👉 IMPORTANT: change the date to just AFTER your event day, then re-deploy
+//    (firebase deploy --only firestore:rules). After that date, all access is
+//    denied and the data is frozen/read-safe.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if request.time < timestamp.date(2026, 9, 30);
+    }
+  }
+}
