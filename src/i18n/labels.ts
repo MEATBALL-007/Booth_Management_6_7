@@ -1,4 +1,9 @@
 const LABELS = {
+  'nav.setup': { th: 'ตั้งค่า', en: 'Setup' },
+  'nav.backToSetup': { th: 'กลับไปหน้าตั้งค่า', en: 'Back to setup' },
+  'nav.confirmBack': { th: 'กลับไปหน้าตั้งค่า? จะออกจากโหมดนี้', en: 'Back to setup? This leaves the current mode.' },
+  'nav.confirm': { th: 'ยืนยัน', en: 'Confirm' },
+  'nav.cancel': { th: 'ยกเลิก', en: 'Cancel' },
   'setup.title': { th: 'ตั้งค่าเครื่อง', en: 'Device setup' },
   'setup.chooseBooth': { th: 'เลือกซุ้ม', en: 'Choose booth' },
   'setup.chooseMode': { th: 'เลือกโหมด', en: 'Choose mode' },

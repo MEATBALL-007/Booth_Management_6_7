@@ -22,7 +22,7 @@ test('shows Setup when no device config', () => {
   expect(screen.getByText(/ตั้งค่าเครื่อง/)).toBeInTheDocument()
 })
 
-test('display mode renders the Display screen and can reset', async () => {
+test('display mode renders the Display screen; back-to-setup asks to confirm first', async () => {
   const user = userEvent.setup()
   render(<App />)
   await user.click(screen.getByRole('button', { name: /น้ำปั่น/ }))
@@ -32,7 +32,14 @@ test('display mode renders the Display screen and can reset', async () => {
   // Display screen shows the Now Serving heading
   expect(screen.getByText(/กำลังทำ/)).toBeInTheDocument()
 
-  await user.click(screen.getByRole('button', { name: /เปลี่ยนค่า/ }))
+  // Back button opens a confirm; cancelling keeps us in Display mode
+  await user.click(screen.getByRole('button', { name: /ตั้งค่า/ }))
+  await user.click(screen.getByRole('button', { name: /ยกเลิก/ }))
+  expect(screen.getByText(/กำลังทำ/)).toBeInTheDocument()
+
+  // Confirming actually returns to Setup
+  await user.click(screen.getByRole('button', { name: /ตั้งค่า/ }))
+  await user.click(screen.getByRole('button', { name: /ยืนยัน/ }))
   expect(screen.getByText(/ตั้งค่าเครื่อง/)).toBeInTheDocument()
 })
 
