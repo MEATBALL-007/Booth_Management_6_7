@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>รายงานระบบงานสายสัมพันธ์ ม.6/7</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Kanit:wght@400;600;700;800&family=Sarabun:wght@400;600&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --orange:#FA4616; --yellow:#FFC72C; --ink:#1A1A1A; --paper:#ffffff;
+    --muted:#6b6b6b; --line:#ececec; --soft:#fff7ec; --softline:#ffe4c2;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{background:#e9e9ec; color:var(--ink); font-family:'Sarabun',sans-serif; -webkit-print-color-adjust:exact; print-color-adjust:exact;}
+  .kanit{font-family:'Kanit',sans-serif;}
+  .mono{font-family:'JetBrains Mono',monospace;}
+  .en{font-family:'Kanit',sans-serif; font-weight:400; opacity:.55; font-size:.62em;}
+
+  .page{
+    width:210mm; min-height:297mm; background:var(--paper); margin:14px auto;
+    padding:16mm 15mm; position:relative; box-shadow:0 6px 30px rgba(0,0,0,.12);
+  }
+
+  /* ---- Cover header ---- */
+  .hero{ background:var(--ink); color:#fff; border-radius:20px; padding:26px 28px; position:relative; overflow:hidden;}
+  .hero:after{content:""; position:absolute; right:-60px; top:-60px; width:220px; height:220px; border-radius:50%; background:radial-gradient(circle at 30% 30%, rgba(250,70,22,.55), transparent 62%);}
+  .hero .tag{display:inline-block; background:var(--yellow); color:var(--ink); font-weight:700; font-family:'Kanit'; font-size:12px; padding:4px 12px; border-radius:999px; letter-spacing:.3px;}
+  .hero h1{font-family:'Kanit'; font-weight:800; font-size:31px; line-height:1.15; margin:12px 0 4px;}
+  .hero h1 .accent{color:var(--yellow);}
+  .hero p{opacity:.8; font-size:14px; max-width:78%;}
+  .hero .badge{position:absolute; right:26px; bottom:22px; text-align:center;}
+  .hero .badge .n{font-family:'JetBrains Mono'; font-weight:700; font-size:30px; color:var(--yellow); line-height:1;}
+  .hero .badge .l{font-family:'Kanit'; font-size:11px; opacity:.85; margin-top:3px;}
+
+  h2.sec{font-family:'Kanit'; font-weight:700; font-size:19px; margin:26px 0 12px; display:flex; align-items:center; gap:9px;}
+  h2.sec .dot{width:11px; height:11px; border-radius:3px; background:var(--orange);}
+  h2.sec .en{margin-left:auto;}
+
+  /* ---- KPI strip ---- */
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:10px; margin-top:16px;}
+  .kpi{border:1.5px solid var(--line); border-radius:14px; padding:13px 14px;}
+  .kpi .n{font-family:'JetBrains Mono'; font-weight:700; font-size:23px; color:var(--orange);}
+  .kpi .l{font-family:'Kanit'; font-size:12px; color:var(--muted); margin-top:2px;}
+
+  /* ---- Booth cards ---- */
+  .booths{display:grid; grid-template-columns:repeat(3,1fr); gap:12px;}
+  .booth{border:1.5px solid var(--line); border-radius:16px; padding:15px; position:relative;}
+  .booth .ico{font-size:26px;}
+  .booth h3{font-family:'Kanit'; font-weight:700; font-size:15px; margin:6px 0 2px;}
+  .booth .team{display:inline-block; font-family:'Kanit'; font-size:11px; font-weight:600; color:#fff; background:var(--ink); padding:2px 9px; border-radius:999px; margin-bottom:9px;}
+  .booth ul{list-style:none; font-size:12.5px; color:#333;}
+  .booth li{display:flex; justify-content:space-between; padding:3px 0; border-bottom:1px dashed var(--line);}
+  .booth li:last-child{border:0;}
+  .booth li .price{font-family:'JetBrains Mono'; font-weight:700; color:var(--orange);}
+  .booth.hot{border-color:var(--softline); background:var(--soft);}
+  .booth .flag{position:absolute; top:-9px; right:12px; background:var(--yellow); color:var(--ink); font-family:'Kanit'; font-weight:700; font-size:10px; padding:2px 8px; border-radius:999px;}
+
+  /* ---- Flow ---- */
+  .flow{display:flex; align-items:stretch; gap:0; margin-top:6px;}
+  .step{flex:1; text-align:center; padding:12px 6px; position:relative;}
+  .step .c{width:42px; height:42px; border-radius:50%; background:var(--ink); color:var(--yellow); font-family:'Kanit'; font-weight:700; font-size:18px; display:flex; align-items:center; justify-content:center; margin:0 auto 8px;}
+  .step .t{font-family:'Kanit'; font-weight:600; font-size:12.5px;}
+  .step .d{font-size:11px; color:var(--muted); margin-top:2px; line-height:1.3;}
+  .step:not(:last-child):after{content:"→"; position:absolute; right:-6px; top:24px; color:var(--orange); font-weight:700; font-size:18px;}
+
+  /* ---- Feature grid ---- */
+  .feats{display:grid; grid-template-columns:repeat(3,1fr); gap:11px;}
+  .feat{border:1.5px solid var(--line); border-radius:14px; padding:13px;}
+  .feat .h{display:flex; align-items:center; gap:8px; font-family:'Kanit'; font-weight:700; font-size:14px;}
+  .feat .num{font-family:'JetBrains Mono'; font-weight:700; font-size:12px; color:#fff; background:var(--orange); width:22px; height:22px; border-radius:7px; display:flex; align-items:center; justify-content:center;}
+  .feat p{font-size:12px; color:#444; margin-top:7px; line-height:1.45;}
+  .feat .ok{display:inline-block; margin-top:8px; font-family:'Kanit'; font-size:10.5px; font-weight:600; color:#0a7d33; background:#e7f6ec; padding:2px 8px; border-radius:999px;}
+
+  /* ---- Trust box ---- */
+  .trust{background:var(--ink); color:#fff; border-radius:18px; padding:20px 22px;}
+  .trust h2{font-family:'Kanit'; font-weight:800; font-size:18px; color:var(--yellow); margin-bottom:4px;}
+  .trust .sub{opacity:.7; font-size:12.5px; margin-bottom:14px;}
+  .trust .grid{display:grid; grid-template-columns:1fr 1fr; gap:11px 20px;}
+  .trust .item{display:flex; gap:10px; align-items:flex-start;}
+  .trust .item .k{font-size:19px; line-height:1;}
+  .trust .item .tt{font-family:'Kanit'; font-weight:600; font-size:13px;}
+  .trust .item .dd{font-size:11.5px; opacity:.78; line-height:1.4;}
+
+  /* ---- Donation formula ---- */
+  .formula{display:flex; align-items:center; justify-content:center; gap:14px; flex-wrap:wrap; background:var(--soft); border:1.5px solid var(--softline); border-radius:16px; padding:18px; margin-top:12px;}
+  .formula .box{text-align:center;}
+  .formula .box .v{font-family:'Kanit'; font-weight:700; font-size:15px;}
+  .formula .box .s{font-size:11px; color:var(--muted);}
+  .formula .op{font-family:'JetBrains Mono'; font-weight:700; font-size:24px; color:var(--orange);}
+  .formula .res .v{color:var(--orange); font-size:18px;}
+
+  /* ---- Menu highlight ---- */
+  .menu{display:grid; grid-template-columns:1.1fr 1fr; gap:14px; align-items:stretch;}
+  .menu .card{border:1.5px solid var(--line); border-radius:15px; padding:15px;}
+  .menu .before{opacity:.85;}
+  .menu .strike{text-decoration:line-through; color:#b00; font-weight:600;}
+  .menu .arrow{font-size:20px; color:var(--orange); font-weight:700;}
+  .chip{display:inline-block; font-family:'Kanit'; font-size:11px; font-weight:600; padding:3px 10px; border-radius:999px; margin:3px 4px 0 0; background:#fff; border:1.3px solid var(--softline);}
+
+  /* ---- Roadmap ---- */
+  .road{display:grid; grid-template-columns:repeat(5,1fr); gap:9px;}
+  .road .r{border:1.5px dashed var(--softline); border-radius:12px; padding:11px 10px; text-align:center; background:#fffdf8;}
+  .road .r .i{font-size:20px;}
+  .road .r .t{font-family:'Kanit'; font-weight:600; font-size:11.5px; margin-top:5px; line-height:1.3;}
+
+  footer{margin-top:26px; padding-top:14px; border-top:2px solid var(--ink); display:flex; justify-content:space-between; align-items:center; font-size:11.5px; color:var(--muted);}
+  footer .brand{font-family:'Kanit'; font-weight:700; color:var(--ink);}
+  .stack{display:flex; gap:6px; flex-wrap:wrap;}
+  .stack span{background:#f2f2f4; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono'; font-size:10.5px;}
+
+  .note{font-size:11px; color:var(--muted); margin-top:8px;}
+
+  @media print{
+    html,body{background:#fff;}
+    .page{margin:0; box-shadow:none; width:auto; min-height:auto; padding:12mm 12mm;}
+    .page + .page{page-break-before:always;}
+    .screen-only{display:none;}
+  }
+  @page{size:A4; margin:0;}
+</style>
+</head>
+<body>
+
+<!-- ============ PAGE 1 ============ -->
+<section class="page">
+  <div class="hero">
+    <span class="tag">PHANTOM CREW · ม.6/7</span>
+    <h1>ระบบหลังบ้าน<span class="accent">งานสายสัมพันธ์</span><br/>สำหรับ 3 ซุ้มขายของบริจาค</h1>
+    <p>เว็บแอป (PWA) รันบน iPad และคอมพิวเตอร์ ผ่านเบราว์เซอร์ — รับออเดอร์ จัดคิว รับเงิน และสรุปยอดบริจาคแบบเรียลไทม์ ทำงานได้แม้เน็ตหลุด</p>
+    <div class="badge">
+      <div class="n">106/106</div>
+      <div class="l">การทดสอบผ่านครบ<br/>ระบบพร้อมใช้จริง ✓</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><div class="n">3</div><div class="l">ซุ้ม ทำงานแยกอิสระ</div></div>
+    <div class="kpi"><div class="n">36</div><div class="l">นักเรียนในทีม</div></div>
+    <div class="kpi"><div class="n">6</div><div class="l">โมดูลหลัก สร้างเสร็จ</div></div>
+    <div class="kpi"><div class="n">2</div><div class="l">ภาษา ไทย + อังกฤษ</div></div>
+  </div>
+
+  <h2 class="sec"><span class="dot"></span>3 ซุ้มในระบบ <span class="en">The three booths</span></h2>
+  <div class="booths">
+    <div class="booth">
+      <div class="ico">🖼️</div>
+      <h3>โฟโต้บูธ</h3>
+      <span class="team">13 คน</span>
+      <ul>
+        <li><span>ถ่าย 3 ช็อต ปริ้น 2 ใบ</span><span class="price">35฿</span></li>
+      </ul>
+      <p class="note">ตัดสต็อกฟิล์มอัตโนมัติ · เตือนเมื่อใกล้หมดม้วน</p>
+    </div>
+    <div class="booth">
+      <div class="ico">✏️</div>
+      <h3>วาดภาพเสมือน</h3>
+      <span class="team">8 คน (5 วาด + 3 หลังบ้าน)</span>
+      <ul>
+        <li><span>วาดล้อเลียนสด (caricature)</span><span class="price">25฿</span></li>
+      </ul>
+      <p class="note">วาดขนานกัน 5 คน · จอโชว์ได้หลายคิวพร้อมกัน</p>
+    </div>
+    <div class="booth hot">
+      <span class="flag">เมนูใหม่</span>
+      <div class="ico">🥤</div>
+      <h3>น้ำปั่นสตรอเบอร์รี่</h3>
+      <span class="team">14 คน · ตัวทำเงินหลัก</span>
+      <ul>
+        <li><span>สตรอเบอร์รี่โยเกิร์ตปั่น</span><span class="price">35฿</span></li>
+        <li><span>สตรอเบอร์รี่นมสดปั่น</span><span class="price">25฿</span></li>
+        <li><span>+ ท็อปปิ้ง (ไข่มุก/วิป)</span><span class="price">+10฿</span></li>
+      </ul>
+      <p class="note">เลือกความหวาน + ท็อปปิ้งได้ต่อแก้ว</p>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="dot"></span>เงินไหลยังไงใน 1 ออเดอร์ <span class="en">One order, end to end</span></h2>
+  <div class="flow">
+    <div class="step"><div class="c">1</div><div class="t">สั่ง</div><div class="d">เลือกสินค้า + ตัวเลือก ลงตะกร้า</div></div>
+    <div class="step"><div class="c">2</div><div class="t">จ่าย</div><div class="d">เงินสด หรือ สแกน QR PromptPay ยอดเป๊ะ</div></div>
+    <div class="step"><div class="c">3</div><div class="t">ออกคิว</div><div class="d">เลขคิวขึ้นจอ + เสียงเรียก</div></div>
+    <div class="step"><div class="c">4</div><div class="t">ทำ/เสิร์ฟ</div><div class="d">คนทำเห็นรายการ + ตัวเลือก</div></div>
+    <div class="step"><div class="c">5</div><div class="t">บันทึก</div><div class="d">ยอด + บัญชี อัปเดตทันที</div></div>
+  </div>
+
+  <footer>
+    <div><span class="brand">งานสายสัมพันธ์ · ม.6/7</span> — รายงานสรุประบบสำหรับครูที่ปรึกษา</div>
+    <div>หน้า 1 / 2</div>
+  </footer>
+</section>
+
+<!-- ============ PAGE 2 ============ -->
+<section class="page">
+  <h2 class="sec"><span class="dot"></span>6 ความสามารถหลัก (สร้างเสร็จแล้ว) <span class="en">What the system does</span></h2>
+  <div class="feats">
+    <div class="feat"><div class="h"><span class="num">1</span> รากฐานแอป</div><p>เว็บแอปติดตั้งลงจอ iPad ได้ · ธีมโรงเรียน · 2 ภาษา · ทำงานออฟไลน์</p><span class="ok">✓ เสร็จ</span></div>
+    <div class="feat"><div class="h"><span class="num">2</span> เครื่องรับออเดอร์</div><p>เลือกสินค้า→จ่ายเงินสด/QR→ออกเลขคิว→เรียกคิว/ปิดคิว/ยกเลิก</p><span class="ok">✓ เสร็จ</span></div>
+    <div class="feat"><div class="h"><span class="num">3</span> จอโชว์คิวลูกค้า</div><p>"กำลังทำ / คิวถัดไป" ตัวใหญ่ + เสียงเรียก + ไฟกระพริบเมื่อถึงคิว</p><span class="ok">✓ เสร็จ</span></div>
+    <div class="feat"><div class="h"><span class="num">4</span> แดชบอร์ดบัญชี</div><p>สรุปยอด 3 ซุ้มเรียลไทม์ · เงินสด/โอน · ยอดบริจาคสุทธิ · ล็อก PIN</p><span class="ok">✓ เสร็จ</span></div>
+    <div class="feat"><div class="h"><span class="num">5</span> ศูนย์ควบคุม + สื่อสาร</div><p>ซุ้มแจ้งเตือนหากัน (ขอคนช่วย/ของหมด) · HQ ประกาศถึงทุกซุ้ม · ดูเครื่องออนไลน์</p><span class="ok">✓ เสร็จ</span></div>
+    <div class="feat"><div class="h"><span class="num">6</span> เมนู + ตัวเลือก</div><p>สตรอเบอร์รี่ + เลือกความหวาน 3 ระดับ + ท็อปปิ้ง คิดราคาอัตโนมัติ</p><span class="ok">✓ เสร็จ</span></div>
+  </div>
+
+  <h2 class="sec"><span class="dot"></span>ทำไมครูวางใจได้ — ความโปร่งใส <span class="en">Built for accountability</span></h2>
+  <div class="trust">
+    <h2>ตรวจสอบได้ทุกบาท 💯</h2>
+    <div class="sub">ระบบออกแบบให้เงินบริจาคโปร่งใส ตรวจย้อนหลังได้ ลดความผิดพลาดและข้อครหา</div>
+    <div class="grid">
+      <div class="item"><div class="k">🧾</div><div><div class="tt">บันทึกทุกออเดอร์ถาวร</div><div class="dd">ใคร/เวลา/รายการ/ยอด ตรวจย้อนหลังได้ถ้ายอดไม่ตรง</div></div></div>
+      <div class="item"><div class="k">✋</div><div><div class="tt">ยกเลิกต้องใส่เหตุผล</div><div class="dd">กันพลาด กันโกง ทุกการยกเลิกมีหลักฐาน</div></div></div>
+      <div class="item"><div class="k">💵</div><div><div class="tt">แยกเงินสด / เงินโอน อัตโนมัติ</div><div class="dd">เทียบกับเงินจริงในลิ้นชักได้ทันที</div></div></div>
+      <div class="item"><div class="k">🔒</div><div><div class="tt">แดชบอร์ดล็อก PIN</div><div class="dd">เฉพาะครู/คนบัญชีเปิดดูยอดรวมได้</div></div></div>
+      <div class="item"><div class="k">📶</div><div><div class="tt">ทำงานแม้เน็ตหลุด</div><div class="dd">ขายต่อได้ ข้อมูลซิงค์เองเมื่อเน็ตกลับ ไม่มีตกหล่น</div></div></div>
+      <div class="item"><div class="k">🍓</div><div><div class="tt">ไม่มีน้ำอัดลม</div><div class="dd">เปลี่ยนเป็นสตรอเบอร์รี่โยเกิร์ต สายสุขภาพ ตามแนวทางโรงเรียน</div></div></div>
+    </div>
+  </div>
+
+  <h2 class="sec"><span class="dot"></span>ยอดบริจาคสุทธิ คำนวณเองอัตโนมัติ <span class="en">Net donation, computed live</span></h2>
+  <div class="formula">
+    <div class="box"><div class="v">ยอดขายรวม</div><div class="s">ทุกออเดอร์ที่จ่ายแล้ว</div></div>
+    <div class="op">−</div>
+    <div class="box"><div class="v">ต้นทุน</div><div class="s">ฟิล์ม/วัตถุดิบ ฯลฯ</div></div>
+    <div class="op">=</div>
+    <div class="box res"><div class="v">ยอดบริจาคสุทธิ</div><div class="s">ตัวเลขที่ส่งโรงเรียน</div></div>
+  </div>
+
+  <h2 class="sec"><span class="dot"></span>กำลังพัฒนาต่อ <span class="en">Roadmap</span></h2>
+  <div class="road">
+    <div class="r"><div class="i">🎯</div><div class="t">มิเตอร์เป้าบริจาค</div></div>
+    <div class="r"><div class="i">⏰</div><div class="t">Happy Hour ปรับราคา</div></div>
+    <div class="r"><div class="i">🧮</div><div class="t">นับเงินปิดซุ้ม</div></div>
+    <div class="r"><div class="i">🎫</div><div class="t">แสตมป์ครบ 3 ซุ้ม</div></div>
+    <div class="r"><div class="i">📊</div><div class="t">ออกรายงาน Excel/PDF</div></div>
+  </div>
+
+  <footer>
+    <div class="stack"><span>React</span><span>Firebase</span><span>PWA</span><span>iPad-ready</span><span>106 tests ✓</span></div>
+    <div>หน้า 2 / 2</div>
+  </footer>
+</section>
+
+</body>
+</html>
