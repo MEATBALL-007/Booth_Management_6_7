@@ -20,3 +20,6 @@ dist-ssr/
 # Logs
 npm-debug.log*
 
+
+# Firebase CLI cache
+.firebase/
