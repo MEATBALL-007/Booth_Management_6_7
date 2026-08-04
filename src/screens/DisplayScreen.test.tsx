@@ -30,7 +30,22 @@ test('renders serving numbers big and up-next sorted by createdAt', () => {
     o({ id: 'w2', queueNumber: 'B1', status: 'waiting', createdAt: 1 }),
   ]))
   expect(screen.getAllByTestId('serving').map((e) => e.textContent)).toEqual(['A1'])
-  expect(screen.getAllByTestId('upnext').map((e) => e.textContent)).toEqual(['B1', 'A2'])
+  // NOTE: the earliest waiting (B1) is now spotlighted separately as `next-up` (Task 5);
+  // only the remaining up-next ones (A2) still carry the `upnext` testid.
+  expect(screen.getAllByTestId('upnext').map((e) => e.textContent)).toEqual(['A2'])
+  expect(screen.getByTestId('next-up')).toHaveTextContent('B1')
+})
+
+test('spotlights the first up-next number as the "get ready" next', () => {
+  render(<DisplayScreen booth="drinks" />)
+  act(() => emit([
+    o({ id: 's', queueNumber: 'A1', status: 'serving' }),
+    o({ id: 'w1', queueNumber: 'A2', status: 'waiting', createdAt: 2 }),
+    o({ id: 'w2', queueNumber: 'B1', status: 'waiting', createdAt: 1 }),
+  ]))
+  // the very next (earliest waiting) is B1, shown in the get-ready spotlight
+  expect(screen.getByTestId('next-up')).toHaveTextContent('B1')
+  expect(screen.getByText(/เตรียมตัว/)).toBeInTheDocument()
 })
 
 test('does not chime for the first snapshot, but chimes when a new order starts serving after', () => {

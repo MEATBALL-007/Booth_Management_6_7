@@ -40,6 +40,8 @@ const LABELS = {
   'display.live': { th: 'สด', en: 'LIVE' },
   'display.upNext': { th: 'คิวถัดไป', en: 'Up Next' },
   'display.noQueue': { th: 'ยังไม่มีคิว', en: 'No orders yet' },
+  'display.next': { th: 'ถัดไป', en: 'Next' },
+  'display.getReady': { th: 'เตรียมตัว', en: 'Get ready' },
   'dashboard.pinPrompt': { th: 'ใส่ PIN', en: 'Enter PIN' },
   'dashboard.pinWrong': { th: 'PIN ไม่ถูกต้อง', en: 'Wrong PIN' },
   'dashboard.unlock': { th: 'ปลดล็อก', en: 'Unlock' },
