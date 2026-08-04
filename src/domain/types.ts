@@ -8,7 +8,7 @@ export type Station = (typeof STATIONS)[number]
 
 export type PaymentMethod = 'cash' | 'qr'
 export type PaymentStatus = 'pending' | 'paid'
-export type OrderStatus = 'waiting' | 'serving' | 'done' | 'cancelled'
+export type OrderStatus = 'waiting' | 'serving' | 'done' | 'cancelled' | 'skipped'
 
 export interface OptionChoice {
   id: string
@@ -51,6 +51,7 @@ export interface Order {
   cancelReason?: string
   createdAt: number
   paidAt?: number
+  announcedAt?: number
   servingAt?: number
   doneAt?: number
 }

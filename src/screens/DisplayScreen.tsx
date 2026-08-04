@@ -22,15 +22,16 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
 
   const serving = servingOrders(orders)
   const upNext = upNextOrders(orders)
-  const flashing = useServingAlert(serving.map((s) => s.queueNumber), ready)
+  const [next, ...rest] = upNext
+  const flashing = useServingAlert(serving.map((s) => ({ n: s.queueNumber, announcedAt: s.announcedAt ?? 0 })), ready)
 
   return (
     <div
-      className={`min-h-screen p-8 md:p-12 flex flex-col gap-10 md:gap-14 text-phantom-text transition-colors duration-300 ${
+      className={`min-h-screen p-8 md:p-12 flex flex-col items-center justify-center text-center gap-10 md:gap-14 text-phantom-text transition-colors duration-300 ${
         flashing ? 'bg-phantom-orange/30 animate-pulse' : 'bg-phantom-bg'
       }`}
     >
-      <header className="flex flex-wrap items-center justify-between gap-4">
+      <header className="w-full flex flex-wrap items-center justify-center gap-4">
         <span className="font-kanit text-3xl md:text-5xl font-bold text-phantom-yellow">
           {L(`booth.${booth}`).th} <span className="text-phantom-muted font-normal">· {L(`booth.${booth}`).en}</span>
         </span>
@@ -40,16 +41,16 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
         </span>
       </header>
 
-      <section className="flex flex-col gap-6 md:gap-8">
+      <section className="flex flex-col items-center gap-6 md:gap-8">
         <h2 className="font-kanit text-2xl md:text-3xl font-semibold text-phantom-muted">
-          {L('display.nowServing').th} · {L('display.nowServing').en}
+          🔔 {L('display.nowServing').th} · {L('display.nowServing').en}
         </h2>
         {serving.length === 0 ? (
           <p className="font-kanit text-xl md:text-2xl text-phantom-muted">
             {L('display.noQueue').th} · {L('display.noQueue').en}
           </p>
         ) : (
-          <div className="flex flex-wrap justify-center gap-10 md:gap-16">
+          <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16">
             {serving.map((s) => {
               const detail = itemDetail(s)
               return (
@@ -69,22 +70,41 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
         )}
       </section>
 
-      <section className="flex flex-col gap-4 md:gap-5">
-        <h2 className="font-kanit text-xl md:text-2xl font-semibold text-phantom-muted">
-          {L('display.upNext').th} · {L('display.upNext').en}
-        </h2>
-        <div className="flex flex-wrap gap-4">
-          {upNext.map((u) => (
-            <div
-              key={u.id}
-              data-testid="upnext"
-              className="rounded-full border border-phantom-line bg-phantom-surface2 px-6 py-3 font-mono text-2xl md:text-3xl font-bold text-phantom-text"
-            >
-              {u.queueNumber}
-            </div>
-          ))}
-        </div>
-      </section>
+      {next && (
+        <section className="flex flex-col items-center gap-3 rounded-3xl border-2 border-phantom-yellow/50 bg-phantom-yellow/10 px-10 py-6 md:px-16 md:py-8 shadow-[0_0_40px_rgba(255,199,44,0.25)]">
+          <h2 className="font-kanit text-xl md:text-2xl font-bold text-phantom-yellow">
+            👉 {L('display.next').th} · {L('display.getReady').th}
+            <span className="ml-2 text-sm md:text-base font-normal text-phantom-yellow/70">
+              {L('display.next').en} · {L('display.getReady').en}
+            </span>
+          </h2>
+          <span
+            data-testid="next-up"
+            className="glow-y font-mono font-extrabold text-phantom-yellow text-[clamp(56px,10vw,140px)] leading-none"
+          >
+            {next.queueNumber}
+          </span>
+        </section>
+      )}
+
+      {rest.length > 0 && (
+        <section className="flex flex-col items-center gap-4 md:gap-5">
+          <h2 className="font-kanit text-lg md:text-xl font-semibold text-phantom-muted">
+            {L('display.upNext').th} · {L('display.upNext').en}
+          </h2>
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            {rest.map((u) => (
+              <div
+                key={u.id}
+                data-testid="upnext"
+                className="rounded-full border border-phantom-line bg-phantom-surface2 px-6 py-3 font-mono text-xl md:text-2xl font-bold text-phantom-muted"
+              >
+                {u.queueNumber}
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }

@@ -69,3 +69,46 @@ test('serving card shows the item summary with options for the maker', () => {
   const card = screen.getByText(/โยเกิร์ต/)
   expect(card).toHaveTextContent('ไข่มุกป็อป')
 })
+
+test('call button on a waiting order serves that specific number', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([
+    order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'waiting', createdAt: 1 }),
+    order({ id: 'o2', queueNumber: 'A2', station: 'A', status: 'waiting', createdAt: 2 }),
+  ]))
+  // call the SECOND waiting specifically
+  await user.click(screen.getAllByRole('button', { name: /^เรียก$/ })[1])
+  expect(updateOrderStatus).toHaveBeenCalledWith('o2', expect.objectContaining({ status: 'serving' }))
+})
+
+test('skip moves a serving order to skipped; recall brings it back to serving', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving' })]))
+  await user.click(screen.getByRole('button', { name: /ข้าม/ }))
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'skipped' }))
+
+  updateOrderStatus.mockClear()
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'skipped' })]))
+  await user.click(screen.getByRole('button', { name: /เรียกซ้ำ/ }))
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'serving' }))
+})
+
+test('re-announce bumps announcedAt on a serving order', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving' })]))
+  await user.click(screen.getByRole('button', { name: /ประกาศซ้ำ/ }))
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ announcedAt: expect.any(Number) }))
+})
+
+test('undo restores the prior state of the last action', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving', servingAt: 5 })]))
+  await user.click(screen.getByRole('button', { name: /เสร็จ/ }))          // serving -> done
+  updateOrderStatus.mockClear()
+  await user.click(screen.getByRole('button', { name: /ย้อนกลับ/ }))       // undo
+  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'serving', servingAt: 5 }))
+})
