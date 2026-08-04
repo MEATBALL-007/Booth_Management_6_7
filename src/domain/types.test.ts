@@ -1,5 +1,5 @@
 import { BOOTH_IDS, MODES, STATIONS } from './types'
-import type { OptionGroup, OptionChoice, Selections, Product, OrderItem } from './types'
+import type { OptionGroup, OptionChoice, Selections, Product, OrderItem, Order, OrderStatus } from './types'
 
 test('domain enums match the spec', () => {
   expect(BOOTH_IDS).toEqual(['photo', 'portrait', 'drinks'])
@@ -16,4 +16,14 @@ test('option types compose into a Product and OrderItem', () => {
   expect(product.optionGroups?.[0].choices[0].priceDelta).toBe(10)
   expect(sel.topping).toBe('topping-boba')
   expect(item.options?.[0].priceDelta).toBe(10)
+})
+
+test('OrderStatus includes skipped and Order has announcedAt', () => {
+  const s: OrderStatus = 'skipped'
+  const o: Order = {
+    id: 'x', boothId: 'drinks', queueNumber: 'A1', station: 'A', items: [], total: 0,
+    paymentMethod: 'cash', paymentStatus: 'paid', status: s, createdAt: 1, announcedAt: 5,
+  }
+  expect(o.status).toBe('skipped')
+  expect(o.announcedAt).toBe(5)
 })
