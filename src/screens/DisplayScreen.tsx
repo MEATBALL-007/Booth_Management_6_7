@@ -22,7 +22,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
 
   const serving = servingOrders(orders)
   const upNext = upNextOrders(orders)
-  const flashing = useServingAlert(serving.map((s) => s.queueNumber), ready)
+  const flashing = useServingAlert(serving.map((s) => ({ n: s.queueNumber, announcedAt: s.announcedAt ?? 0 })), ready)
 
   return (
     <div

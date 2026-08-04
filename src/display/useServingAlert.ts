@@ -1,25 +1,25 @@
 import { useEffect, useRef, useState } from 'react'
-import { newlyServing } from './queueView'
+import { newlyAnnounced, type ServingSig } from './queueView'
 import { playChime } from './chime'
 
 const FLASH_MS = 2500
 
-export function useServingAlert(servingNumbers: string[], primed = true): boolean {
-  const prev = useRef<string[]>(servingNumbers)
+export function useServingAlert(serving: ServingSig[], primed = true): boolean {
+  const prev = useRef<ServingSig[]>(serving)
   const first = useRef(true)
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const [flashing, setFlashing] = useState(false)
-  const key = servingNumbers.join('|')
+  const key = serving.map((s) => `${s.n}@${s.announcedAt}`).join('|')
 
   useEffect(() => {
     if (!primed) return
     if (first.current) {
       first.current = false
-      prev.current = servingNumbers
+      prev.current = serving
       return
     }
-    const fresh = newlyServing(prev.current, servingNumbers)
-    prev.current = servingNumbers
+    const fresh = newlyAnnounced(prev.current, serving)
+    prev.current = serving
     if (fresh.length > 0) {
       playChime()
       setFlashing(true)

@@ -1,4 +1,4 @@
-import { servingOrders, upNextOrders, newlyServing } from './queueView'
+import { servingOrders, upNextOrders, newlyServing, newlyAnnounced } from './queueView'
 import type { Order } from '../domain/types'
 
 const o = (over: Partial<Order>): Order => ({
@@ -24,4 +24,15 @@ test('newlyServing returns numbers present in next but not prev', () => {
   expect(newlyServing(['A1'], ['A1', 'A2'])).toEqual(['A2'])
   expect(newlyServing(['A1'], ['A1'])).toEqual([])
   expect(newlyServing([], ['A1'])).toEqual(['A1'])
+})
+
+test('newlyAnnounced fires for a new number OR a bumped announcedAt', () => {
+  const prev = [{ n: 'A1', announcedAt: 5 }]
+  // new number A2
+  expect(newlyAnnounced(prev, [{ n: 'A1', announcedAt: 5 }, { n: 'A2', announcedAt: 7 }]))
+    .toEqual([{ n: 'A2', announcedAt: 7 }])
+  // same number, bumped announcedAt -> re-announce
+  expect(newlyAnnounced(prev, [{ n: 'A1', announcedAt: 9 }])).toEqual([{ n: 'A1', announcedAt: 9 }])
+  // unchanged -> nothing
+  expect(newlyAnnounced(prev, [{ n: 'A1', announcedAt: 5 }])).toEqual([])
 })
