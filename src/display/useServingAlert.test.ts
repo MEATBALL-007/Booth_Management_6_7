@@ -36,3 +36,14 @@ test('no change means no chime', () => {
   rerender({ s: [sig('A1', 1)] })
   expect(playChimeSpy).not.toHaveBeenCalled()
 })
+
+test('flash still clears on schedule if an unrelated change lands mid-flash (no stuck flash)', () => {
+  const { result, rerender } = renderHook(({ s }) => useServingAlert(s), { initialProps: { s: [sig('A1', 1)] } })
+  rerender({ s: [sig('A1', 1), sig('A2', 2)] })   // A2 new -> flashing
+  expect(result.current).toBe(true)
+  act(() => vi.advanceTimersByTime(1000))          // partway through the flash
+  rerender({ s: [sig('A2', 2)] })                  // A1 removed — no new number, no bumped announcedAt
+  expect(result.current).toBe(true)                // still flashing (timer not cancelled)
+  act(() => vi.advanceTimersByTime(1500))           // reach original 2500ms
+  expect(result.current).toBe(false)               // cleared on original schedule
+})
