@@ -1,6 +1,6 @@
 import { vi, beforeEach, test, expect } from 'vitest'
 
-const { addDoc, onSnapshot, updateDoc, collection, query, where, doc } = vi.hoisted(() => ({
+const { addDoc, onSnapshot, updateDoc, collection, query, where, doc, deleteField } = vi.hoisted(() => ({
   addDoc: vi.fn(),
   onSnapshot: vi.fn(),
   updateDoc: vi.fn(),
@@ -8,10 +8,11 @@ const { addDoc, onSnapshot, updateDoc, collection, query, where, doc } = vi.hois
   query: vi.fn((...args) => ({ __query: args })),
   where: vi.fn((f, op, v) => ({ __where: [f, op, v] })),
   doc: vi.fn((_db, path, id) => ({ __doc: [path, id] })),
+  deleteField: vi.fn(() => ({ __deleteField: true })),
 }))
 
 vi.mock('firebase/firestore', () => ({
-  collection, addDoc, onSnapshot, query, where, doc, updateDoc,
+  collection, addDoc, onSnapshot, query, where, doc, updateDoc, deleteField,
 }))
 vi.mock('../lib/firebase', () => ({ getDb: () => ({ __db: true }) }))
 
@@ -51,6 +52,21 @@ test('updateOrderStatus updates the order doc with the patch', async () => {
   await updateOrderStatus('o1', { status: 'serving', servingAt: 42 })
   expect(doc).toHaveBeenCalledWith({ __db: true }, 'orders', 'o1')
   expect(updateDoc).toHaveBeenCalledWith({ __doc: ['orders', 'o1'] }, { status: 'serving', servingAt: 42 })
+})
+
+test('updateOrderStatus turns an explicit undefined into deleteField() so undo can remove a field', async () => {
+  updateDoc.mockResolvedValue(undefined)
+  // the shape an undo patch has: every undoable field, absent ones as undefined
+  await updateOrderStatus('o1', {
+    status: 'waiting', servingAt: undefined, doneAt: undefined, announcedAt: undefined, cancelReason: undefined,
+  })
+  expect(updateDoc.mock.calls).toStrictEqual([[{ __doc: ['orders', 'o1'] }, {
+    status: 'waiting',
+    servingAt: { __deleteField: true },
+    doneAt: { __deleteField: true },
+    announcedAt: { __deleteField: true },
+    cancelReason: { __deleteField: true },
+  }]])
 })
 
 test('subscribeAllOrders subscribes to the whole orders collection (no filter) and sorts by createdAt', () => {

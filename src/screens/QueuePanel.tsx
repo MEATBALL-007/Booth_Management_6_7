@@ -35,9 +35,10 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   }
   const runUndo = () => { if (undo) { updateOrderStatus(undo.id, undo.before); setUndo(null) } }
   const confirmCancel = () => {
-    if (!cancelId || !reason.trim()) return
+    const patch = cancelId && Q.cancel(reason)
+    if (!patch) return   // no target, or an empty reason: keep the panel open
     const order = mine.find((o) => o.id === cancelId)
-    if (order) apply(order, { status: 'cancelled', cancelReason: reason.trim() }, L('queue.cancel').th)
+    if (order) apply(order, patch, L('queue.cancel').th)
     setCancelId(null); setReason('')
   }
   const itemSummary = (o: Order) => o.items.map((it) => `${it.name} ×${it.qty}${it.options?.length ? ` · ${it.options.map((op) => op.label).join(' · ')}` : ''}`).join(' , ')

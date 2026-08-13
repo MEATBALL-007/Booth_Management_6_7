@@ -103,12 +103,48 @@ test('re-announce bumps announcedAt on a serving order', async () => {
   expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ announcedAt: expect.any(Number) }))
 })
 
-test('undo restores the prior state of the last action', async () => {
+/**
+ * Undo assertions deliberately use toStrictEqual on the raw mock.calls rather
+ * than toHaveBeenCalledWith/objectContaining: both of those ignore the very
+ * thing that matters here — a field the action added that the undo patch fails
+ * to clear (objectContaining allows extra keys; toHaveBeenCalledWith treats a
+ * key set to undefined as absent).
+ */
+
+test('undo of "เสร็จ" restores serving and clears the doneAt the action added', async () => {
   const user = userEvent.setup()
   render(<QueuePanel booth="drinks" station="A" />)
-  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving', servingAt: 5 })]))
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'serving', servingAt: 5, announcedAt: 5 })]))
   await user.click(screen.getByRole('button', { name: /เสร็จ/ }))          // serving -> done
   updateOrderStatus.mockClear()
   await user.click(screen.getByRole('button', { name: /ย้อนกลับ/ }))       // undo
-  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'serving', servingAt: 5 }))
+  expect(updateOrderStatus.mock.calls).toStrictEqual([['o1', {
+    status: 'serving', servingAt: 5, doneAt: undefined, announcedAt: 5, cancelReason: undefined,
+  }]])
+})
+
+test('undo of "เรียกคิวถัดไป" restores waiting and clears servingAt + announcedAt', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'waiting', createdAt: 1 })]))
+  await user.click(screen.getByRole('button', { name: /เรียกคิวถัดไป/ }))  // waiting -> serving
+  updateOrderStatus.mockClear()
+  await user.click(screen.getByRole('button', { name: /ย้อนกลับ/ }))
+  expect(updateOrderStatus.mock.calls).toStrictEqual([['o1', {
+    status: 'waiting', servingAt: undefined, doneAt: undefined, announcedAt: undefined, cancelReason: undefined,
+  }]])
+})
+
+test('undo of "ยกเลิก" restores waiting and clears the cancelReason', async () => {
+  const user = userEvent.setup()
+  render(<QueuePanel booth="drinks" station="A" />)
+  act(() => emit([order({ id: 'o1', queueNumber: 'A1', station: 'A', status: 'waiting', createdAt: 1 })]))
+  await user.click(screen.getByRole('button', { name: /ยกเลิก\/แก้ไข/ }))
+  await user.type(screen.getByLabelText(/เหตุผล/), 'ลูกค้าเปลี่ยนใจ')
+  await user.click(screen.getByRole('button', { name: /ยืนยันยกเลิก/ }))
+  updateOrderStatus.mockClear()
+  await user.click(screen.getByRole('button', { name: /ย้อนกลับ/ }))
+  expect(updateOrderStatus.mock.calls).toStrictEqual([['o1', {
+    status: 'waiting', servingAt: undefined, doneAt: undefined, announcedAt: undefined, cancelReason: undefined,
+  }]])
 })
