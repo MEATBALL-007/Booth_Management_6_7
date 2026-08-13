@@ -14,11 +14,13 @@
 
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
-- [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
+- [x] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+      — ✅ **ผ่านแล้วเมื่อ 2026-08-13** (commit `ecfff72`) เจอบั๊กจริงและแก้แล้ว:
+      `orderSnapshot` เก็บเฉพาะ field ที่มีค่า + Firestore `updateDoc` เป็น merge
+      → field ที่ action สร้างขึ้นมาเองรอดจากการ undo เสมอ
+      พิสูจน์ด้วย round-trip test 9 เคส (ทุก action × ทุก state ที่กดถึงได้) + 3 เคสระดับ UI
+      + 1 เคส pin การแปลง `undefined → deleteField()` ที่ repo layer
+      ยืนยัน red phase แล้ว (9 เทสต์ล้มก่อนแก้ ตรงกับที่เอกสาร audit ทำนายไว้เป๊ะ)
 - [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
@@ -62,22 +64,27 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+ตรวจข้อ **No-show** ของ `2026-08-04-queue-pro-upgrade-design.md`:
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+> No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้);
+> เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 
-**commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
+เกณฑ์ข้อนี้มี 4 ท่อน ต้องพิสูจน์ให้ครบทุกท่อน **อย่าหยุดแค่ท่อนที่เทสต์เดิมครอบอยู่แล้ว**:
+1. `skip` บน serving → `skipped` — `queueActions.test.ts` + `QueuePanel.test.tsx` ครอบแล้ว
+   (ยืนยันอีกครั้ง ไม่ต้องเขียนใหม่)
+2. **skipped หายจากจอลูกค้า** — ต้องเป็นเทสต์ใน `src/screens/DisplayScreen.test.tsx`
+   ว่า order สถานะ `skipped` ไม่ถูก render เลย (นี่คือท่อนที่น่าจะยังขาดที่สุด)
+3. **ขึ้นโซนพักไว้** ใน QueuePanel — มี UI อยู่แล้ว (`L('queue.parked')`) เช็คว่ามีเทสต์ครอบไหม
+4. **เรียกซ้ำ → Display ประกาศจริง (chime + flash)** — `recall` เซ็ต `announcedAt` ใหม่ แต่ต้อง
+   พิสูจน์ว่า DisplayScreen ตอบสนองต่อ `announcedAt` ที่เปลี่ยน ด้วยการเล่นเสียง + flash
+   ให้อ่าน `DisplayScreen.tsx` ก่อนว่า trigger ผูกกับอะไร (announcedAt? status?) แล้วเขียนเทสต์ตามจริง
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+เขียนเทสต์เฉพาะท่อนที่ยังขาด ถ้าท่อนไหนโค้ดยังไม่รองรับจริง ให้บันทึกเป็นช่องว่างใน SUMMARY.md
+พร้อมระบุว่าขาดตรงไหน (ตาม Goal: ห้ามทิ้งข้อไหนไว้ในสถานะ "ไม่รู้")
+
+**commit ระหว่างทางเป็นระยะ** — รอบ 2026-08-13 ยืนยันแล้วว่า git identity ใช้งานได้
+
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ **ประกาศซ้ำ**)
 
 ---
 
