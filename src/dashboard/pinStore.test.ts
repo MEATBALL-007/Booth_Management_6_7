@@ -1,4 +1,5 @@
 import { isDashboardUnlocked, unlockDashboard, lockDashboard } from './pinStore'
+import { APP_CONFIG } from '../domain/appConfig'
 
 beforeEach(() => localStorage.clear())
 
@@ -11,13 +12,18 @@ test('wrong PIN does not unlock', () => {
   expect(isDashboardUnlocked()).toBe(false)
 })
 
-test('correct PIN REDACTED-PIN unlocks and is remembered', () => {
-  expect(unlockDashboard('REDACTED-PIN')).toBe(true)
+test('the configured PIN unlocks and is remembered', () => {
+  expect(unlockDashboard(APP_CONFIG.dashboardPin)).toBe(true)
   expect(isDashboardUnlocked()).toBe(true)
 })
 
+test('empty input never unlocks', () => {
+  expect(unlockDashboard('')).toBe(false)
+  expect(isDashboardUnlocked()).toBe(false)
+})
+
 test('lockDashboard re-locks', () => {
-  unlockDashboard('REDACTED-PIN')
+  unlockDashboard(APP_CONFIG.dashboardPin)
   lockDashboard()
   expect(isDashboardUnlocked()).toBe(false)
 })
