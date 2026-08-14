@@ -27,6 +27,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
 
   return (
     <div
+      data-testid="display-root"
       className={`min-h-screen p-8 md:p-12 flex flex-col items-center justify-center text-center gap-10 md:gap-14 text-phantom-text transition-colors duration-300 ${
         flashing ? 'bg-phantom-orange/30 animate-pulse' : 'bg-phantom-bg'
       }`}

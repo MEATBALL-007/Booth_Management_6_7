@@ -63,3 +63,70 @@ test('shows the no-queue placeholder when nothing is serving', () => {
   render(<DisplayScreen booth="drinks" />)
   expect(screen.getByText(/ยังไม่มีคิว/)).toBeInTheDocument()
 })
+
+// --- No-show (skip / recall) acceptance ---------------------------------
+// spec: 2026-08-04-queue-pro-upgrade-design.md
+//   "ข้าม serving → skipped (หายจากจอลูกค้า...); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)"
+// The queueActions half (skip/recall) is covered in queueActions.test.ts; these
+// pin down the Display half, which was never asserted anywhere.
+
+const flashing = () => screen.getByTestId('display-root').className.includes('animate-pulse')
+
+test('a skipped order vanishes from the customer display entirely', () => {
+  render(<DisplayScreen booth="drinks" />)
+  act(() => emit([
+    o({ id: 's1', queueNumber: 'A1', status: 'serving' }),
+    o({ id: 'w1', queueNumber: 'A2', status: 'waiting', createdAt: 2 }),
+    o({ id: 'k1', queueNumber: 'A3', status: 'skipped', createdAt: 1 }),
+  ]))
+  // not serving, not the get-ready spotlight, not in the up-next strip...
+  expect(screen.getAllByTestId('serving').map((e) => e.textContent)).toEqual(['A1'])
+  expect(screen.getByTestId('next-up')).toHaveTextContent('A2')
+  expect(screen.queryAllByTestId('upnext')).toEqual([])
+  // ...and nowhere else on the screen either
+  expect(screen.queryByText('A3')).not.toBeInTheDocument()
+})
+
+test('a skipped order does not steal the get-ready spotlight from a later waiting one', () => {
+  render(<DisplayScreen booth="drinks" />)
+  act(() => emit([
+    o({ id: 'k1', queueNumber: 'A3', status: 'skipped', createdAt: 1 }), // older than the waiting one
+    o({ id: 'w1', queueNumber: 'A4', status: 'waiting', createdAt: 2 }),
+  ]))
+  expect(screen.getByTestId('next-up')).toHaveTextContent('A4')
+})
+
+test('recalling a skipped order announces it again: back on screen, chime + flash', () => {
+  render(<DisplayScreen booth="drinks" />)
+  act(() => emit([
+    o({ id: 's1', queueNumber: 'A1', status: 'serving', announcedAt: 100 }),
+    o({ id: 'k1', queueNumber: 'A3', status: 'skipped', createdAt: 1 }),
+  ])) // first snapshot = baseline, no chime
+  expect(playChimeSpy).not.toHaveBeenCalled()
+  expect(flashing()).toBe(false)
+
+  // recall(A3, 200) => { status: 'serving', servingAt: 200, announcedAt: 200 }
+  act(() => emit([
+    o({ id: 's1', queueNumber: 'A1', status: 'serving', announcedAt: 100 }),
+    o({ id: 'k1', queueNumber: 'A3', status: 'serving', createdAt: 1, servingAt: 200, announcedAt: 200 }),
+  ]))
+  expect(screen.getAllByTestId('serving').map((e) => e.textContent)).toEqual(['A1', 'A3'])
+  expect(playChimeSpy).toHaveBeenCalledTimes(1) // chime only for A3, not for the unchanged A1
+  expect(flashing()).toBe(true)
+})
+
+test('the recall flash stops on its own so the screen is not left pulsing', () => {
+  vi.useFakeTimers()
+  try {
+    render(<DisplayScreen booth="drinks" />)
+    act(() => emit([o({ id: 'k1', queueNumber: 'A3', status: 'skipped', createdAt: 1 })]))
+    act(() => emit([
+      o({ id: 'k1', queueNumber: 'A3', status: 'serving', createdAt: 1, servingAt: 200, announcedAt: 200 }),
+    ]))
+    expect(flashing()).toBe(true)
+    act(() => { vi.advanceTimersByTime(2500) })
+    expect(flashing()).toBe(false)
+  } finally {
+    vi.useRealTimers()
+  }
+})
