@@ -13,7 +13,8 @@
 ## 1. โปรเจกต์นี้คืออะไร
 ระบบหลังบ้านงานสายสัมพันธ์ ม.6/7 — **PWA จัดการ 3 ซุ้มขายของบริจาค** (คิว + รับเงิน + บัญชีเรียลไทม์ + สื่อสารข้ามซุ้ม) รันบน iPad/คอมผ่านเบราว์เซอร์ ทำงาน offline ได้.
 
-**สถานะ: LIVE + เกือบครบ** — deploy แล้วที่ **https://saisamphan-67.web.app** (Firebase project `saisamphan-67`). **144 tests ผ่าน, build สะอาด, ทุกอย่าง merge เข้า `main` แล้ว.**
+**สถานะ: LIVE + เกือบครบ** — deploy แล้วที่ **https://saisamphan-67.web.app** (Firebase project `saisamphan-67`). **131 tests ผ่าน, build สะอาด, ทุกอย่าง merge เข้า `main` แล้ว.**
+> มี PR ค้างอยู่ 1 ใบ (แก้บั๊ก undo, +13 tests → 144) รอรีวิว
 
 ## 2. สิ่งที่สร้างเสร็จแล้ว (merged to main)
 1. **Foundation** — PWA scaffold, PHANTOM CREW theme, Firestore lazy `getDb()`, offline persistence, i18n, Setup screen
