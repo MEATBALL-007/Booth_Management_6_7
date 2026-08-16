@@ -249,12 +249,48 @@
 - [ ] ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)
 - [ ] อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
 - [ ] tests เขียวครบ + `npm run build` ผ่าน + PWA generate
-      — ⚠️ **ยังติ๊กไม่ได้ และรู้แล้วว่าเพราะอะไร (พบตอนรอบ 2026-08-17_0005 ระหว่างตรวจข้ออื่น)**
-      "tests เขียว + build ผ่าน" จริงแล้ว (138/40 บน branch `_0005`, 131/39 บน main; build ผ่าน)
-      แต่ **"PWA generate" ยังไม่ครบ**: `dist/manifest.webmanifest` มี `"icons":[]` = ไม่มีไอคอนเลย
-      → ติดตั้งลงโฮมสกรีน iPad แล้วไม่มีไอคอนแอป (ต้องการอย่างน้อย 192×192 + 512×512)
-      + `"lang":"en"` ทั้งที่แอปเป็นไทย — แก้ที่ `vite.config.ts` บล็อก `VitePWA({ manifest: … })`
-      (`dist/sw.js` + `dist/workbox-*.js` ถูกสร้างจริง ส่วน service worker จึงไม่ใช่ปัญหา)
+      — ⚠️ **ตรวจครบแล้วรอบ 2026-08-17_0023 แต่ *ยังติ๊กไม่ได้* และรู้ชัดแล้วว่าติดตรงไหน**
+      ต่างจากข้อที่ติ๊กไปก่อนหน้า: ช่องว่างที่เหลือ **ไม่ใช่** "เทสต์ระดับนี้พิสูจน์ไม่ได้"
+      แต่เป็น **ตัวสินค้าขาดของจริง** — ปิดได้ด้วยการเพิ่มไฟล์ไอคอน ไม่ใช่ด้วยการเขียนเทสต์เพิ่ม
+      **ไม่ได้แก้ production code เลย `vite.config.ts` เหมือน main ทุก byte**
+      1. **"tests เขียว + build ผ่าน" — ✅ รันจริงรอบนี้ จดตัวเลขจริง**
+         `npm test` บน main (ต้นรอบ) = **131 ผ่าน / 39 ไฟล์**; บน branch นี้ = **137 / 40**
+         `npm run build` = `tsc -b` + `vite build` ผ่าน (เตือนเรื่อง chunk > 500 kB เท่านั้น ไม่ใช่ error)
+      2. **"PWA generate" — ส่วน service worker ✅ ครบจริง ตรวจถึงการต่อสายแล้ว**
+         `dist/sw.js` + `dist/workbox-9c191d2f.js` + `dist/registerSW.js` ถูกสร้าง (`generateSW`, precache 5)
+         และ **`dist/index.html` เรียก `registerSW.js` จริง** — บรรทัดที่ปลั๊กอินฉีดเข้ามา:
+         `<script id="vite-plugin-pwa:register-sw" src="/registerSW.js">` + `<link rel="manifest" …>`
+         → ข้อสงสัยของ plan ที่ว่า "เช็คด้วยว่า index.html เรียก registerSW.js จริงไหม" = **เรียกจริง**
+      3. **❌ ช่องว่างที่ทำให้ติ๊กไม่ได้: `manifest.icons` เป็น array ว่าง** (`vite.config.ts:17`)
+         build จริงรอบนี้ให้ `dist/manifest.webmanifest` ทั้งไฟล์เท่ากับของรอบ `_0005` เป๊ะ:
+         `{"name":"สายสัมพันธ์ ม.6/7","short_name":"Sai Samphan","start_url":"/","display":"standalone",`
+         `"background_color":"#1A1A1A","theme_color":"#1A1A1A","lang":"en","scope":"/","icons":[]}`
+         → ติดตั้งลงโฮมสกรีน iPad แล้ว **ไม่มีไอคอนแอป** (ต้องมีอย่างน้อย 192×192 + 512×512)
+         — เจอเพิ่มรอบนี้: `index.html` ก็**ไม่มี `<link rel="apple-touch-icon">`** ด้วย ซึ่งเป็นทาง
+         ที่ Safari บน iOS ใช้จริงเมื่อ manifest ไม่มีไอคอน → บน iPad จึงไม่มี fallback เหลือเลย
+         — และ `lang` เป็น `"en"` (ค่า default ของปลั๊กอิน) ทั้งที่ `index.html` เป็น `lang="th"`
+         **ตัวแก้ = เพิ่ม `icons` + `lang: 'th'` ใน `VitePWA({ manifest: … })` ของ `vite.config.ts`
+         พร้อมไฟล์รูปจริงใน `public/`** — เป็นงาน asset ที่ต้องมีคนตัดสินใจว่าเอารูปจากไหน
+         **ไม่ได้ทำในรอบนี้ตามที่ plan สั่ง และไม่ได้เขียนเทสต์ที่ *เรียกร้อง* ไอคอน** เพราะเทสต์แบบนั้น
+         จะแดงทันทีและทำให้ Verify ล้มทั้งที่ยังไม่มีใครแก้ได้ (บทเรียนเดียวกับบั๊กข้อ Idempotency ง.)
+      4. **สิ่งที่ปิดไปได้จริงรอบนี้: manifest มีตาข่ายกันถอยหลังแล้ว** เทสต์ใหม่ 6 ตัวใน **ไฟล์ใหม่**
+         `src/pwaConfig.test.ts` (ไฟล์ใหม่ล้วน ไม่ชน branch ไหน) — ก่อนหน้านี้ **ไม่มีเทสต์แม้แต่ตัวเดียว
+         ที่แตะ `vite.config.ts`** ใครลบ field ใน manifest ทิ้ง build ก็ยังเขียวเงียบๆ
+         วิธี: `vi.mock('vite-plugin-pwa')` ให้ `VitePWA()` กลายเป็นตัวบันทึก option แล้ว `import`
+         `../vite.config` → ได้ object จริงที่ config ส่งเข้าไป **ไม่ต้องรัน build ไม่ต้อง regex source**
+         (ลองทางตรงแล้วไม่ได้: `api.webManifestData` ของปลั๊กอินยังเป็น `undefined` จนกว่า
+         `configResolved` จะทำงาน — จึงอ่านจากตัว config เปล่าๆ ไม่ได้)
+         ปักไว้: `registerType: 'autoUpdate'`, `name`/`short_name`, `display`/`theme_color`/`background_color`,
+         `icons` ต้องยังเป็น array อยู่, และ **icon ทุกตัวที่ประกาศต้องมี `src`+`sizes`+`type`ครบ**
+         (ข้อหลังตอนนี้ผ่านแบบไม่มีอะไรให้ตรวจ แต่จะ *มีฟัน* ทันทีที่ไอคอนถูกเพิ่มเข้ามาในรอบหน้า)
+         + เทสต์ guard กัน "ผ่านแบบว่างเปล่า" (ถ้ามีคนถอด `VitePWA()` ออก เทสต์ที่เหลือจะอ่าน
+         `undefined?.field` แล้วเขียวหมดทั้งชุด)
+      — **mutation-check แดงตรงจุด รันจริงทั้ง 3 แบบ แล้ว revert แล้ว (`git status` สะอาด):**
+         (ก) ลบ `short_name` ออกจาก manifest → **แดง 1 ตัว เป็นเทสต์ใหม่ เทสต์เดิมทั้ง 131 ตัวเขียวหมด**
+         (ข) `registerType: 'autoUpdate'` → `'prompt'` (เคสจริง: จอซุ้มที่เปิดค้างทั้งวันจะค้างอยู่ที่
+             โค้ดเวอร์ชันเก่าจนกว่าจะมีคนมากดยืนยัน) → **แดง 1 ตัว เป็นเทสต์ใหม่ เดิมเขียวหมด**
+         (ค) `icons: [{ src: '/pwa-192.png' }]` (เคสจริง: รอบหน้าเพิ่มไอคอนแล้วลืม `sizes`/`type`)
+             → **แดง 1 ตัว** = ยืนยันว่าเทสต์ well-formed มีฟันจริงตอนที่มีของให้ตรวจ
 - [ ] Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)
 - [ ] Display เลขคิวสเกลใหญ่ตามจอด้วย clamp
 
@@ -285,34 +321,35 @@ npm test && npm run build
 
 ## Next task — do ONLY this
 
-ตรวจข้อ **tests เขียวครบ + `npm run build` ผ่าน + PWA generate**
-(`2026-08-03-ui-overhaul-design.md`) — **ข้อของ queue-pro-upgrade ปิดครบแล้ว เหลือแต่ข้อ Undo
-ที่รอ merge อย่างเดียว (ห้ามทำซ้ำ)** ข้อถัดไปจึงข้ามมาที่ spec ของ `ui-overhaul`
+ตรวจข้อ **Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)**
+ของ `2026-08-03-ui-overhaul-design.md`
 
-**อ่านก่อนลงมือ — ส่วน "tests + build" เก็บหลักฐานไว้ให้แล้วรอบ 2026-08-17_0005 อย่าเสียเวลาซ้ำ:**
-`npm test` = 131/39 บน main (138/40 บน branch `_0005`), `npm run build` ผ่าน,
-`dist/sw.js` + `dist/manifest.webmanifest` + `dist/workbox-*.js` ถูกสร้างจริง (`generateSW`, precache 5)
-→ **แค่รัน Verify ซ้ำเพื่อยืนยันตัวเลข ณ รอบนั้น แล้วจดลงช่อง** ส่วนที่เหลือคือของจริงของข้อนี้:
-1. **"PWA generate" ไม่ได้แปลว่าแค่ไฟล์ถูกสร้าง — และรอบ `_0005` เปิดดูแล้วพบว่ามันไม่ครบจริงๆ**
-   `dist/manifest.webmanifest` ทั้งไฟล์คือ (อ่านจาก build จริงของรอบ `_0005`):
-   `{"name":"สายสัมพันธ์ ม.6/7","short_name":"Sai Samphan","start_url":"/","display":"standalone",`
-   `"background_color":"#1A1A1A","theme_color":"#1A1A1A","lang":"en","scope":"/","icons":[]}`
-   → **`icons` เป็น array ว่าง** = ติดตั้งลงโฮมสกรีน iPad แล้วไม่มีไอคอน (iOS/Android ต้องการ
-   อย่างน้อย 192×192 + 512×512) และ `lang` เป็น `"en"` ทั้งที่แอปเป็นไทย
-   → **ข้อนี้ยังไม่จริง อย่าติ๊กถ้ายังไม่มี icons** งานของรอบนั้นคือ *ยืนยันว่ายังขาด* + ปักด้วยเทสต์
-   ตามข้อ 2 แล้วจดว่าต้องแก้ที่ `vite.config.ts` (บล็อก `VitePWA({ manifest: … })`) — **อย่าเพิ่งแก้**
-   การเพิ่มไฟล์ไอคอนจริงเป็นงาน asset คนละรอบ ต้องตัดสินใจว่าเอารูปจากไหนด้วย
-   — เช็คด้วยว่า `index.html`/bundle เรียก `registerSW.js` จริงไหม (build สร้างไฟล์นี้ออกมาแล้ว)
-2. **ปักด้วยเทสต์ใน *ไฟล์ใหม่*** เช่น `src/pwaConfig.test.ts` ที่ `import` config จาก `vite.config.ts`
-   แล้ว assert ว่า manifest มี field ที่จำเป็นครบ (เทสต์ระดับ config แบบนี้ไม่ต้องรัน build จริง
-   และจับกรณี "ใครมาลบ icons ออกทีหลัง" ได้) — **ห้ามแก้ `vite.config.ts` เอง**
-3. mutation-check ตามเคย: ลบ field ที่ปักไว้ออกจาก config ชั่วคราว → เทสต์ใหม่ต้องแดง เทสต์เดิมต้องเขียว
-   แล้ว revert ให้ `git status` สะอาด
+**ข้อ `tests + build + PWA generate` ตรวจครบแล้วรอบ 2026-08-17_0023 อย่าทำซ้ำ** — ผลอยู่ในช่องของมัน
+สรุปสั้นๆ: tests+build ✅, service worker + `registerSW.js` ต่อสายครบ ✅, **แต่ `manifest.icons` ว่าง**
+จึงยังไม่ติ๊ก และเหลือเป็น *งานของคน* (ต้องมีไฟล์รูปจริง — ดูหัวข้อ "ค้างอยู่ที่คน" ข้างล่าง)
+มีตาข่ายกันถอยหลังแล้วที่ `src/pwaConfig.test.ts`
 
-**ลำดับที่แนะนำหลังจากนั้น** (ข้อละรอบ): `Firestore/logic ไม่เปลี่ยน` ของ `ui-overhaul` (ใช้วิธี
-`git diff` แบบเดียวกับรอบ `_0005` เทียบจาก merge ของ UI overhaul) → แล้วค่อยไปกอง `hq-comms`
-ซึ่งยังไม่มีหลักฐานเลยสักข้อ (เริ่มจาก `Donation thermometer` เพราะ `metrics.ts` ปักเลขไว้แล้ว
-เหลือแค่พิสูจน์ *การต่อสาย* ไปที่หน้าจอ — เป็นแพตเทิร์นเดียวกับรอบ `_0031`/`_0042` ที่ได้ผลมาแล้ว)
+**วิธีทำข้อนี้ — เป็นข้อ *audit ด้วย `git diff`* ไม่ใช่ข้อเขียนเทสต์ (แพตเทิร์นเดียวกับรอบ `_0005` ข้อ 2):**
+1. หา commit ของ **UI overhaul** ก่อน (`git log --oneline --all -- tailwind.config.js src/ui` หรือหา
+   merge commit ที่ชื่อพาดพิง UI/Neon) แล้วใช้ parent สายหลักของมันเป็นฐานเทียบ — **จดเลข commit ที่ใช้
+   ลงในช่องด้วยเสมอ** เพื่อให้รอบหลังตรวจซ้ำได้ว่าเทียบจากจุดเดียวกัน
+2. `git diff <ฐาน>..main --stat` แล้ว **ไล่ทีละไฟล์** ว่าไฟล์ที่เปลี่ยนตกอยู่ใน presentation /
+   Tailwind config / `src/ui` จริงไหม ไฟล์ที่ต้อง **ไม่เปลี่ยนเลย**: `firestore.rules`,
+   `firestore.indexes.json`, `src/**/[a-z]*Repo.ts` ทุกตัว, `src/firebase*.ts`,
+   และ logic ล้วนอย่าง `buildOrder.ts`, `cart.ts`, `options.ts`, `promptpay.ts`, `queueNumber.ts`,
+   `catalog.ts`, `commsLogic.ts`, `metrics.ts`
+3. ถ้าเจอไฟล์ที่ **เปลี่ยนจริงและไม่ใช่ presentation** → **อย่าแก้โค้ด** ให้บันทึกว่าเปลี่ยนอะไร
+   บรรทัดไหน และมันละเมิดเกณฑ์หรือไม่ (บางอย่างเป็นฟีเจอร์คนละสายเหมือน `types.ts` ในรอบ `_0005`
+   ซึ่ง**ไม่ละเมิด**) แล้วติ๊ก/ไม่ติ๊กตามความจริง
+4. ข้อนี้พิสูจน์ด้วยประวัติ git ไม่ใช่ด้วยเทสต์ **จึงไม่ต้องเขียนไฟล์เทสต์ใหม่** — ถ้าเผลอไปเขียน
+   เทสต์ที่ assert ว่า "ไฟล์ไม่เปลี่ยน" มันจะกลายเป็นตัวขวางทุกการแก้ในอนาคต **ห้ามทำ**
+
+**ลำดับที่แนะนำหลังจากนั้น** (ข้อละรอบ): `Display เลขคิวสเกลใหญ่ตามจอด้วย clamp` ของ `ui-overhaul`
+(ระวัง: ถ้าเป็นเรื่อง CSS ล้วนจะชนกำแพงเดียวกับข้อ "จัดกึ่งกลาง responsive" — แต่ `clamp()` **ต่างออกไป**
+เพราะมันเป็น *ค่าที่เขียนอยู่ในซอร์ส* ตรวจได้ว่า `font-size` ของเลขคิวใช้ `clamp(...)` จริงไหม
+โดยไม่ต้องให้ jsdom คำนวณ layout) → แล้วค่อยไปกอง `hq-comms` ซึ่งยังไม่มีหลักฐานเลยสักข้อ
+(เริ่มจาก `Donation thermometer` เพราะ `metrics.ts` ปักเลขไว้แล้ว เหลือแค่พิสูจน์ *การต่อสาย*
+ไปที่หน้าจอ — เป็นแพตเทิร์นเดียวกับรอบ `_0031`/`_0042` ที่ได้ผลมาแล้ว)
 
 ⚠️ ไฟล์ที่ branch อื่นแก้ค้างไว้ (ห้ามแตะถ้าเลี่ยงได้): `DisplayScreen.tsx`, `DisplayScreen.test.tsx`
 (`_0020`/`_0031`), `queueActions.*`, `ordersRepo.*`, `QueuePanel.tsx` (`_1553`/`_0030`)
@@ -333,7 +370,14 @@ npm test && npm run build
 ถ้างานซุ้มยังเปิดใช้อยู่ ควรบอกคนหน้างานว่า "อย่าเปิดแผงยกเลิกค้างไว้" จนกว่าจะ merge เสร็จ
 👉 **ถ้าจะ merge อันเดียว ให้ merge อันนี้ก่อนเพื่อน** — เป็น branch เดียวที่แก้ยอดขายหายจริง
 
-**ตอนนี้มี branch ค้างรอ merge 9 อัน กองสูงขึ้นทุกรอบ** — agent push/merge เองไม่ได้ (ไม่มีสิทธิ์ push/gh)
+🎨 **งานที่ agent ทำต่อเองไม่ได้ เพราะต้องมีไฟล์รูป:** PWA ยังไม่มีไอคอน (`manifest.icons` ว่าง
++ `index.html` ไม่มี `apple-touch-icon`) → ติดตั้งลงโฮมสกรีน iPad แล้วได้ไอคอนเปล่า
+สิ่งที่ต้องทำ: วางไฟล์ `public/pwa-192.png` + `public/pwa-512.png` (และ `apple-touch-icon-180.png`)
+แล้วเติมลง `VitePWA({ manifest: { icons: [...], lang: 'th' } })` ใน `vite.config.ts`
+— เทสต์ `src/pwaConfig.test.ts` จะตรวจให้เองว่า icon ทุกตัวมี `src`/`sizes`/`type` ครบ
+**ห้าม agent สร้างรูปเอง** ต้องเป็นโลโก้จริงของงาน ไม่ใช่ placeholder ที่จะติดไปถึงวันงาน
+
+**ตอนนี้มี branch ค้างรอ merge 11 อัน กองสูงขึ้นทุกรอบ** — agent push/merge เองไม่ได้ (ไม่มีสิทธิ์ push/gh)
 แนะนำให้ merge ตามลำดับนี้ (เรียงจากชนน้อยไปมาก):
 
 1. `auto/Booth_Management_6_7/2026-08-15_0008` — แก้ข้อความ plan อย่างเดียว (แตะแค่ `AUTOPILOT.md`, `SUMMARY.md`)
@@ -354,6 +398,11 @@ npm test && npm run build
    📌 เกี่ยวกับ 0020/0031 แบบเดียวกับ 0043: เทสต์ glanceable **อ่าน source ของ `DisplayScreen.tsx`
    ด้วย `readFileSync`** (เพื่อเก็บ `L('...')` call site ทุกตัว) ถ้า 0020/0031 ย้าย label
    ไปไฟล์อื่นหรือเปลี่ยนไปใช้ `<BiLabel>` เทสต์ guard จะแดง — **ตั้งใจให้แดง ไม่ใช่ conflict**
+10. `auto/Booth_Management_6_7/2026-08-17_0005` — ข้อ **tests+build+ไม่เปลี่ยน logic** เพิ่มไฟล์ใหม่
+    ไฟล์เดียว (`src/order/promptpay.pin.test.ts`) **ไม่แตะ production code เลย** ไม่ชนโค้ดกับใคร
+11. `auto/Booth_Management_6_7/2026-08-17_0023` — ข้อ **PWA generate (ตรวจแล้ว ยังไม่ติ๊ก)**
+    เพิ่มไฟล์ใหม่ไฟล์เดียว (`src/pwaConfig.test.ts`) **ไม่แตะ production code เลย** ไม่ชนโค้ดกับใคร
+    — เป็นไฟล์เทสต์แรกของโปรเจคที่แตะ `vite.config.ts` ถ้ารอบหลังมีใครแก้ manifest ให้ดูไฟล์นี้ด้วย
 
 ทุกอันจะ conflict กันที่ `AUTOPILOT.md` และ `SUMMARY.md` เท่านั้น (ทุก branch เขียนสองไฟล์นี้)
 วิธีแก้: เอาของ branch ที่ใหม่กว่าเสมอ — ของ 0042 เป็น superset ของ 0031, 0020 และ 0008 อยู่แล้ว
