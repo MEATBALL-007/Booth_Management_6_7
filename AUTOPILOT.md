@@ -199,13 +199,62 @@
          → **แดง 3 ตัว ใหม่ทั้งหมด** (`labels.coverage` 2 + `glanceable` 1)
          (ข) ลบ 👉 ออกจากหัวข้อ "เตรียมตัว" → **แดง 1 ตัว และเป็นเทสต์ใหม่**
          revert ทั้งสองแบบแล้ว (`git status` สะอาด)
-- [ ] เทสต์ทั้งชุดเขียว + `npm run build` ผ่าน; ไม่เปลี่ยน logic บัญชี/เมนู/comms
+- [x] เทสต์ทั้งชุดเขียว + `npm run build` ผ่าน; ไม่เปลี่ยน logic บัญชี/เมนู/comms
+      — ✅ **ติ๊กในรอบ 2026-08-17_0005** ครบทั้ง 2 ส่วน + ปิดช่องว่างเชิงอนาคตของส่วนที่ 3
+      **ไม่ได้แก้ production code เลย** (เทสต์ใหม่ 7 ตัวใน **ไฟล์ใหม่** `src/order/promptpay.pin.test.ts`)
+      1. **เทสต์เขียว + build ผ่าน — รันจริง จดตัวเลขจริง**
+         `npm test` = **138 ผ่าน / 40 ไฟล์** บน branch นี้ (บน main = 131 / 39 — รันยืนยันแล้วต้นรอบ)
+         `npm run build` = `tsc -b` + `vite build` ผ่าน
+         PWA: **`dist/sw.js` + `dist/manifest.webmanifest` ถูกสร้างจริง** (`generateSW`, precache 5 entries)
+         — **จดไว้เฉยๆ ตามที่ plan สั่ง ไม่ได้ไปติ๊กช่อง `PWA generate` ของ `ui-overhaul`** (คนละข้อ คนละรอบ)
+      2. **"ไม่เปลี่ยน logic บัญชี/เมนู/comms" — ✅ จริง พิสูจน์ด้วย `git diff` ไม่ใช่เทสต์**
+         เทียบ `abd1288` (parent สายหลักของ merge Queue Pro-Upgrade `81763eb`, 4 ส.ค.) → `main` (`a505b12`)
+         ไฟล์พวกนี้ **ไม่เปลี่ยนเลยแม้แต่ไบต์เดียว**: `src/order/buildOrder.ts`, `cart.ts`, `options.ts`,
+         `promptpay.ts`, `queueNumber.ts`, `src/domain/catalog.ts` (**เมนูอยู่ที่นี่ ไม่มี `src/menu/`**),
+         `src/comms/commsLogic.ts`, `commsRepo.ts`, `types.ts`, `src/dashboard/metrics.ts`,
+         `src/expense/expensesRepo.ts`
+         — มี 2 ไฟล์ใน `src/domain/` ที่เปลี่ยน **และทั้งคู่ไม่ใช่ logic บัญชี/เมนู/comms**:
+         (ก) `types.ts` — เพิ่ม `'skipped'` เข้า `OrderStatus` + `announcedAt?` = ตัวฟีเจอร์คิวเอง (เพิ่มล้วน)
+         (ข) `appConfig.ts` — commit `17e8c2e` ย้าย `promptpayId`/`dashboardPin` ไป `import.meta.env`
+             = config ของ deploy ไม่ใช่สูตรคำนวณ (สูตรอยู่ `promptpay.ts` ซึ่งไม่เปลี่ยน)
+      3. **ส่วนที่ *เคย* เป็นช่องว่างเชิงอนาคต — ตรวจครบทุกไฟล์ ปิดไป 1 ไฟล์**
+         เปิดอ่านเทสต์ของทุกไฟล์ในข้อ 2 ว่า assert *ตัวเลขจริง* หรือแค่ "ถูกเรียก":
+         `buildOrder` (total=85), `cart` (45+70, subtotal 90), `options` (delta 10, unit 45),
+         `catalog` (35/7.86, 25/3, [35,25], [14,10], topping [0,10,10]), `metrics` (netDonation=50,
+         expectedCash=40, bestSellers ทั้ง object), `commsLogic` (threshold 90s ทั้งสองฝั่ง)
+         → **ทั้งหมดปักตัวเลขจริงอยู่แล้ว** `commsRepo` เป็น repo บางๆ assert payload เป๊ะบน mock = พอดีระดับ
+         — 🐞 **ยกเว้น `promptpay.test.ts` ซึ่งเป็นเทสต์กลวง** assert แค่ "เป็น string", "ยาว > 0",
+         "ขึ้นต้น `00020101`", "คนละ amount ได้คนละค่า", "deterministic" — **ทุกข้อรอดหมดถ้า amount ผิด**
+         เพราะยอดที่ผิดก็ยัง deterministic และยังขึ้นต้นด้วย header เหมือนเดิม
+         **mutation-check วัดขนาดช่องว่างได้ตรงๆ (รันจริงทั้งสองแบบ แล้ว revert แล้ว `git status` สะอาด):**
+         (ก) `{ amount: amount * 2 }` = **เก็บเงินลูกค้าเป็น 2 เท่าทุกใบ** → **เทสต์ทั้ง 131 ตัวของ main
+             เขียวหมด** หลังเพิ่มไฟล์ใหม่ → **แดง 2 ตัว และเป็นเทสต์ใหม่ทั้งคู่**
+         (ข) ส่ง id ตายตัว `'0899999999'` = **เงินเข้าบัญชีคนอื่นทุกใบ** → main เขียวหมดเหมือนกัน
+             หลังเพิ่มไฟล์ใหม่ → **แดง 1 ตัว และเป็นเทสต์ใหม่**
+         เทสต์ใหม่ถอด EMVCo TLV เองในไฟล์เทสต์ (**ไม่เพิ่ม dependency**) แล้วปัก: ยอดเงิน (tag 54
+         รวมทศนิยม 2 ตำแหน่ง), สกุลเงิน 764 + ประเทศ TH, ปลายทางเป็น id ที่ส่งเข้าไปในรูปสากล (tag 29),
+         `01 = 12` (ยอดถูกล็อก ลูกค้าพิมพ์ยอดเองไม่ได้) และ CRC16 ถูกต้อง + เทสต์ยืนยันว่า CRC มีฟัน
+      — ⚠️ **ช่องว่างของ *ตัวสินค้า* ที่เจอรอบนี้ (ยังไม่ได้แก้ ไม่ได้เขียนเทสต์ pin ไว้):**
+      `appConfig.ts` fallback เป็น `?? ''` แล้ว `promptpay-qr` **ไม่ throw เมื่อ id ว่าง** — ตรวจจริงแล้ว
+      มันคืน payload ที่ *หน้าตาถูกต้องทุกอย่าง* แต่จ่ายไปที่ id `0000000000000`
+      (`00020101021229370016A000000677010111011300000000000005802TH5303764540535.00630473F2`)
+      → ถ้า build โดยลืมตั้ง `VITE_PROMPTPAY_ID` จอจะขึ้น QR ที่สแกนแล้วเงินไม่เข้าใคร
+      **และระบบยังบันทึก `paymentStatus: 'paid'` ให้ตามปกติ** (`buildOrder.ts:22` ตั้งค่าตายตัว)
+      = ยอดขายหายแบบเงียบๆ ทั้งงาน ไม่ได้เขียนเทสต์ปักไว้เพราะจะกลายเป็นตัวขวางตอนแก้
+      (บทเรียนเดียวกับบั๊กข้อ Idempotency ง.) ตัวแก้ที่ควรทำ: ให้ `buildPromptPayPayload` โยน error
+      เมื่อ id ว่าง **หรือ** ให้หน้าจอ order ซ่อนช่องทาง QR ไปเลยเมื่อ config ไม่ครบ — **คนละข้อ คนละรอบ**
 
 **จาก `2026-08-03-ui-overhaul-design.md`**
 
 - [ ] ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)
 - [ ] อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
 - [ ] tests เขียวครบ + `npm run build` ผ่าน + PWA generate
+      — ⚠️ **ยังติ๊กไม่ได้ และรู้แล้วว่าเพราะอะไร (พบตอนรอบ 2026-08-17_0005 ระหว่างตรวจข้ออื่น)**
+      "tests เขียว + build ผ่าน" จริงแล้ว (138/40 บน branch `_0005`, 131/39 บน main; build ผ่าน)
+      แต่ **"PWA generate" ยังไม่ครบ**: `dist/manifest.webmanifest` มี `"icons":[]` = ไม่มีไอคอนเลย
+      → ติดตั้งลงโฮมสกรีน iPad แล้วไม่มีไอคอนแอป (ต้องการอย่างน้อย 192×192 + 512×512)
+      + `"lang":"en"` ทั้งที่แอปเป็นไทย — แก้ที่ `vite.config.ts` บล็อก `VitePWA({ manifest: … })`
+      (`dist/sw.js` + `dist/workbox-*.js` ถูกสร้างจริง ส่วน service worker จึงไม่ใช่ปัญหา)
 - [ ] Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)
 - [ ] Display เลขคิวสเกลใหญ่ตามจอด้วย clamp
 
@@ -236,30 +285,34 @@ npm test && npm run build
 
 ## Next task — do ONLY this
 
-ตรวจข้อ **เทสต์ทั้งชุดเขียว + `npm run build` ผ่าน; ไม่เปลี่ยน logic บัญชี/เมนู/comms**
-(`2026-08-04-queue-pro-upgrade-design.md` — ข้อสุดท้ายของ spec นั้น)
+ตรวจข้อ **tests เขียวครบ + `npm run build` ผ่าน + PWA generate**
+(`2026-08-03-ui-overhaul-design.md`) — **ข้อของ queue-pro-upgrade ปิดครบแล้ว เหลือแต่ข้อ Undo
+ที่รอ merge อย่างเดียว (ห้ามทำซ้ำ)** ข้อถัดไปจึงข้ามมาที่ spec ของ `ui-overhaul`
 
-**อ่านก่อนลงมือ:** ข้อนี้แบ่งเป็น 2 ส่วนที่พิสูจน์กันคนละแบบ อย่าเหมารวม
-1. **"เทสต์เขียว + build ผ่าน" — พิสูจน์ด้วยการรัน Verify command แล้ว *จดตัวเลขจริง*ลงช่องนี้**
-   (ตอนนี้บน main คือ 131 ผ่าน / 39 ไฟล์ — branch นี้เพิ่มเป็น 140) เป็นส่วนที่ง่ายที่สุด
-   ⚠️ ตอนรัน `npm run build` ให้ **ดู output ว่า `dist/sw.js` + `dist/manifest.webmanifest`
-   ถูกสร้างจริงไหม** แล้ว **จดผลไว้เฉยๆ ในช่องนี้ ห้ามไปติ๊กช่อง `PWA generate`**
-   (นั่นเป็นข้อของ `ui-overhaul` = คนละข้อ = คนละรอบ ตามกฎ "หนึ่งงานต่อรอบ")
-2. **"ไม่เปลี่ยน logic บัญชี/เมนู/comms" — เป็นสมบัติ *เชิงประวัติ* พิสูจน์ด้วย `git diff` ไม่ใช่เทสต์**
-   ให้หา commit ของ Queue Pro-Upgrade (merge เมื่อ 4 ส.ค.) ด้วย `git log --oneline` แล้ว diff
-   ตั้งแต่ commit **ก่อนหน้า**นั้นถึง `main` เฉพาะไฟล์ logic พวกนี้:
-   `src/order/buildOrder.ts`, `src/order/cart.ts`, `src/order/options.ts`, `src/order/promptpay.ts`,
-   `src/comms/commsLogic.ts`, `src/comms/commsRepo.ts` + ไฟล์เมนู/ราคา (⚠️ **ไม่มี `src/menu/`**
-   ให้หาก่อนว่าเมนูอยู่ไหน — น่าจะเป็น `src/domain/*` หรือ `src/data/*`)
-   — ถ้า diff ว่าง = ข้อนี้จริง ให้จดชื่อ commit ที่ใช้เทียบไว้ด้วย คนตรวจจะได้ทวนได้
-   — ถ้า diff **ไม่ว่าง** อย่าติ๊ก ให้จดว่าไฟล์ไหนเปลี่ยนบรรทัดไหน แล้วบอกว่าเป็นการเปลี่ยน
-     logic จริงหรือแค่ rename/format — **นี่คือผลลัพธ์ที่มีค่าที่สุดของรอบนี้ถ้ามันเกิดขึ้น**
-3. **ส่วนที่ *ยัง* เป็นช่องว่างหลังตรวจ 2 ข้อบน:** `git diff` พิสูจน์แค่ว่า "ไม่เคยเปลี่ยน"
-   ไม่ได้กัน "จะเปลี่ยนในอนาคต" ให้เช็คว่าแต่ละไฟล์ข้างบนมีเทสต์ปักคณิตศาสตร์ของมันอยู่แล้วไหม
-   (ตอนนี้เห็น `buildOrder.test.ts`, `cart.test.ts`, `options.test.ts`, `promptpay.test.ts`,
-   `commsLogic.test.ts`, `commsRepo.test.ts` อยู่ครบ — ให้เปิดดูว่ามัน assert *ตัวเลข* จริง
-   หรือ assert แค่ว่าฟังก์ชันถูกเรียก) ไฟล์ไหนไม่มีของจริง → เพิ่มเทสต์ปักใน **ไฟล์ใหม่**
-   **ห้ามแก้ logic เอง** ข้อนี้ทั้งข้อคือ "ห้ามเปลี่ยน" การไปแก้จะทำให้ข้อนี้เป็นเท็จด้วยมือตัวเอง
+**อ่านก่อนลงมือ — ส่วน "tests + build" เก็บหลักฐานไว้ให้แล้วรอบ 2026-08-17_0005 อย่าเสียเวลาซ้ำ:**
+`npm test` = 131/39 บน main (138/40 บน branch `_0005`), `npm run build` ผ่าน,
+`dist/sw.js` + `dist/manifest.webmanifest` + `dist/workbox-*.js` ถูกสร้างจริง (`generateSW`, precache 5)
+→ **แค่รัน Verify ซ้ำเพื่อยืนยันตัวเลข ณ รอบนั้น แล้วจดลงช่อง** ส่วนที่เหลือคือของจริงของข้อนี้:
+1. **"PWA generate" ไม่ได้แปลว่าแค่ไฟล์ถูกสร้าง — และรอบ `_0005` เปิดดูแล้วพบว่ามันไม่ครบจริงๆ**
+   `dist/manifest.webmanifest` ทั้งไฟล์คือ (อ่านจาก build จริงของรอบ `_0005`):
+   `{"name":"สายสัมพันธ์ ม.6/7","short_name":"Sai Samphan","start_url":"/","display":"standalone",`
+   `"background_color":"#1A1A1A","theme_color":"#1A1A1A","lang":"en","scope":"/","icons":[]}`
+   → **`icons` เป็น array ว่าง** = ติดตั้งลงโฮมสกรีน iPad แล้วไม่มีไอคอน (iOS/Android ต้องการ
+   อย่างน้อย 192×192 + 512×512) และ `lang` เป็น `"en"` ทั้งที่แอปเป็นไทย
+   → **ข้อนี้ยังไม่จริง อย่าติ๊กถ้ายังไม่มี icons** งานของรอบนั้นคือ *ยืนยันว่ายังขาด* + ปักด้วยเทสต์
+   ตามข้อ 2 แล้วจดว่าต้องแก้ที่ `vite.config.ts` (บล็อก `VitePWA({ manifest: … })`) — **อย่าเพิ่งแก้**
+   การเพิ่มไฟล์ไอคอนจริงเป็นงาน asset คนละรอบ ต้องตัดสินใจว่าเอารูปจากไหนด้วย
+   — เช็คด้วยว่า `index.html`/bundle เรียก `registerSW.js` จริงไหม (build สร้างไฟล์นี้ออกมาแล้ว)
+2. **ปักด้วยเทสต์ใน *ไฟล์ใหม่*** เช่น `src/pwaConfig.test.ts` ที่ `import` config จาก `vite.config.ts`
+   แล้ว assert ว่า manifest มี field ที่จำเป็นครบ (เทสต์ระดับ config แบบนี้ไม่ต้องรัน build จริง
+   และจับกรณี "ใครมาลบ icons ออกทีหลัง" ได้) — **ห้ามแก้ `vite.config.ts` เอง**
+3. mutation-check ตามเคย: ลบ field ที่ปักไว้ออกจาก config ชั่วคราว → เทสต์ใหม่ต้องแดง เทสต์เดิมต้องเขียว
+   แล้ว revert ให้ `git status` สะอาด
+
+**ลำดับที่แนะนำหลังจากนั้น** (ข้อละรอบ): `Firestore/logic ไม่เปลี่ยน` ของ `ui-overhaul` (ใช้วิธี
+`git diff` แบบเดียวกับรอบ `_0005` เทียบจาก merge ของ UI overhaul) → แล้วค่อยไปกอง `hq-comms`
+ซึ่งยังไม่มีหลักฐานเลยสักข้อ (เริ่มจาก `Donation thermometer` เพราะ `metrics.ts` ปักเลขไว้แล้ว
+เหลือแค่พิสูจน์ *การต่อสาย* ไปที่หน้าจอ — เป็นแพตเทิร์นเดียวกับรอบ `_0031`/`_0042` ที่ได้ผลมาแล้ว)
 
 ⚠️ ไฟล์ที่ branch อื่นแก้ค้างไว้ (ห้ามแตะถ้าเลี่ยงได้): `DisplayScreen.tsx`, `DisplayScreen.test.tsx`
 (`_0020`/`_0031`), `queueActions.*`, `ordersRepo.*`, `QueuePanel.tsx` (`_1553`/`_0030`)
