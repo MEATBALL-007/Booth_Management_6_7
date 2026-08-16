@@ -291,7 +291,46 @@
              โค้ดเวอร์ชันเก่าจนกว่าจะมีคนมากดยืนยัน) → **แดง 1 ตัว เป็นเทสต์ใหม่ เดิมเขียวหมด**
          (ค) `icons: [{ src: '/pwa-192.png' }]` (เคสจริง: รอบหน้าเพิ่มไอคอนแล้วลืม `sizes`/`type`)
              → **แดง 1 ตัว** = ยืนยันว่าเทสต์ well-formed มีฟันจริงตอนที่มีของให้ตรวจ
-- [ ] Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)
+- [x] Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)
+      — ✅ **ติ๊กในรอบ 2026-08-17_0039** พิสูจน์ด้วย **git history ไม่ใช่เทสต์** (ตามที่ plan สั่ง)
+      **ไม่ได้แก้ไฟล์โค้ดเลยแม้แต่ไบต์เดียว และไม่ได้เพิ่มไฟล์เทสต์** รอบนี้แตะแค่ `AUTOPILOT.md` + `SUMMARY.md`
+      **ฐานเทียบที่ใช้ (จดไว้ให้รอบหลังตรวจซ้ำจากจุดเดียวกันได้):**
+      merge ของ UI overhaul = `4c8a5d6` → parent สายหลัก = **`3304e66`** (`docs: UI overhaul implementation plan`)
+      ช่วงที่ตรวจ = `3304e66..4c8a5d6` (**24 ไฟล์**, +617/−315) และตรวจซ้ำสะสมถึง main ด้วย `3304e66..main`
+      1. **ไฟล์ที่ต้อง "ไม่เปลี่ยนเลย" — ไม่เปลี่ยนสักไฟล์ ทั้งสองช่วง** (`git diff --name-only` คืนว่าง):
+         `firestore.rules`, `firestore.indexes.json`, `firebase.json`, `.firebaserc`, `src/lib/firebase.ts`(+`.test.ts`),
+         `src/order/ordersRepo.ts`, `src/comms/commsRepo.ts`, `src/expense/expensesRepo.ts`,
+         `buildOrder.ts`, `cart.ts`, `options.ts`, `promptpay.ts`, `queueNumber.ts`, `catalog.ts`,
+         `commsLogic.ts`, `metrics.ts`
+         — ⚠️ **sanity check ของ pathspec (สำคัญ: "diff ว่าง" ไม่มีค่าถ้า pathspec จับไฟล์ไม่ได้ตั้งแต่แรก):**
+         `src/domain/types.ts` โผล่ในช่วง `3304e66..main` จริง = คำสั่งจับไฟล์เป็น; และเจอว่า `src/firebase*`
+         **ไม่ match อะไรเลย** เพราะไฟล์จริงอยู่ที่ `src/lib/firebase.ts` → เขียนเป็น path เต็มแล้วตรวจซ้ำ
+      2. **24 ไฟล์ที่เปลี่ยนจริง — ไล่อ่านครบทุกไฟล์ ตกอยู่ใน 3 หมวดที่เกณฑ์อนุญาตทั้งหมด**
+         (ก) **Tailwind/token:** `tailwind.config.js` (เพิ่มสี surface/line/muted/success/danger + boxShadow glow),
+             `src/index.css` (`html{font-size:120%}` = base +20%, `.glow-o`/`.glow-y`), `src/theme.ts` +`theme.test.ts`
+         (ข) **`src/ui/` ของใหม่ล้วน:** `Button`, `Panel`, `Chip`, `StatTile`, `QueueNumber` + เทสต์ 2 ไฟล์
+         (ค) **presentation:** `App.tsx`, `PinGate.tsx`, `SetupScreen`, `OrderStation`, `QueuePanel`,
+             `DashboardScreen`, `DisplayScreen`, `AlertButtons`, `BroadcastBar`, `CommsToast`, `PresenceBoard`,
+             `labels.ts` (**เพิ่ม 2 key: `order.hasOptions`, `display.live` — เพิ่มล้วน ไม่แก้ของเดิม**)
+         — ตรวจถึงระดับ **hunk header** (`git diff -U0`) ไม่ใช่แค่ `--stat`: ในไฟล์ component ทุกไฟล์
+         hunk ที่ไม่ใช่ import ตกอยู่ **ใต้ `return (`ทั้งหมด** = ครึ่งบนที่เป็น hook/handler ไม่ถูกแตะ
+         ยืนยันเพิ่มว่า call site ของ logic เหมือนเดิมเป๊ะ: `buildPromptPayPayload(APP_CONFIG.promptpayId, total)`,
+         `lineUnitPrice(p, line.selections) * line.qty`, `setQty(...)`, `ackMessage(top.id, me)`,
+         `fire({...base(), kind, ...})`, `m.*` ทุกตัวของ dashboard (ทั้ง 8 `data-testid` เดิมยังอยู่ครบ)
+      3. **ข้อยกเว้นเดียวที่ *ไม่ใช่* presentation — บันทึกตรงๆ ไม่กลบ:** `.gitignore` +3 บรรทัด
+         (`.firebase/` cache, commit `b2a732b` ที่ไหลมาอยู่ในช่วงเดียวกัน) — **ไม่ใช่ Firestore ไม่ใช่ logic**
+         จึงไม่ละเมิดเกณฑ์ แต่ก็ไม่ใช่ presentation ตรงตัว ผู้ตรวจควรรู้ว่ามีไฟล์นี้อยู่ในช่วง
+      4. **3 จุดที่ *พฤติกรรม* เปลี่ยนแม้จะอยู่ในไฟล์ presentation (ตรวจแล้วไม่มีข้อไหนเป็นบัญชี/เมนู/comms):**
+         (ก) `PinGate.tsx` เพิ่ม `onKeyDown` → กด Enter = submit (ตัว `unlockDashboard` ไม่เปลี่ยน)
+         (ข) `DisplayScreen.tsx` เพิ่มฟังก์ชัน `itemDetail()` **เหนือ component** (hunk เดียวในกองที่อยู่เหนือ
+             `return (`) = ตัวจัดรูปข้อความล้วน ทำให้จอลูกค้าโชว์รายการสินค้าใต้เลขคิว **ข้อมูลใหม่บนจอ
+             แต่ไม่ใช่การคิดเงิน** อ่านจาก `o.items` ที่มีอยู่แล้ว
+         (ค) `OrderStation.tsx` ย้ายแผงเลือกตัวเลือกไปเป็น modal (`fixed inset-0`) + เพิ่มชิป "มีตัวเลือก"
+             — ตรรกะ `confirmPick`/`pick` เหมือนเดิมทุกบรรทัด
+      — 🔗 เชื่อมกับช่อง **Display glanceable**: ป้าย `LIVE` ที่ไม่มีไทย **เกิดที่ commit นี้เอง**
+      (`89ed450 feat(ui): restyle Display screen…` ใส่ `{L('display.live').en}` ใน header) ไม่ใช่ของเก่าตกค้าง
+      — Verify รอบนี้: `npm test` = **131 ผ่าน / 39 ไฟล์** (เท่ากับ main พอดี เพราะรอบนี้ไม่ได้เพิ่มเทสต์),
+      `npm run build` ผ่าน (`generateSW`, precache 5 entries; เตือน chunk > 500 kB เหมือนเดิม)
 - [ ] Display เลขคิวสเกลใหญ่ตามจอด้วย clamp
 
 **จาก `2026-07-24-hq-comms-crosssell-design.md`**
@@ -321,35 +360,39 @@ npm test && npm run build
 
 ## Next task — do ONLY this
 
-ตรวจข้อ **Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)**
-ของ `2026-08-03-ui-overhaul-design.md`
+ตรวจข้อ **Display เลขคิวสเกลใหญ่ตามจอด้วย clamp** ของ `2026-08-03-ui-overhaul-design.md`
 
-**ข้อ `tests + build + PWA generate` ตรวจครบแล้วรอบ 2026-08-17_0023 อย่าทำซ้ำ** — ผลอยู่ในช่องของมัน
-สรุปสั้นๆ: tests+build ✅, service worker + `registerSW.js` ต่อสายครบ ✅, **แต่ `manifest.icons` ว่าง**
-จึงยังไม่ติ๊ก และเหลือเป็น *งานของคน* (ต้องมีไฟล์รูปจริง — ดูหัวข้อ "ค้างอยู่ที่คน" ข้างล่าง)
-มีตาข่ายกันถอยหลังแล้วที่ `src/pwaConfig.test.ts`
+**สองข้อก่อนหน้าตรวจครบแล้ว อย่าทำซ้ำ** — ผลอยู่ในช่องของมันเอง:
+`tests+build+PWA generate` (รอบ `_0023`, ยังไม่ติ๊กเพราะ `manifest.icons` ว่าง = งานของคน) และ
+`Firestore/logic ไม่เปลี่ยน` (รอบ `_0039`, **ติ๊กแล้ว** ฐานเทียบ `3304e66..4c8a5d6`)
 
-**วิธีทำข้อนี้ — เป็นข้อ *audit ด้วย `git diff`* ไม่ใช่ข้อเขียนเทสต์ (แพตเทิร์นเดียวกับรอบ `_0005` ข้อ 2):**
-1. หา commit ของ **UI overhaul** ก่อน (`git log --oneline --all -- tailwind.config.js src/ui` หรือหา
-   merge commit ที่ชื่อพาดพิง UI/Neon) แล้วใช้ parent สายหลักของมันเป็นฐานเทียบ — **จดเลข commit ที่ใช้
-   ลงในช่องด้วยเสมอ** เพื่อให้รอบหลังตรวจซ้ำได้ว่าเทียบจากจุดเดียวกัน
-2. `git diff <ฐาน>..main --stat` แล้ว **ไล่ทีละไฟล์** ว่าไฟล์ที่เปลี่ยนตกอยู่ใน presentation /
-   Tailwind config / `src/ui` จริงไหม ไฟล์ที่ต้อง **ไม่เปลี่ยนเลย**: `firestore.rules`,
-   `firestore.indexes.json`, `src/**/[a-z]*Repo.ts` ทุกตัว, `src/firebase*.ts`,
-   และ logic ล้วนอย่าง `buildOrder.ts`, `cart.ts`, `options.ts`, `promptpay.ts`, `queueNumber.ts`,
-   `catalog.ts`, `commsLogic.ts`, `metrics.ts`
-3. ถ้าเจอไฟล์ที่ **เปลี่ยนจริงและไม่ใช่ presentation** → **อย่าแก้โค้ด** ให้บันทึกว่าเปลี่ยนอะไร
-   บรรทัดไหน และมันละเมิดเกณฑ์หรือไม่ (บางอย่างเป็นฟีเจอร์คนละสายเหมือน `types.ts` ในรอบ `_0005`
-   ซึ่ง**ไม่ละเมิด**) แล้วติ๊ก/ไม่ติ๊กตามความจริง
-4. ข้อนี้พิสูจน์ด้วยประวัติ git ไม่ใช่ด้วยเทสต์ **จึงไม่ต้องเขียนไฟล์เทสต์ใหม่** — ถ้าเผลอไปเขียน
-   เทสต์ที่ assert ว่า "ไฟล์ไม่เปลี่ยน" มันจะกลายเป็นตัวขวางทุกการแก้ในอนาคต **ห้ามทำ**
+**ข้อนี้ตรวจได้จริงต่างจากข้อ "จัดกึ่งกลาง responsive"** เพราะ `clamp()` เป็น *ค่าที่เขียนอยู่ในซอร์ส*
+ไม่ต้องให้ jsdom คำนวณ layout — สำรวจไว้แล้วรอบ `_0039` (ยังไม่ได้เขียนเทสต์ ปล่อยให้เป็นงานรอบหน้า):
+- `src/ui/QueueNumber.tsx:3` — `size="display"` → `text-[clamp(96px,22vw,320px)] leading-none glow-o`
+  ส่วน `size="card"` → `text-5xl` (ไม่ clamp — **ตั้งใจ** เพราะการ์ดในแผงคิวไม่ได้สเกลตามจอ)
+- `src/screens/DisplayScreen.tsx:83` — กล่อง "เตรียมตัว" ใช้ `text-[clamp(56px,10vw,140px)]` ของตัวเอง
+  (**ไม่ได้ผ่าน `QueueNumber`** — เป็นจุดที่หลุดง่ายที่สุดถ้ามีคน refactor)
+**วิธีทำที่แนะนำ:** ไฟล์เทสต์ใหม่ `src/ui/QueueNumber.clamp.test.tsx` (ไฟล์ใหม่ล้วน ไม่ชน branch ไหน)
+→ `render(<QueueNumber value="A12" size="display" />)` แล้วอ่าน `className` จาก `container`
+ปักว่า **มี `clamp(` จริง** และ **ค่ากลางเป็นหน่วย viewport (`vw`)** = ข้อความจริงของเกณฑ์ "สเกลใหญ่ตามจอ"
++ ปักว่า `size="card"` **ไม่มี** clamp (กันการเผลอเอา display scale ไปใส่การ์ด)
+⚠️ นี่เป็นการ assert `className` ซึ่งปกติ teeth ติดลบ (เขียนซ้ำ source) — **ข้อนี้เป็นข้อยกเว้นที่รับได้**
+เพราะเกณฑ์เขียนชื่อเทคนิค `clamp` มาตรงๆ ระดับซอร์ส แต่ **ห้ามไป assert ตัวเลข 96/22/320 แบบเป๊ะ**
+(ค่าปรับได้ตามงานออกแบบ ปักไว้จะกลายเป็นตัวขวาง) — ปักแค่ *รูปแบบ* ด้วย regex เช่น `/clamp\([^)]*vw/`
+⚠️ ส่วนของ `DisplayScreen.tsx:83` **อย่าแตะไฟล์นั้น** (`_0020`/`_0031` ค้างอยู่) ถ้าจะปักให้ทำแบบ
+`labels.coverage.test.ts` ของรอบ `_0055` คือ `readFileSync` อ่านซอร์สแล้ว regex — และ**ต้องมีเทสต์ guard
+กันผ่านแบบว่างเปล่า** ถ้า regex จับได้ 0 ตัว
+**mutation-check ที่ต้องรัน:** เปลี่ยน `text-[clamp(96px,22vw,320px)]` เป็น `text-8xl` คงที่ →
+เทสต์ใหม่ต้องแดง เทสต์เดิม 131 ตัวต้องเขียวหมด (นั่นคือขนาดของช่องว่าง) แล้ว revert
 
-**ลำดับที่แนะนำหลังจากนั้น** (ข้อละรอบ): `Display เลขคิวสเกลใหญ่ตามจอด้วย clamp` ของ `ui-overhaul`
-(ระวัง: ถ้าเป็นเรื่อง CSS ล้วนจะชนกำแพงเดียวกับข้อ "จัดกึ่งกลาง responsive" — แต่ `clamp()` **ต่างออกไป**
-เพราะมันเป็น *ค่าที่เขียนอยู่ในซอร์ส* ตรวจได้ว่า `font-size` ของเลขคิวใช้ `clamp(...)` จริงไหม
-โดยไม่ต้องให้ jsdom คำนวณ layout) → แล้วค่อยไปกอง `hq-comms` ซึ่งยังไม่มีหลักฐานเลยสักข้อ
+**ลำดับที่แนะนำหลังจากนั้น:** ไปกอง `hq-comms` ซึ่งยังไม่มีหลักฐานเลยสักข้อ
 (เริ่มจาก `Donation thermometer` เพราะ `metrics.ts` ปักเลขไว้แล้ว เหลือแค่พิสูจน์ *การต่อสาย*
 ไปที่หน้าจอ — เป็นแพตเทิร์นเดียวกับรอบ `_0031`/`_0042` ที่ได้ผลมาแล้ว)
+เหลือใน `ui-overhaul` อีก 2 ข้อที่ **ตรวจด้วยเทสต์ระดับนี้ไม่ได้** (`Neon Clarity สม่ำเสมอ`,
+`อ่านง่ายบน iPad/มือถือ ไม่มี horizontal scroll, touch target ≥44px`) — ทั้งคู่ต้องการ browser จริง
+= ชนกำแพงเดียวกับ "จัดกึ่งกลาง responsive" **อย่าเผาทั้งรอบไปกับมัน** ถ้าถึงคิว ให้บันทึกเป็นช่องว่าง
+ที่รู้ตัวแล้วข้าม (หมายเหตุ: `min-h-[44px]` ถูกใส่ไว้ทั่วทุกปุ่มแล้วตั้งแต่ UI overhaul — grep ดูได้
+แต่ "ไม่มี horizontal scroll" พิสูจน์ไม่ได้ถ้าไม่มี viewport จริง)
 
 ⚠️ ไฟล์ที่ branch อื่นแก้ค้างไว้ (ห้ามแตะถ้าเลี่ยงได้): `DisplayScreen.tsx`, `DisplayScreen.test.tsx`
 (`_0020`/`_0031`), `queueActions.*`, `ordersRepo.*`, `QueuePanel.tsx` (`_1553`/`_0030`)
@@ -377,7 +420,7 @@ npm test && npm run build
 — เทสต์ `src/pwaConfig.test.ts` จะตรวจให้เองว่า icon ทุกตัวมี `src`/`sizes`/`type` ครบ
 **ห้าม agent สร้างรูปเอง** ต้องเป็นโลโก้จริงของงาน ไม่ใช่ placeholder ที่จะติดไปถึงวันงาน
 
-**ตอนนี้มี branch ค้างรอ merge 11 อัน กองสูงขึ้นทุกรอบ** — agent push/merge เองไม่ได้ (ไม่มีสิทธิ์ push/gh)
+**ตอนนี้มี branch ค้างรอ merge 12 อัน กองสูงขึ้นทุกรอบ** — agent push/merge เองไม่ได้ (ไม่มีสิทธิ์ push/gh)
 แนะนำให้ merge ตามลำดับนี้ (เรียงจากชนน้อยไปมาก):
 
 1. `auto/Booth_Management_6_7/2026-08-15_0008` — แก้ข้อความ plan อย่างเดียว (แตะแค่ `AUTOPILOT.md`, `SUMMARY.md`)
@@ -403,6 +446,9 @@ npm test && npm run build
 11. `auto/Booth_Management_6_7/2026-08-17_0023` — ข้อ **PWA generate (ตรวจแล้ว ยังไม่ติ๊ก)**
     เพิ่มไฟล์ใหม่ไฟล์เดียว (`src/pwaConfig.test.ts`) **ไม่แตะ production code เลย** ไม่ชนโค้ดกับใคร
     — เป็นไฟล์เทสต์แรกของโปรเจคที่แตะ `vite.config.ts` ถ้ารอบหลังมีใครแก้ manifest ให้ดูไฟล์นี้ด้วย
+12. `auto/Booth_Management_6_7/2026-08-17_0039` — ข้อ **Firestore/logic ไม่เปลี่ยน (ติ๊กแล้ว)**
+    **ไม่มีไฟล์โค้ดเลย** แตะแค่ `AUTOPILOT.md` + `SUMMARY.md` (เป็นข้อที่พิสูจน์ด้วย git history)
+    → merge อันไหนก่อนก็ได้ ไม่ชนโค้ดกับใครทั้งสิ้น
 
 ทุกอันจะ conflict กันที่ `AUTOPILOT.md` และ `SUMMARY.md` เท่านั้น (ทุก branch เขียนสองไฟล์นี้)
 วิธีแก้: เอาของ branch ที่ใหม่กว่าเสมอ — ของ 0042 เป็น superset ของ 0031, 0020 และ 0008 อยู่แล้ว
