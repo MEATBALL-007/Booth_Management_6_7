@@ -33,6 +33,12 @@ export function reannounce(order: Order, now: number): Partial<Order> | null {
   return { announcedAt: now }
 }
 
+export function cancel(reason: string): Partial<Order> | null {
+  const trimmed = reason.trim()
+  if (!trimmed) return null
+  return { status: 'cancelled', cancelReason: trimmed }
+}
+
 export function orderSnapshot(order: Order): Partial<Order> {
   const snap: Partial<Order> = { status: order.status }
   if (order.servingAt !== undefined) snap.servingAt = order.servingAt

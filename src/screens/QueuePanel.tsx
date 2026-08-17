@@ -37,7 +37,7 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   const confirmCancel = () => {
     if (!cancelId || !reason.trim()) return
     const order = mine.find((o) => o.id === cancelId)
-    if (order) apply(order, { status: 'cancelled', cancelReason: reason.trim() }, L('queue.cancel').th)
+    if (order) apply(order, Q.cancel(reason), L('queue.cancel').th)
     setCancelId(null); setReason('')
   }
   const itemSummary = (o: Order) => o.items.map((it) => `${it.name} ×${it.qty}${it.options?.length ? ` · ${it.options.map((op) => op.label).join(' · ')}` : ''}`).join(' , ')
