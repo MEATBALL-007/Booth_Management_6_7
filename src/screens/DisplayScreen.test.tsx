@@ -63,3 +63,15 @@ test('shows the no-queue placeholder when nothing is serving', () => {
   render(<DisplayScreen booth="drinks" />)
   expect(screen.getByText(/ยังไม่มีคิว/)).toBeInTheDocument()
 })
+
+test('the photo booth display says it is shooting, not serving', () => {
+  render(<DisplayScreen booth="photo" />)
+  expect(screen.getByText(/กำลังถ่าย/)).toBeInTheDocument()
+  expect(screen.getByText(/Now Shooting/)).toBeInTheDocument()
+  expect(screen.queryByText(/Now Serving/)).not.toBeInTheDocument()
+})
+
+test('booths without their own wording keep the generic now-serving heading', () => {
+  render(<DisplayScreen booth="drinks" />)
+  expect(screen.getByText(/Now Serving/)).toBeInTheDocument()
+})
