@@ -1,4 +1,4 @@
-import type { Order, Station } from '../domain/types'
+import type { Order, OrderStatus, Station } from '../domain/types'
 
 export function callNext(orders: Order[], station: Station, now: number): { id: string; patch: Partial<Order> } | null {
   const next = orders
@@ -39,11 +39,29 @@ export function cancel(reason: string): Partial<Order> | null {
   return { status: 'cancelled', cancelReason: trimmed }
 }
 
-export function orderSnapshot(order: Order): Partial<Order> {
-  const snap: Partial<Order> = { status: order.status }
-  if (order.servingAt !== undefined) snap.servingAt = order.servingAt
-  if (order.doneAt !== undefined) snap.doneAt = order.doneAt
-  if (order.announcedAt !== undefined) snap.announcedAt = order.announcedAt
-  if (order.cancelReason !== undefined) snap.cancelReason = order.cancelReason
-  return snap
+/** Every field a queue action can touch, so undo can restore all of them. */
+export interface OrderSnapshot {
+  status: OrderStatus
+  servingAt: number | undefined
+  doneAt: number | undefined
+  announcedAt: number | undefined
+  cancelReason: string | undefined
+}
+
+/**
+ * The undo patch for an order: its state *before* an action runs.
+ * Every undoable field is present, and `undefined` means "this field was
+ * absent — remove it again". Listing only the fields that happen to have a
+ * value is not enough: updateDoc merges, so any field the action introduced
+ * would survive the undo (an undone "เรียกคิวถัดไป" left servingAt behind).
+ * ordersRepo.updateOrderStatus turns those `undefined`s into deleteField().
+ */
+export function orderSnapshot(order: Order): OrderSnapshot {
+  return {
+    status: order.status,
+    servingAt: order.servingAt,
+    doneAt: order.doneAt,
+    announcedAt: order.announcedAt,
+    cancelReason: order.cancelReason,
+  }
 }

@@ -11,7 +11,7 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   const [orders, setOrders] = useState<Order[]>([])
   const [cancelId, setCancelId] = useState<string | null>(null)
   const [reason, setReason] = useState('')
-  const [undo, setUndo] = useState<{ id: string; before: Partial<Order>; label: string } | null>(null)
+  const [undo, setUndo] = useState<{ id: string; before: Q.OrderSnapshot; label: string } | null>(null)
 
   useEffect(() => subscribeBoothOrders(booth, setOrders), [booth])
 
