@@ -14,12 +14,22 @@
 
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
-- [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
-- [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+- [x] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+      — ✅ รอบ 2026-08-18: เจอบั๊กจริงและแก้แล้ว (`orderSnapshot` คืน field ครบทุกตัว,
+      `updateOrderStatus` แปลง `undefined` → `deleteField()`) พิสูจน์ด้วย 19 เทสต์ใหม่:
+      round-trip 9 เคสครบทุก action (`src/queue/undoRoundTrip.test.ts`) + 7 เคสระดับ UI
+      (`src/screens/QueuePanelUndo.test.tsx`) ทั้งหมดใช้ `toStrictEqual` บน mock.calls
+      บันทึกการวิเคราะห์เดิมอยู่ที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`
+      **⚠️ งานนี้อยู่บน branch `auto/Booth_Management_6_7/2026-08-18_0009` ยังไม่ merge เข้า main**
+- [x] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+      — ✅ รอบ 2026-08-18: เกณฑ์นี้ **ผ่านครบทุกท่อนโดยไม่ต้องแก้โค้ดเลย** แต่เดิมมี 2 ท่อนที่ไม่มีเทสต์
+      พิสูจน์ จึงเขียนเพิ่ม 11 เทสต์ในไฟล์ใหม่ 2 ไฟล์ (ไม่แตะไฟล์เทสต์เดิม เลี่ยง merge conflict):
+      1. ข้าม → `skipped` — เดิมมีแล้ว: `queueActions.test.ts:32`, `QueuePanel.test.tsx:85`
+      2. หายจากจอลูกค้า — **เดิมเป็นช่องว่าง** → `src/screens/DisplaySkipped.test.tsx` (3 เทสต์)
+      3. ขึ้นโซนพักไว้ — เดิมครอบคลุมโดยบังเอิญ → `src/screens/QueueParkedZone.test.tsx` (5 เทสต์)
+      4. เรียกซ้ำ → Display ประกาศ chime+flash — **เดิมเป็นช่องว่างที่ใหญ่ที่สุด**
+         (เทสต์เดิมพิสูจน์แค่ค่า patch ไม่เคยพิสูจน์ว่าจอประกาศจริง) → `DisplaySkipped.test.tsx` (3 เทสต์)
+      เทสต์ทั้ง 11 ผ่าน mutation check แล้ว (ดู SUMMARY.md) — ไม่ใช่เทสต์ที่เขียวเพราะไม่ได้ทดสอบอะไร
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
 - [ ] Idempotency: กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
@@ -60,24 +70,34 @@ npm test && npm run build
 - ห้ามแตะ `.env*`, `.firebaserc`
 - อย่าติ๊ก checkbox ใน `docs/` (ธรรมเนียมนี้ไม่ถูกใช้ในโปรเจคนี้ — ติ๊กที่ไฟล์นี้ไฟล์เดียว)
 
-## Next task
+## Next task — do ONLY this
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+ตรวจข้อ **ประกาศซ้ำ** ของ `2026-08-04-queue-pro-upgrade-design.md`:
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+> กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 
-**commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
+สถานะที่รู้แล้วจากรอบ No-show (2026-08-18) — **ไม่ต้องวิเคราะห์ซ้ำ**:
+- `Q.reannounce(order, now)` คืน `{ announcedAt: now }` เฉพาะเมื่อ status เป็น `serving`
+  (มีเทสต์แล้วที่ `queueActions.test.ts:41-44`)
+- ปุ่ม "🔔 ประกาศซ้ำ" ใน `QueuePanel.tsx:74` มีเทสต์ระดับ UI แล้วที่ `QueuePanel.test.tsx:98`
+  แต่ใช้ `objectContaining` — ยังไม่พิสูจน์ว่า patch **ไม่มี field เกิน**
+- ฝั่ง Display: `newlyAnnounced` ยิงเมื่อ `announcedAt` เพิ่มขึ้น และรอบ No-show ได้พิสูจน์แล้วว่า
+  announcedAt ที่เด้งทำให้ **chime + flash จริง** ที่ `DisplaySkipped.test.tsx`
+  ("recall still announces when skip and recall collapse into one snapshot")
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+เหลือช่องว่างจริงแค่ 2 จุด — งานรอบนี้จึงควรเล็ก:
+1. เทสต์ระดับ Display ที่ตั้งชื่อ/เล่าเรื่องเป็น "ประกาศซ้ำ" โดยตรง (serving เดิม → announcedAt เด้ง
+   → chime + flash) และเคส **announcedAt เท่าเดิม → ต้องไม่ประกาศ** (กัน re-render ยิงเสียงมั่ว)
+2. `updateOrderStatus.mock.calls` ของปุ่มประกาศซ้ำ ด้วย `toStrictEqual` ว่าเป็น
+   `{ announcedAt: <number> }` **เท่านั้น** — ห้ามพก `status`/`servingAt` ติดไปด้วย
+   (ถ้าพกไป undo/idempotency จะเพี้ยน)
+
+เขียนใน **ไฟล์ใหม่** (เช่น `src/screens/DisplayReannounce.test.tsx`) ตามธรรมเนียมรอบก่อนๆ
+และ **mutation-check** เทสต์ที่เขียวตั้งแต่รันแรกเสมอ ก่อนจะเชื่อว่ามันพิสูจน์อะไรได้
+
+**commit ระหว่างทางเป็นระยะ**
+
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ **เรียกเจาะจง**)
 
 ---
 
