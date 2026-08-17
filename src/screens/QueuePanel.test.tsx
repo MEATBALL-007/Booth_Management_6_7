@@ -110,5 +110,9 @@ test('undo restores the prior state of the last action', async () => {
   await user.click(screen.getByRole('button', { name: /เสร็จ/ }))          // serving -> done
   updateOrderStatus.mockClear()
   await user.click(screen.getByRole('button', { name: /ย้อนกลับ/ }))       // undo
-  expect(updateOrderStatus).toHaveBeenCalledWith('o1', expect.objectContaining({ status: 'serving', servingAt: 5 }))
+  // toStrictEqual on the raw call, not objectContaining: a subset matcher cannot
+  // see a field left behind by the undo (QueuePanelUndo.test.tsx covers the rest)
+  expect(updateOrderStatus.mock.calls).toStrictEqual([['o1', {
+    status: 'serving', servingAt: 5, doneAt: undefined, announcedAt: undefined, cancelReason: undefined,
+  }]])
 })

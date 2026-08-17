@@ -24,7 +24,7 @@ const write = (order: Order, patch: Partial<Order>): Order => {
     if (v === undefined) delete next[k]
     else next[k] = v
   }
-  return next as Order
+  return next as unknown as Order
 }
 
 const served = { servingAt: 300, announcedAt: 300 }
