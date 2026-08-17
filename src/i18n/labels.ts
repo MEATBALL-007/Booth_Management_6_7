@@ -1,3 +1,5 @@
+import type { BoothId } from '../domain/types'
+
 const LABELS = {
   'nav.setup': { th: 'ตั้งค่า', en: 'Setup' },
   'nav.backToSetup': { th: 'กลับไปหน้าตั้งค่า', en: 'Back to setup' },
@@ -37,6 +39,7 @@ const LABELS = {
   'order.cancelPick': { th: 'ยกเลิก', en: 'Cancel' },
   'order.hasOptions': { th: 'มีตัวเลือก', en: 'Options' },
   'display.nowServing': { th: 'กำลังทำ', en: 'Now Serving' },
+  'display.nowServing.photo': { th: 'กำลังถ่าย', en: 'Now Shooting' },
   'display.live': { th: 'สด', en: 'LIVE' },
   'display.upNext': { th: 'คิวถัดไป', en: 'Up Next' },
   'display.noQueue': { th: 'ยังไม่มีคิว', en: 'No orders yet' },
@@ -80,4 +83,13 @@ export type LabelKey = keyof typeof LABELS
 
 export function L(key: LabelKey): { th: string; en: string } {
   return LABELS[key]
+}
+
+// The customer display says what the booth is actually doing, not the generic
+// "serving" — a photo booth is shooting, not serving. Add a `display.nowServing.<booth>`
+// label to give another booth its own wording; anything absent falls back to the
+// generic one, so this stays a one-line change per booth.
+export function nowServingLabel(booth: BoothId): { th: string; en: string } {
+  const specific = `display.nowServing.${booth}`
+  return L(specific in LABELS ? (specific as LabelKey) : 'display.nowServing')
 }

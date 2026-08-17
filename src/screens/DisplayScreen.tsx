@@ -3,7 +3,7 @@ import type { BoothId, Order } from '../domain/types'
 import { subscribeBoothOrders } from '../order/ordersRepo'
 import { servingOrders, upNextOrders } from '../display/queueView'
 import { useServingAlert } from '../display/useServingAlert'
-import { L } from '../i18n/labels'
+import { L, nowServingLabel } from '../i18n/labels'
 import { QueueNumber } from '../ui/QueueNumber'
 
 function itemDetail(o: Order): string {
@@ -24,6 +24,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
   const upNext = upNextOrders(orders)
   const [next, ...rest] = upNext
   const flashing = useServingAlert(serving.map((s) => ({ n: s.queueNumber, announcedAt: s.announcedAt ?? 0 })), ready)
+  const nowServing = nowServingLabel(booth)
 
   return (
     <div
@@ -43,7 +44,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
 
       <section className="flex flex-col items-center gap-6 md:gap-8">
         <h2 className="font-kanit text-2xl md:text-3xl font-semibold text-phantom-muted">
-          🔔 {L('display.nowServing').th} · {L('display.nowServing').en}
+          🔔 {nowServing.th} · {nowServing.en}
         </h2>
         {serving.length === 0 ? (
           <p className="font-kanit text-xl md:text-2xl text-phantom-muted">
