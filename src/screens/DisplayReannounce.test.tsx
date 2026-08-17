@@ -83,10 +83,12 @@ test('re-announcing one serving number leaves the other serving numbers silent',
 
 // --- clause: announcedAt เท่าเดิม → ต้องไม่ประกาศ ---------------------------
 
-test('a snapshot that does not bump announcedAt is silent', () => {
+test('a new waiting order arriving does not re-announce the number already serving', () => {
   // Firestore re-delivers the whole booth on any change, so the display sees fresh objects
-  // constantly. An unrelated order arriving must not re-fire the chime for a number that
-  // was announced long ago — the up-next order below is what forces a re-evaluation.
+  // constantly. A new *waiting* order must not re-fire the chime for a number announced
+  // long ago. (This one is held by the alert hook's key being derived from the serving set
+  // only — a waiting order never reaches it. The test below is the one that exercises
+  // newlyAnnounced's comparison through the screen.)
   const { container } = render(<DisplayScreen booth="drinks" />)
   act(() => emit([o({ id: 'a', queueNumber: 'A1', status: 'serving', announcedAt: 100 })]))
 
@@ -98,6 +100,26 @@ test('a snapshot that does not bump announcedAt is silent', () => {
   expect(playChimeSpy).not.toHaveBeenCalled()
   expect(isFlashing(container)).toBe(false)
   expect(screen.getByTestId('next-up')).toHaveTextContent('A9')
+})
+
+test('finishing one serving order does not re-announce the one still serving', () => {
+  // Changing the serving SET does re-run the alert effect, so this is the case where the
+  // display genuinely re-compares announcedAt values. A2 leaving must not drag A1 — whose
+  // announcedAt never moved — back into an announcement.
+  const { container } = render(<DisplayScreen booth="drinks" />)
+  act(() => emit([
+    o({ id: 'a', queueNumber: 'A1', status: 'serving', announcedAt: 100 }),
+    o({ id: 'b', queueNumber: 'A2', status: 'serving', announcedAt: 100 }),
+  ]))
+
+  act(() => emit([
+    o({ id: 'a', queueNumber: 'A1', status: 'serving', announcedAt: 100 }), // untouched
+    o({ id: 'b', queueNumber: 'A2', status: 'done', doneAt: 500 }),         // finished
+  ]))
+
+  expect(playChimeSpy).not.toHaveBeenCalled()
+  expect(isFlashing(container)).toBe(false)
+  expect(screen.getAllByTestId('serving').map((e) => e.textContent)).toEqual(['A1'])
 })
 
 test('an announcedAt that goes backwards does not announce', () => {
