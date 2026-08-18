@@ -1,6 +1,6 @@
 import { vi, beforeEach, test, expect } from 'vitest'
 
-const { addDoc, onSnapshot, updateDoc, collection, query, where, doc } = vi.hoisted(() => ({
+const { addDoc, onSnapshot, updateDoc, collection, query, where, doc, deleteField } = vi.hoisted(() => ({
   addDoc: vi.fn(),
   onSnapshot: vi.fn(),
   updateDoc: vi.fn(),
@@ -8,10 +8,11 @@ const { addDoc, onSnapshot, updateDoc, collection, query, where, doc } = vi.hois
   query: vi.fn((...args) => ({ __query: args })),
   where: vi.fn((f, op, v) => ({ __where: [f, op, v] })),
   doc: vi.fn((_db, path, id) => ({ __doc: [path, id] })),
+  deleteField: vi.fn(() => ({ __delete: true })),
 }))
 
 vi.mock('firebase/firestore', () => ({
-  collection, addDoc, onSnapshot, query, where, doc, updateDoc,
+  collection, addDoc, onSnapshot, query, where, doc, updateDoc, deleteField,
 }))
 vi.mock('../lib/firebase', () => ({ getDb: () => ({ __db: true }) }))
 
@@ -51,6 +52,17 @@ test('updateOrderStatus updates the order doc with the patch', async () => {
   await updateOrderStatus('o1', { status: 'serving', servingAt: 42 })
   expect(doc).toHaveBeenCalledWith({ __db: true }, 'orders', 'o1')
   expect(updateDoc).toHaveBeenCalledWith({ __doc: ['orders', 'o1'] }, { status: 'serving', servingAt: 42 })
+})
+
+// Firestore has no "set this to undefined" — an undo that must remove a field the action
+// created has to send the deleteField() sentinel, otherwise updateDoc merges and it survives.
+test('updateOrderStatus turns an explicit undefined in the patch into deleteField()', async () => {
+  updateDoc.mockResolvedValue(undefined)
+  await updateOrderStatus('o1', { status: 'waiting', servingAt: undefined, announcedAt: undefined })
+  expect(updateDoc).toHaveBeenCalledWith({ __doc: ['orders', 'o1'] }, {
+    status: 'waiting', servingAt: { __delete: true }, announcedAt: { __delete: true },
+  })
+  expect(deleteField).toHaveBeenCalledTimes(2)
 })
 
 test('subscribeAllOrders subscribes to the whole orders collection (no filter) and sorts by createdAt', () => {

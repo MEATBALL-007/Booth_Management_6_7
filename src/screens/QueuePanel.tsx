@@ -11,7 +11,7 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   const [orders, setOrders] = useState<Order[]>([])
   const [cancelId, setCancelId] = useState<string | null>(null)
   const [reason, setReason] = useState('')
-  const [undo, setUndo] = useState<{ id: string; before: Partial<Order>; label: string } | null>(null)
+  const [undo, setUndo] = useState<{ id: string; before: Q.OrderSnapshot; label: string } | null>(null)
 
   useEffect(() => subscribeBoothOrders(booth, setOrders), [booth])
 
@@ -35,9 +35,10 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   }
   const runUndo = () => { if (undo) { updateOrderStatus(undo.id, undo.before); setUndo(null) } }
   const confirmCancel = () => {
-    if (!cancelId || !reason.trim()) return
+    const patch = Q.cancel(reason)
+    if (!cancelId || !patch) return
     const order = mine.find((o) => o.id === cancelId)
-    if (order) apply(order, { status: 'cancelled', cancelReason: reason.trim() }, L('queue.cancel').th)
+    if (order) apply(order, patch, L('queue.cancel').th)
     setCancelId(null); setReason('')
   }
   const itemSummary = (o: Order) => o.items.map((it) => `${it.name} ×${it.qty}${it.options?.length ? ` · ${it.options.map((op) => op.label).join(' · ')}` : ''}`).join(' , ')
