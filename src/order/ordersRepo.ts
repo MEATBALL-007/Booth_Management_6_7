@@ -1,4 +1,4 @@
-import { collection, addDoc, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, onSnapshot, query, where, doc, updateDoc, deleteField } from 'firebase/firestore'
 import { getDb } from '../lib/firebase'
 import type { Order, BoothId } from '../domain/types'
 
@@ -22,6 +22,14 @@ export function subscribeAllOrders(cb: (orders: Order[]) => void): () => void {
   })
 }
 
+// An explicit `undefined` in the patch means "remove this field". Firestore has no way to
+// store undefined, and updateDoc merges, so the only way to drop a field an action created
+// (the undo case) is the deleteField() sentinel. Ordinary action patches never hold
+// undefined, so this leaves every existing write untouched.
 export async function updateOrderStatus(id: string, patch: Partial<Order>): Promise<void> {
-  await updateDoc(doc(getDb(), 'orders', id), patch)
+  const payload: Record<string, unknown> = {}
+  for (const [field, value] of Object.entries(patch)) {
+    payload[field] = value === undefined ? deleteField() : value
+  }
+  await updateDoc(doc(getDb(), 'orders', id), payload)
 }

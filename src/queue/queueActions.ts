@@ -33,11 +33,33 @@ export function reannounce(order: Order, now: number): Partial<Order> | null {
   return { announcedAt: now }
 }
 
-export function orderSnapshot(order: Order): Partial<Order> {
-  const snap: Partial<Order> = { status: order.status }
-  if (order.servingAt !== undefined) snap.servingAt = order.servingAt
-  if (order.doneAt !== undefined) snap.doneAt = order.doneAt
-  if (order.announcedAt !== undefined) snap.announcedAt = order.announcedAt
-  if (order.cancelReason !== undefined) snap.cancelReason = order.cancelReason
-  return snap
+export function cancel(reason: string): Partial<Order> | null {
+  const cancelReason = reason.trim()
+  if (!cancelReason) return null
+  return { status: 'cancelled', cancelReason }
+}
+
+/**
+ * Everything an action is allowed to touch, so undo can put all of it back.
+ * A key holding `undefined` means "this field was absent — remove it again";
+ * updateOrderStatus turns that into Firestore's deleteField() sentinel.
+ * Listing every key is load-bearing: updateDoc merges, so a field omitted here
+ * would survive the undo instead of being reverted.
+ */
+export interface OrderSnapshot {
+  status: Order['status']
+  servingAt: number | undefined
+  doneAt: number | undefined
+  announcedAt: number | undefined
+  cancelReason: string | undefined
+}
+
+export function orderSnapshot(order: Order): OrderSnapshot {
+  return {
+    status: order.status,
+    servingAt: order.servingAt,
+    doneAt: order.doneAt,
+    announcedAt: order.announcedAt,
+    cancelReason: order.cancelReason,
+  }
 }

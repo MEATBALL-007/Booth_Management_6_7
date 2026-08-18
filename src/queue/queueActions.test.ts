@@ -1,4 +1,4 @@
-import { callNext, callSpecific, markDone, skip, recall, reannounce, orderSnapshot } from './queueActions'
+import { callNext, callSpecific, markDone, skip, recall, reannounce, cancel, orderSnapshot } from './queueActions'
 import type { Order } from '../domain/types'
 
 const o = (over: Partial<Order>): Order => ({
@@ -44,8 +44,17 @@ test('reannounce bumps announcedAt on a serving order only', () => {
   expect(reannounce(o({ status: 'skipped' }), 100)).toBeNull()
 })
 
-test('orderSnapshot captures only defined mutable fields (for undo)', () => {
-  expect(orderSnapshot(o({ status: 'serving', servingAt: 5 }))).toEqual({ status: 'serving', servingAt: 5 })
+test('cancel records the trimmed reason; blank reason is a no-op', () => {
+  expect(cancel('  ของหมด  ')).toEqual({ status: 'cancelled', cancelReason: 'ของหมด' })
+  expect(cancel('   ')).toBeNull()
+})
+
+// toStrictEqual, not toEqual: toEqual treats a key holding undefined as absent, and
+// "this field was absent, delete it again" is the whole point of the snapshot.
+test('orderSnapshot captures every mutable field, undefined meaning it was absent (for undo)', () => {
+  expect(orderSnapshot(o({ status: 'serving', servingAt: 5 }))).toStrictEqual({
+    status: 'serving', servingAt: 5, doneAt: undefined, announcedAt: undefined, cancelReason: undefined,
+  })
   expect(orderSnapshot(o({ status: 'done', servingAt: 5, doneAt: 9, announcedAt: 5, cancelReason: 'x' })))
-    .toEqual({ status: 'done', servingAt: 5, doneAt: 9, announcedAt: 5, cancelReason: 'x' })
+    .toStrictEqual({ status: 'done', servingAt: 5, doneAt: 9, announcedAt: 5, cancelReason: 'x' })
 })
