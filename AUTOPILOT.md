@@ -21,7 +21,18 @@
       ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
 - [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
-- [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
+- [x] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
+      — ✅ รอบ 2026-08-20 (0031): โค้ดถูกอยู่แล้ว ไม่ต้องแก้ production เลย ช่องว่างอยู่ที่เทสต์ล้วนๆ
+      เพิ่ม 9 เทสต์ที่ `src/screens/QueuePanel.callSpecific.test.tsx` (4)
+      + `src/screens/DisplayScreen.callSpecific.test.tsx` (5) — commit `d2f47b2`, `aa260fc`
+      พิสูจน์ว่าไม่ vacuous ด้วยการ break โค้ด 10 แบบ **ทุกเทสต์ทั้ง 9 ตัวถูกฆ่าอย่างน้อย 1 แบบ**
+      **หลักฐานว่าช่องว่างเป็นของจริง**: ใส่ `doneAt` ปลอมเข้าไปใน patch ที่ QueuePanel ส่งให้
+      `updateOrderStatus` (ระดับ panel ไม่ใช่ระดับ pure function) → เทสต์ใหม่แดง 1 ตัว
+      แต่เทสต์เดิมทั้ง `QueuePanel.test.tsx` + `queueActions.test.ts` **เขียวครบ 16 ตัว**
+      เพราะ `objectContaining` มองข้าม field ส่วนเกิน (`updateOrderStatus` เป็น merge → ติดลง doc จริง)
+      → เทสต์ใหม่ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` ทั้งลิสต์แทน
+      หมายเหตุ: guard `status !== 'waiting'` ของ `callSpecific` **ไปไม่ถึงจาก UI** เพราะปุ่ม `เรียก`
+      ถูก render เฉพาะการ์ด waiting เท่านั้น (มีเทสต์ล็อกไว้แล้ว) — เป็น defence ชั้นสอง
 - [ ] Idempotency: กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
 - [ ] Display: จัดกึ่งกลางทุกจอ (responsive), "เตรียมตัว" callout เด่น, skipped ไม่โชว์
 - [ ] Display glanceable: มองแวบเดียวเข้าใจได้โดยไม่ต้องอ่านอังกฤษ (สี+ไอคอน+ขนาด; ไทยเด่น อังกฤษรอง)
@@ -62,22 +73,54 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+ตรวจข้อ **Idempotency** ให้จบ:
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+> กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
+
+⚠️ **บรรทัด "Next task" ในไฟล์นี้ค้างอยู่ที่ข้อ Undo มาหลายรอบแล้ว** (working copy stale ตามที่
+memory เตือน) — รอบนี้เขียนทับให้แล้ว ถ้าเจอว่าค้างอีกให้เชื่อ checkbox ด้านบนเป็นหลัก
+
+สถานะที่สำรวจไว้แล้วรอบ 2026-08-20 (0031) — **สำรวจบน branch นี้เอง ไม่ต้องสำรวจซ้ำ**:
+- guard ระดับ pure function มีครบและมีเทสต์แล้วทุกตัวใน `src/queue/queueActions.ts`:
+  `callNext` คืน null เมื่อไม่มี waiting, ส่วน `callSpecific`/`markDone`/`skip`/`recall`/`reannounce`
+  คืน null เมื่อ status ไม่ตรง — เทสต์อยู่ที่ `src/queue/queueActions.test.ts:18-34`
+- ฝั่ง UI: `apply()` ใน `QueuePanel.tsx:24-28` ทำ `if (!patch) return` → guard ที่คืน null
+  กลายเป็น no-op จริง **ไม่มีเทสต์ระดับ UI ยืนยันบรรทัดนี้เลย**
+- รอบนี้พิสูจน์แล้วว่าปุ่ม `เรียก` ถูก render เฉพาะการ์ด waiting → guard ของ `callSpecific`
+  ไปไม่ถึงจากการกดปุ่ม ดู `src/screens/QueuePanel.callSpecific.test.tsx:107`
+
+**ช่องว่างที่เหลือจริงๆ มี 3 จุด:**
+1. **กดซ้ำเร็วๆ (double-click) บนปุ่มเดียวกัน** — UI ยัง render การ์ดเดิมอยู่จนกว่า Firestore
+   จะ echo กลับมา ดังนั้นคลิกที่สองยิง `updateOrderStatus` ซ้ำด้วย patch เดียวกันได้
+   นี่คือ **บั๊กที่มีโอกาสเป็นของจริง** ไม่ใช่แค่ช่องว่างเทสต์ — ตรวจก่อนว่า `apply()`
+   กันซ้ำหรือเปล่า (ตอนนี้ดูเหมือน **ไม่กัน**) ถ้าไม่กันจริง ให้ตัดสินใจว่าจะแก้หรือบันทึกเป็นช่องว่าง
+2. **สองเครื่องพร้อมกัน** — เครื่อง B ยังถือ snapshot เก่า (order = waiting) แล้วกด `เรียก`
+   หลังเครื่อง A ดึงไปแล้ว → `callSpecific` ที่ฝั่ง B เห็น status เก่าจึงคืน patch ไม่ใช่ null
+   ทดสอบได้ด้วยการ emit snapshot เก่าค้างไว้แล้วกด (จำลอง lag) — ต้องระบุให้ชัดว่า
+   guard นี้เป็น **client-side เท่านั้น** ไม่มี transaction/compare-and-set ที่ Firestore
+   (ห้ามแก้ `firestore.rules` — out of scope)
+3. **`เรียกคิวถัดไป` กดรัวๆ** — ปุ่ม disabled เมื่อ `waiting.length === 0` เท่านั้น
+   กดสองครั้งก่อน echo กลับ → ดึง o1 ซ้ำสองรอบ (ไม่ใช่ o1 แล้ว o2) ยังไม่มีเทสต์
+
+**กับดักที่เจอแล้ว (อย่าพลาดซ้ำ):**
+- ปุ่ม label ไทย `เรียก` / `เรียกคิวถัดไป` / `เรียกซ้ำ` ขึ้นต้นเหมือนกัน → **ต้องใช้ `/^เรียก$/`**
+- ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` ทั้งลิสต์ ไม่ใช่ `objectContaining`
+  — รอบนี้พิสูจน์แล้วว่า `objectContaining` ปล่อย field ส่วนเกินผ่านได้จริง (เทสต์เดิม 16 ตัวเขียวหมด)
+  การ assert ทั้งลิสต์ยังจับ "ยิงซ้ำสองครั้ง" ได้ด้วย ซึ่งตรงกับข้อนี้พอดี
+- `Date.now` ให้ล็อกด้วย `vi.spyOn(Date, 'now').mockReturnValue(...)` **อย่าใช้ fake timers**
+  เพราะ `userEvent` ถือ timer ของตัวเอง สลับแล้วเทสต์ค้าง
+
+สิ่งที่ต้องทำ: เพิ่ม `src/screens/QueuePanel.idempotency.test.tsx` **เป็นไฟล์ใหม่แยก**
+ถ้าเจอว่าเป็นบั๊กจริง (ข้อ 1/3) ให้แก้ production ด้วย ไม่ใช่แค่บันทึก
+**ต้อง break โค้ดดูว่าเทสต์แดงจริงทุกตัว** แล้ว revert
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+⚠️ **เรื่อง branch (สำคัญกว่าตัวงาน)**: runner แตก branch ใหม่จาก `main` ทุกรอบ และ **ไม่เคย merge
+กลับ** → **ก่อนเริ่มงาน ให้ `git log --all --oneline` ดูก่อนเสมอ** ว่าเกณฑ์ข้อนั้นมีคนทำไว้แล้วหรือยัง
+(รอบนี้เช็คแล้ว: ไม่มี branch ไหนเคยแตะ callSpecific/idempotency เลย)
+
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "Display: จัดกึ่งกลางทุกจอ")
 
 ---
 
