@@ -14,12 +14,18 @@
 
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
-- [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
-- [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+- [x] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+      — ✅ รอบ 2026-08-19: เจอบั๊กจริงและแก้แล้ว (`orderSnapshot` เก็บไม่ครบ + `updateDoc` เป็น merge
+      ทำให้ field ที่ action สร้างขึ้นรอดจาก undo) พิสูจน์ด้วย round-trip test 10 เคส ครบทุก action
+      ในทุก state ที่กดถึงได้จริง ที่ `src/queue/undoRoundTrip.test.ts` + UI 3 เคสที่
+      `src/screens/QueuePanel.undo.test.tsx` — commit `2791ffe`
+      (สเปกที่ใช้: `docs/autopilot/2026-08-13-undo-audit-findings.md` จากรอบที่โค้ดถูกลบทิ้ง)
+- [x] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+      — ✅ รอบ 2026-08-20: โค้ดถูกอยู่แล้ว ไม่มีบั๊ก แต่ 3 ใน 4 ท่อนไม่เคยมีเทสต์ยืนยัน เพิ่มเทสต์ 10 ตัว
+      ที่ `src/screens/DisplayScreen.noshow.test.tsx` (5) + `src/screens/QueuePanel.noshow.test.tsx` (5)
+      พิสูจน์ว่าไม่ vacuous ด้วยการ break โค้ด 6 แบบ ทุกแบบทำให้เทสต์ที่ตรงกันแดง
+      หมายเหตุ: `skipped` หายจากจอเพราะ `queueView` filter **เอาเข้า** (`=== 'serving'`/`=== 'waiting'`)
+      ไม่ได้ตัด skipped ออกตรงๆ — เทสต์ใหม่จึงเป็น regression guard ของพฤติกรรมนี้
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
 - [ ] Idempotency: กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
@@ -62,22 +68,40 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+ตรวจข้อ **ประกาศซ้ำ** ให้จบ:
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+> กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
+
+สถานะที่สำรวจไว้แล้วรอบ 2026-08-20 (ไม่ต้องสำรวจซ้ำ):
+- `Q.reannounce(o, now)` คืน `{ announcedAt: now }` เฉพาะตอน status เป็น `serving`
+  — มีเทสต์ระดับ pure function แล้วที่ `src/queue/queueActions.test.ts:41`
+- `newlyAnnounced` กับ `useServingAlert` มีเทสต์ระดับ unit แล้วที่ `src/display/queueView.test.ts:29`
+  และ `src/display/useServingAlert.test.ts:28` (**แต่ตัวหลังเช็คแค่ chime ไม่ได้เช็ค flash**)
+- **ช่องว่างจริงคือ**: ยังไม่มีเทสต์ระดับ **DisplayScreen** ที่พิสูจน์เส้นทาง "เลขเดิมที่ serving อยู่แล้ว
+  แล้ว announcedAt เด้ง" ซึ่งเป็น **คนละ branch** กับที่รอบ No-show ทำไป
+  (รอบนั้นเลขหายไปแล้วกลับมา = branch `was === undefined`; รอบนี้คือ branch `s.announcedAt > was`)
+- **ช่องว่างจริงข้อสอง**: ยังไม่มีเทสต์ระดับ QueuePanel ที่กดปุ่ม 🔔 ประกาศซ้ำ แล้ว assert ว่า patch
+  ที่ส่งคือ `{ announcedAt }` **เท่านั้น** — ต้องไม่มี `status` ติดไปด้วย (ถ้ามี = เขียนทับสถานะจริง)
+
+สิ่งที่ต้องทำ:
+1. `src/screens/DisplayScreen.reannounce.test.tsx` — emit เลขเดิม status `serving` สองครั้ง
+   โดยครั้งที่สอง `announcedAt` สูงกว่า → assert chime 1 ครั้ง + root มี `animate-pulse`
+   ใช้ `rootOf(container) = container.firstElementChild` (อย่า query `.animate-pulse` ทั้งหน้า
+   เพราะจุดไฟ live ใน header มี `animate-pulse` ถาวร — จะได้เทสต์ที่เขียวหลอก)
+2. `src/screens/QueuePanel.reannounce.test.tsx` — กดปุ่ม 🔔 บน serving card แล้วเช็ค
+   `Object.keys(patch)` ให้เท่ากับ `['announcedAt']` เป๊ะๆ (**ห้ามใช้ `objectContaining`**)
+   และเช็คว่าปุ่มนี้ไม่มีบน waiting card / บนการ์ดในโซนพักไว้
+
+ทำแบบเดียวกับรอบ No-show: ถ้าโค้ดถูกอยู่แล้วก็แค่เพิ่มเทสต์ที่พิสูจน์มัน
+**แต่ต้องพิสูจน์ว่าเทสต์ไม่ vacuous** — break โค้ดชั่วคราว (เช่น ให้ `reannounce` คืน `{}` ,
+ถอด `animate-pulse` ออกจาก DisplayScreen, ปิด `playChime()`) แล้วดูว่าเทสต์แดงตรงข้อ จากนั้น revert
+**เทสต์ใหม่ให้แยกไฟล์** จะได้ไม่ชนกับ branch อื่น
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "เรียกเจาะจง")
+
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "ประกาศซ้ำ")
 
 ---
 
