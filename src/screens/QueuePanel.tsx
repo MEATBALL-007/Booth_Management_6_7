@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BoothId, Station, Order } from '../domain/types'
 import { subscribeBoothOrders, updateOrderStatus } from '../order/ordersRepo'
 import * as Q from '../queue/queueActions'
@@ -13,7 +13,13 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   const [reason, setReason] = useState('')
   const [undo, setUndo] = useState<{ id: string; before: Partial<Order>; label: string } | null>(null)
 
-  useEffect(() => subscribeBoothOrders(booth, setOrders), [booth])
+  // orders we have written to since the last snapshot. Until Firestore echoes back, the
+  // cards on screen still show the OLD status, so a second tap would fire the same patch
+  // again — or make เรียกคิวถัดไป pull the same order twice instead of moving on.
+  // Every snapshot clears the whole set, so a write that never lands can't wedge a card.
+  const written = useRef(new Set<string>())
+
+  useEffect(() => subscribeBoothOrders(booth, (next) => { written.current.clear(); setOrders(next) }), [booth])
 
   const mine = orders.filter((o) => o.station === station)
   const waiting = mine.filter((o) => o.status === 'waiting').sort((a, b) => a.createdAt - b.createdAt)
@@ -23,6 +29,8 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   // apply a patch to one order, recording an undo snapshot first
   const apply = (order: Order, patch: Partial<Order> | null, label: string) => {
     if (!patch) return
+    if (written.current.has(order.id)) return   // stale card — we already acted on this one
+    written.current.add(order.id)
     setUndo({ id: order.id, before: Q.orderSnapshot(order), label })
     updateOrderStatus(order.id, patch)
   }
