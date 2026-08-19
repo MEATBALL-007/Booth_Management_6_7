@@ -20,7 +20,12 @@
       ในทุก state ที่กดถึงได้จริง ที่ `src/queue/undoRoundTrip.test.ts` + UI 3 เคสที่
       `src/screens/QueuePanel.undo.test.tsx` — commit `2791ffe`
       (สเปกที่ใช้: `docs/autopilot/2026-08-13-undo-audit-findings.md` จากรอบที่โค้ดถูกลบทิ้ง)
-- [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+- [x] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+      — ✅ รอบ 2026-08-20: โค้ดถูกอยู่แล้ว ไม่มีบั๊ก แต่ 3 ใน 4 ท่อนไม่เคยมีเทสต์ยืนยัน เพิ่มเทสต์ 10 ตัว
+      ที่ `src/screens/DisplayScreen.noshow.test.tsx` (5) + `src/screens/QueuePanel.noshow.test.tsx` (5)
+      พิสูจน์ว่าไม่ vacuous ด้วยการ break โค้ด 6 แบบ ทุกแบบทำให้เทสต์ที่ตรงกันแดง
+      หมายเหตุ: `skipped` หายจากจอเพราะ `queueView` filter **เอาเข้า** (`=== 'serving'`/`=== 'waiting'`)
+      ไม่ได้ตัด skipped ออกตรงๆ — เทสต์ใหม่จึงเป็น regression guard ของพฤติกรรมนี้
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
 - [ ] Idempotency: กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
@@ -63,26 +68,38 @@ npm test && npm run build
 
 ## Next task
 
-ตรวจข้อ **No-show** ให้จบ:
+ตรวจข้อ **ประกาศซ้ำ** ให้จบ:
 
-> ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+> กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 
-เกณฑ์นี้มี 4 ท่อน ต้องพิสูจน์ด้วยเทสต์ให้ครบทุกท่อน (หรือบันทึกว่าขาดตรงไหน):
-1. `skip` บน serving → `skipped` — **มีเทสต์แล้ว** ที่ `queueActions.test.ts` + `QueuePanel.test.tsx`
-2. **หายจากจอลูกค้า** — `src/screens/DisplayScreen.tsx` ยังไม่มีคำว่า `skipped` อยู่เลย
-   (มันกรองเอา serving/waiting เข้ามา ไม่ได้ตัด skipped ออกตรงๆ) → **ยังไม่มีเทสต์ยืนยัน**
-   ต้องเขียนเทสต์ที่ emit order `skipped` แล้ว assert ว่าเลขนั้นไม่โผล่บนจอ
-3. **ขึ้นโซนพักไว้** ใน QueuePanel — มีโค้ดแล้ว (`skipped.length > 0`) แต่ควรมีเทสต์ยืนยันว่า
-   เลขนั้นอยู่ในโซน `queue.parked` จริง ไม่ใช่แค่ปุ่ม "เรียกซ้ำ" มีอยู่
-4. **เรียกซ้ำ → serving + Display ประกาศ (chime+flash)** — `recall` เซ็ต `announcedAt` ใหม่แล้ว
-   ตัว Display ใช้ `useServingAlert(...)` → หา hook นั้นแล้วพิสูจน์ว่า `announcedAt` ที่ขยับ
-   ทำให้เกิด flash (`animate-pulse`) + chime จริง
+สถานะที่สำรวจไว้แล้วรอบ 2026-08-20 (ไม่ต้องสำรวจซ้ำ):
+- `Q.reannounce(o, now)` คืน `{ announcedAt: now }` เฉพาะตอน status เป็น `serving`
+  — มีเทสต์ระดับ pure function แล้วที่ `src/queue/queueActions.test.ts:41`
+- `newlyAnnounced` กับ `useServingAlert` มีเทสต์ระดับ unit แล้วที่ `src/display/queueView.test.ts:29`
+  และ `src/display/useServingAlert.test.ts:28` (**แต่ตัวหลังเช็คแค่ chime ไม่ได้เช็ค flash**)
+- **ช่องว่างจริงคือ**: ยังไม่มีเทสต์ระดับ **DisplayScreen** ที่พิสูจน์เส้นทาง "เลขเดิมที่ serving อยู่แล้ว
+  แล้ว announcedAt เด้ง" ซึ่งเป็น **คนละ branch** กับที่รอบ No-show ทำไป
+  (รอบนั้นเลขหายไปแล้วกลับมา = branch `was === undefined`; รอบนี้คือ branch `s.announcedAt > was`)
+- **ช่องว่างจริงข้อสอง**: ยังไม่มีเทสต์ระดับ QueuePanel ที่กดปุ่ม 🔔 ประกาศซ้ำ แล้ว assert ว่า patch
+  ที่ส่งคือ `{ announcedAt }` **เท่านั้น** — ต้องไม่มี `status` ติดไปด้วย (ถ้ามี = เขียนทับสถานะจริง)
 
-ทำแบบเดียวกับรอบ Undo: **เขียนเทสต์ให้แดงก่อน** แล้วค่อยแก้ ถ้าพบว่าโค้ดถูกอยู่แล้วก็แค่เพิ่มเทสต์
-ที่พิสูจน์มัน (ต้องพิสูจน์ว่าเทสต์ไม่ vacuous — ดูว่ามันแดงเมื่อ break โค้ดชั่วคราว)
-**เทสต์ใหม่ให้แยกไฟล์** (เช่น `DisplayScreen.noshow.test.tsx`) จะได้ไม่ชนกับ branch อื่น
+สิ่งที่ต้องทำ:
+1. `src/screens/DisplayScreen.reannounce.test.tsx` — emit เลขเดิม status `serving` สองครั้ง
+   โดยครั้งที่สอง `announcedAt` สูงกว่า → assert chime 1 ครั้ง + root มี `animate-pulse`
+   ใช้ `rootOf(container) = container.firstElementChild` (อย่า query `.animate-pulse` ทั้งหน้า
+   เพราะจุดไฟ live ใน header มี `animate-pulse` ถาวร — จะได้เทสต์ที่เขียวหลอก)
+2. `src/screens/QueuePanel.reannounce.test.tsx` — กดปุ่ม 🔔 บน serving card แล้วเช็ค
+   `Object.keys(patch)` ให้เท่ากับ `['announcedAt']` เป๊ะๆ (**ห้ามใช้ `objectContaining`**)
+   และเช็คว่าปุ่มนี้ไม่มีบน waiting card / บนการ์ดในโซนพักไว้
+
+ทำแบบเดียวกับรอบ No-show: ถ้าโค้ดถูกอยู่แล้วก็แค่เพิ่มเทสต์ที่พิสูจน์มัน
+**แต่ต้องพิสูจน์ว่าเทสต์ไม่ vacuous** — break โค้ดชั่วคราว (เช่น ให้ `reannounce` คืน `{}` ,
+ถอด `animate-pulse` ออกจาก DisplayScreen, ปิด `playChime()`) แล้วดูว่าเทสต์แดงตรงข้อ จากนั้น revert
+**เทสต์ใหม่ให้แยกไฟล์** จะได้ไม่ชนกับ branch อื่น
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
+
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "เรียกเจาะจง")
 
 จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "ประกาศซ้ำ")
 
