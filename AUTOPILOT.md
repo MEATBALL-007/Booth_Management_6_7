@@ -14,11 +14,12 @@
 
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
-- [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
+- [x] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+      — ✅ รอบ 2026-08-19: เจอบั๊กจริงและแก้แล้ว (`orderSnapshot` เก็บไม่ครบ + `updateDoc` เป็น merge
+      ทำให้ field ที่ action สร้างขึ้นรอดจาก undo) พิสูจน์ด้วย round-trip test 10 เคส ครบทุก action
+      ในทุก state ที่กดถึงได้จริง ที่ `src/queue/undoRoundTrip.test.ts` + UI 3 เคสที่
+      `src/screens/QueuePanel.undo.test.tsx` — commit `2791ffe`
+      (สเปกที่ใช้: `docs/autopilot/2026-08-13-undo-audit-findings.md` จากรอบที่โค้ดถูกลบทิ้ง)
 - [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
@@ -62,22 +63,28 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+ตรวจข้อ **No-show** ให้จบ:
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+> ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+
+เกณฑ์นี้มี 4 ท่อน ต้องพิสูจน์ด้วยเทสต์ให้ครบทุกท่อน (หรือบันทึกว่าขาดตรงไหน):
+1. `skip` บน serving → `skipped` — **มีเทสต์แล้ว** ที่ `queueActions.test.ts` + `QueuePanel.test.tsx`
+2. **หายจากจอลูกค้า** — `src/screens/DisplayScreen.tsx` ยังไม่มีคำว่า `skipped` อยู่เลย
+   (มันกรองเอา serving/waiting เข้ามา ไม่ได้ตัด skipped ออกตรงๆ) → **ยังไม่มีเทสต์ยืนยัน**
+   ต้องเขียนเทสต์ที่ emit order `skipped` แล้ว assert ว่าเลขนั้นไม่โผล่บนจอ
+3. **ขึ้นโซนพักไว้** ใน QueuePanel — มีโค้ดแล้ว (`skipped.length > 0`) แต่ควรมีเทสต์ยืนยันว่า
+   เลขนั้นอยู่ในโซน `queue.parked` จริง ไม่ใช่แค่ปุ่ม "เรียกซ้ำ" มีอยู่
+4. **เรียกซ้ำ → serving + Display ประกาศ (chime+flash)** — `recall` เซ็ต `announcedAt` ใหม่แล้ว
+   ตัว Display ใช้ `useServingAlert(...)` → หา hook นั้นแล้วพิสูจน์ว่า `announcedAt` ที่ขยับ
+   ทำให้เกิด flash (`animate-pulse`) + chime จริง
+
+ทำแบบเดียวกับรอบ Undo: **เขียนเทสต์ให้แดงก่อน** แล้วค่อยแก้ ถ้าพบว่าโค้ดถูกอยู่แล้วก็แค่เพิ่มเทสต์
+ที่พิสูจน์มัน (ต้องพิสูจน์ว่าเทสต์ไม่ vacuous — ดูว่ามันแดงเมื่อ break โค้ดชั่วคราว)
+**เทสต์ใหม่ให้แยกไฟล์** (เช่น `DisplayScreen.noshow.test.tsx`) จะได้ไม่ชนกับ branch อื่น
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "ประกาศซ้ำ")
 
 ---
 
