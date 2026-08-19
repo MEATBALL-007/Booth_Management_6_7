@@ -26,7 +26,17 @@
       พิสูจน์ว่าไม่ vacuous ด้วยการ break โค้ด 6 แบบ ทุกแบบทำให้เทสต์ที่ตรงกันแดง
       หมายเหตุ: `skipped` หายจากจอเพราะ `queueView` filter **เอาเข้า** (`=== 'serving'`/`=== 'waiting'`)
       ไม่ได้ตัด skipped ออกตรงๆ — เทสต์ใหม่จึงเป็น regression guard ของพฤติกรรมนี้
-- [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
+- [x] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
+      — ✅ รอบ 2026-08-20 (0020): โค้ดถูกอยู่แล้ว ไม่ต้องแก้ production เลย ช่องว่างอยู่ที่เทสต์ล้วนๆ
+      เพิ่ม 12 เทสต์ที่ `src/screens/DisplayScreen.reannounce.test.tsx` (7)
+      + `src/screens/QueuePanel.reannounce.test.tsx` (5) — commit `219d80d`
+      พิสูจน์ว่าไม่ vacuous ด้วยการ break โค้ด 5 แบบ ทุกแบบทำให้เทสต์ที่ตรงกันแดง
+      **หลักฐานว่าช่องว่างเป็นของจริง**: ใส่ `status` ปลอมเข้าไปใน patch ของ `reannounce`
+      → เทสต์ใหม่แดง 3 ตัว แต่ `QueuePanel.test.tsx` เดิม **เขียวครบ 8 ตัว** เพราะใช้
+      `objectContaining` ซึ่งมองข้าม field ส่วนเกิน (`updateDoc` เป็น merge → field ส่วนเกินติดลง doc จริง)
+      หมายเหตุ: `useServingAlert` key จาก **serving set เท่านั้น** — order ที่ waiting เปลี่ยนไม่ re-run effect
+      เคสที่แตะ `newlyAnnounced` จริงจึงต้องเปลี่ยน serving set (เทสต์ "finishing one serving order")
+      ซึ่งเป็นเทสต์ตัวเดียวที่จับ mutation `>` → `>=` ได้
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
 - [ ] Idempotency: กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
 - [ ] Display: จัดกึ่งกลางทุกจอ (responsive), "เตรียมตัว" callout เด่น, skipped ไม่โชว์
@@ -68,38 +78,48 @@ npm test && npm run build
 
 ## Next task
 
-ตรวจข้อ **ประกาศซ้ำ** ให้จบ:
+ตรวจข้อ **เรียกเจาะจง** ให้จบ:
 
-> กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
+> กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
 
-สถานะที่สำรวจไว้แล้วรอบ 2026-08-20 (ไม่ต้องสำรวจซ้ำ):
-- `Q.reannounce(o, now)` คืน `{ announcedAt: now }` เฉพาะตอน status เป็น `serving`
-  — มีเทสต์ระดับ pure function แล้วที่ `src/queue/queueActions.test.ts:41`
-- `newlyAnnounced` กับ `useServingAlert` มีเทสต์ระดับ unit แล้วที่ `src/display/queueView.test.ts:29`
-  และ `src/display/useServingAlert.test.ts:28` (**แต่ตัวหลังเช็คแค่ chime ไม่ได้เช็ค flash**)
-- **ช่องว่างจริงคือ**: ยังไม่มีเทสต์ระดับ **DisplayScreen** ที่พิสูจน์เส้นทาง "เลขเดิมที่ serving อยู่แล้ว
-  แล้ว announcedAt เด้ง" ซึ่งเป็น **คนละ branch** กับที่รอบ No-show ทำไป
-  (รอบนั้นเลขหายไปแล้วกลับมา = branch `was === undefined`; รอบนี้คือ branch `s.announcedAt > was`)
-- **ช่องว่างจริงข้อสอง**: ยังไม่มีเทสต์ระดับ QueuePanel ที่กดปุ่ม 🔔 ประกาศซ้ำ แล้ว assert ว่า patch
-  ที่ส่งคือ `{ announcedAt }` **เท่านั้น** — ต้องไม่มี `status` ติดไปด้วย (ถ้ามี = เขียนทับสถานะจริง)
+สถานะที่สำรวจไว้แล้วรอบ 2026-08-20 (0020) — **สำรวจบน branch นี้เอง ไม่ต้องสำรวจซ้ำ**:
+- `Q.callSpecific(o, now)` คืน `{ status:'serving', servingAt:now, announcedAt:now }` เฉพาะตอน `waiting`
+  มีเทสต์ pure function ครบทั้งสองขาแล้วที่ `src/queue/queueActions.test.ts:22-25`
+- **มีเทสต์ระดับ UI อยู่แล้ว** ที่ `src/screens/QueuePanel.test.tsx:73-83`
+  ("call button on a waiting order serves that specific number") ซึ่งกดปุ่มของ waiting **ตัวที่สอง**
+  แล้ว assert ว่า `o2` ถูกเรียก — ข้อนี้จึงครอบคลุมคำว่า "ข้ามลำดับได้" ในระดับหนึ่งแล้ว
+  ⚠️ รอบ 2026-08-18 (`c145ef3`) เขียน handoff ไว้ว่า "QueuePanel.test.tsx ไม่มีเทสต์ callSpecific เลย"
+  — **ข้อความนั้นผิดสำหรับ branch นี้** ตรวจไฟล์เองก่อนเชื่อ
 
-สิ่งที่ต้องทำ:
-1. `src/screens/DisplayScreen.reannounce.test.tsx` — emit เลขเดิม status `serving` สองครั้ง
-   โดยครั้งที่สอง `announcedAt` สูงกว่า → assert chime 1 ครั้ง + root มี `animate-pulse`
-   ใช้ `rootOf(container) = container.firstElementChild` (อย่า query `.animate-pulse` ทั้งหน้า
-   เพราะจุดไฟ live ใน header มี `animate-pulse` ถาวร — จะได้เทสต์ที่เขียวหลอก)
-2. `src/screens/QueuePanel.reannounce.test.tsx` — กดปุ่ม 🔔 บน serving card แล้วเช็ค
-   `Object.keys(patch)` ให้เท่ากับ `['announcedAt']` เป๊ะๆ (**ห้ามใช้ `objectContaining`**)
-   และเช็คว่าปุ่มนี้ไม่มีบน waiting card / บนการ์ดในโซนพักไว้
+**ช่องว่างที่เหลือจริงๆ มี 3 จุด:**
+1. เทสต์เดิมใช้ `objectContaining({ status: 'serving' })` → ไม่ได้พิสูจน์ว่า `servingAt`/`announcedAt`
+   ถูกตั้ง และไม่กัน field ส่วนเกิน (คลาสเดียวกับบั๊กที่รอบ ประกาศซ้ำ เพิ่งพิสูจน์ว่าซ่อนได้จริง)
+   → ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` แทน
+2. ไม่มีเทสต์ว่าเรียกเลขท้ายแถวแล้ว **เลขที่อยู่ก่อนหน้ายังคง waiting** (ไม่ถูกดึงตามไปด้วย)
+   และ `เรียกคิวถัดไป` หลังจากนั้นยังหยิบตัวที่เก่าที่สุดที่เหลือได้ถูกต้อง
+3. ไม่มีเทสต์ระดับ **DisplayScreen** ว่าเลขที่ถูกเรียกข้ามลำดับขึ้นจอ + ประกาศ (chime+flash)
+   — เส้นทางนี้คือ branch `was === undefined` ของ `newlyAnnounced` ซึ่งรอบ No-show แตะแล้ว
+   แต่ยังไม่เคยแตะจากทาง callSpecific
 
-ทำแบบเดียวกับรอบ No-show: ถ้าโค้ดถูกอยู่แล้วก็แค่เพิ่มเทสต์ที่พิสูจน์มัน
-**แต่ต้องพิสูจน์ว่าเทสต์ไม่ vacuous** — break โค้ดชั่วคราว (เช่น ให้ `reannounce` คืน `{}` ,
-ถอด `animate-pulse` ออกจาก DisplayScreen, ปิด `playChime()`) แล้วดูว่าเทสต์แดงตรงข้อ จากนั้น revert
-**เทสต์ใหม่ให้แยกไฟล์** จะได้ไม่ชนกับ branch อื่น
+**กับดักที่เจอแล้ว (อย่าพลาดซ้ำ):**
+- ปุ่มนี้ label ไทยคือ `เรียก` เฉยๆ ส่วน `เรียกคิวถัดไป` (callNext) กับ `เรียกซ้ำ` (recall)
+  ก็ขึ้นต้นด้วย "เรียก" → **ต้องใช้ regex `/^เรียก$/`** ไม่งั้น query ชนกันเงียบๆ
+- `useServingAlert` key จาก serving set เท่านั้น — ถ้าจะทดสอบเคส "ไม่ควรประกาศ" ต้องทำให้
+  serving set เปลี่ยน ไม่งั้น effect ไม่ re-run แล้วเทสต์เขียวหลอก
+
+สิ่งที่ต้องทำ: เพิ่ม `src/screens/QueuePanel.callSpecific.test.tsx` (+ ถ้าไหว
+`src/screens/DisplayScreen.callSpecific.test.tsx`) **เป็นไฟล์ใหม่แยก** จะได้ไม่ชนกับ branch อื่น
+ถ้าโค้ดถูกอยู่แล้วก็แค่เพิ่มเทสต์ที่พิสูจน์มัน **แต่ต้อง break โค้ดดูว่าเทสต์แดงจริง** แล้ว revert
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "เรียกเจาะจง")
+⚠️ **เรื่อง branch (สำคัญกว่าตัวงาน)**: runner แตก branch ใหม่จาก `main` ทุกรอบ และ **ไม่เคย merge
+กลับ** ทำให้แต่ละรอบทำงานซ้ำของรอบก่อนบน branch ที่มองไม่เห็นกัน — ข้อ Undo ถูกทำ 2 รอบ
+(`d72bbc6`, `2791ffe`), No-show 2 รอบ (`50c9762`, `38cb57c`), ประกาศซ้ำ 2 รอบ (`0f14c87`, `219d80d`)
+**ก่อนเริ่มงาน ให้ `git log --all --oneline` ดูก่อนเสมอว่าเกณฑ์ข้อนั้นมีคนทำไว้แล้วหรือยัง**
+ทางแก้ที่แท้จริงคือ merge branch เหล่านี้เข้า `main` ซึ่งอยู่นอกมือ agent (push ไม่ได้)
+
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "Idempotency")
 
 จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ "ประกาศซ้ำ")
 
