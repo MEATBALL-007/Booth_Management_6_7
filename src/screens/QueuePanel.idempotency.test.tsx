@@ -58,7 +58,11 @@ test('เรียกคิวถัดไป pressed twice before the echo pull
   ])
 })
 
-test('เรียกคิวถัดไป moves on to the next order once the snapshot has echoed', async () => {
+// The guard must RELEASE on the next snapshot, not latch: a queue where calling a number
+// permanently deadens its card would be far worse than the duplicate write it prevents.
+// The order acted on twice has to be the SAME one (o1 called, then o1 finished) — asserting
+// only that เรียกคิวถัดไป advances to o2 proves nothing, because o2 was never locked.
+test('the guard releases on the next snapshot — the same order can be acted on again', async () => {
   const user = userEvent.setup()
   render(<QueuePanel booth="drinks" station="A" />)
   act(() => emit([
@@ -67,15 +71,16 @@ test('เรียกคิวถัดไป moves on to the next order once th
   ]))
   await user.click(screen.getByRole('button', { name: /เรียกคิวถัดไป/ }))
 
-  // Firestore echoes o1 as serving — the guard must release, not latch
   act(() => emit([
     order({ id: 'o1', queueNumber: 'A1', status: 'serving', servingAt: NOW, announcedAt: NOW, createdAt: 1 }),
     order({ id: 'o2', queueNumber: 'A2', status: 'waiting', createdAt: 2 }),
   ]))
-  await user.click(screen.getByRole('button', { name: /เรียกคิวถัดไป/ }))
+  await user.click(screen.getByRole('button', { name: /เสร็จ/ }))            // o1 again, after the echo
+  await user.click(screen.getByRole('button', { name: /เรียกคิวถัดไป/ }))   // and the queue moves on
 
   expect(updateOrderStatus.mock.calls).toStrictEqual([
     ['o1', { status: 'serving', servingAt: NOW, announcedAt: NOW }],
+    ['o1', { status: 'done', doneAt: NOW }],
     ['o2', { status: 'serving', servingAt: NOW, announcedAt: NOW }],
   ])
 })
