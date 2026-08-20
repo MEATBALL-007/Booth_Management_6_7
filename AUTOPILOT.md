@@ -136,7 +136,32 @@
 
 **จาก `2026-08-03-ui-overhaul-design.md`**
 
-- [ ] ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)
+- [x] ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)
+      — ✅ รอบ 2026-08-21 (0051): **เจอบั๊กจริง 2 จุดและแก้แล้ว** ไม่ใช่แค่ช่องว่างเทสต์
+      ผลเต็มอยู่ที่ `docs/autopilot/2026-08-21-neon-clarity-audit.md` (ใช้ซ้ำได้)
+      เทสต์ 19 ตัวที่ `src/neonClarity.audit.test.tsx` (ไฟล์ใหม่) — commit `b65eb97`, `9d1d017`
+      **บั๊กทั้งสองอยู่ที่ `src/screens/DisplayScreen.tsx` การ์ด "เตรียมตัว"**:
+      (1) `:75` `shadow-[0_0_40px_rgba(255,199,44,0.25)]` = เงาเรืองแสงล้อม **การ์ด**
+          ตรงกับข้อห้าม "ห้าม glow …การ์ด" ตรงตัว ⚠️ **grep คำว่า `glow` มองไม่เห็นตัวนี้เลย**
+          เพราะเขียนเป็น arbitrary value ที่ไม่มีคำว่า glow อยู่ — ต้องกวาดหา `shadow-[…rgba…]` ด้วย
+      (2) `:84` `glow-y` บนเลข **คิวถัดไป** (ตามที่ recon รอบ 0036 สงสัยไว้ — สงสัยถูก)
+          หลักฐาน 3 ชั้น: §2 เขียนว่า "เลขคิว**ที่กำลังทำ**", §5.3 ว่า "UP NEXT pills **สะอาด**",
+          queue-pro §4 ผูกคำว่า "เรืองแสง" ไว้กับ **กำลังทำ** เท่านั้น (ถัดไป = การ์ดเหลือง)
+          + ในทางใช้งาน glow สองที่พร้อมกัน **ทำลายเกณฑ์ glanceable** ของอีกสเปก (มองไกลแยกไม่ออกว่าอันไหน "ตอนนี้")
+      แก้โดยลบทั้งสองอย่าง **ไม่แตะข้อความ/testid/logic** การ์ดยังเด่นด้วย `border-2` + tint + clamp + 👉
+      **base +20%** — `src/index.css:5` ถูกอยู่แล้ว และคำถามของแผนเรื่อง extend `radius/fontSize scale`
+      **ตอบแล้วว่าไม่ใช่ช่องว่าง**: ที่ root 120% → `rounded-lg`=9.6px, `rounded-xl`=14.4px,
+      `rounded-2xl`=19.2px ซึ่งห่างจากบันไดในสเปก (sm10·md14·xl20) ไม่เกิน 0.8px อยู่แล้ว
+      และการคูณที่ root ยังสเกล padding/gap ไปด้วย ซึ่ง extend เฉพาะ `fontSize` ทำไม่ได้
+      **ความสม่ำเสมอ**: กวาดครบ 5 หน้า + PinGate + App chrome + comms/* + QrCode → ใช้ `phantom-*` ครบ
+      deviation ที่รับรู้ 3 จุด (QR `bg-white` ต้องขาวจริงถึงสแกนติด · `bg-black/60` scrim ×2 ·
+      `from-[#FFD65a]` หัวไล่สีเลขคิว) — allow-list ไว้พร้อมเหตุผล ไม่ปล่อยเป็นสถานะ "ไม่รู้"
+      break โค้ด 12 แบบ — **ทุกเทสต์ทั้ง 19 ตัวถูกฆ่าอย่างน้อย 1 แบบ**
+      ⚠️ **ขอบเขตของหลักฐาน**: jsdom ไม่รัน cascade ไม่ layout **ไม่มีเทสต์ไหนวัดพิกเซลหรือสีจริง**
+      พิสูจน์ระดับ **token ที่ประกาศไว้ + ตำแหน่งในไฟล์** เท่านั้น
+      ⚠️ **ชนกับ branch `_0007`**: เทสต์ `DisplayScreen.centering.test.tsx` ของรอบนั้น assert ว่า
+      การ์ดเหลือง **มี shadow glow** — ถ้าวันหนึ่ง merge มาชนกัน **ให้แก้เทสต์ตัวนั้น ไม่ใช่คืน glow**
+      (queue-pro §4 ไม่เคยสั่งให้มี glow ส่วน ui-overhaul §2 สั่งห้ามไว้ตรงตัว)
 - [ ] อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
 - [ ] tests เขียวครบ + `npm run build` ผ่าน + PWA generate
 - [ ] Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)
@@ -169,49 +194,44 @@ npm test && npm run build
 
 ## Next task
 
-ขึ้น spec ใหม่ `2026-08-03-ui-overhaul-design.md` — **ข้อแรก**:
+spec `2026-08-03-ui-overhaul-design.md` — **ข้อที่สอง**:
 
-> ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)
+> อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
 
-สเปกกางกฎไว้ที่ `docs/superpowers/specs/2026-08-03-ui-overhaul-design.md` §2–§3 (อ่านก่อน):
-**"glow เฉพาะ 3 จุดสำคัญ (เลขคิว · ยอดเงิน · ปุ่มหลัก) — ที่เหลือสะอาด ห้าม glow พื้น/การ์ด/ข้อความทั่วไป"**
+สเปกกางกฎไว้ที่ `docs/superpowers/specs/2026-08-03-ui-overhaul-design.md` §4 (อ่านก่อน) — มันแตก
+ข้ออ้างย่อยให้แล้ว: breakpoint mobile `<640` / tablet `640–1024` (iPad) / desktop `>1024` (HQ) ·
+iPad ตั้ง = คอลัมน์เดียว **touch target ≥44px** · iPad นอน = 2 คอลัมน์ · HQ = grid หลายคอลัมน์ ·
+จอใหญ่ = เลขคิว `clamp()` · ทุกหน้า **ไม่มี `overflow-x`** ใช้ relative unit + `max-width:100%`
 
-**recon รอบ 0036 ทำไว้ให้แล้ว** (ยังไม่ได้ตัดสินอะไร แค่ชี้พิกัด — ต้องเปิดดูเอง):
-- **base +20% มีจริง**: `src/index.css:5` → `html { font-size: 120%; }` (rem utility เลยสเกลตาม)
-  → พิสูจน์ได้ระดับ config เหมือน `src/theme.test.ts` / `pwaConfig.test.ts` ที่มีอยู่แล้ว
-- **glow มีสองกลไก อย่าสับสน**:
-  `src/index.css:9-10` → `.glow-o` (drop-shadow) / `.glow-y` (text-shadow) — เป็น class เปล่า
-  `tailwind.config.js:24-25` → `boxShadow['glow-o'|'glow-y']` — ใช้ผ่าน **`shadow-glow-o`** เท่านั้น
-  ⚠️ ชื่อคล้ายกันมาก `glow-o` ≠ `shadow-glow-o` เทสต์ที่ค้นด้วย substring `glow-o` จะ**เจอทั้งคู่**
-- **จุดที่ใช้ glow อยู่ตอนนี้ทั้งหมด 5 แห่ง** (grep `glow` ใน `src/` ตัดไฟล์เทสต์):
-  | ไฟล์ | class | เข้าข่าย 3 จุดที่อนุญาตไหม |
-  |---|---|---|
-  | `src/ui/QueueNumber.tsx:3-4` | `glow-o` | เลขคิว ✔ |
-  | `src/ui/Button.tsx:6` (`primary`) | `shadow-glow-o` | ปุ่มหลัก ✔ |
-  | `src/screens/OrderStation.tsx:160` (`cart-total`) | `glow-y` | ยอดเงิน ✔ |
-  | `src/ui/StatTile.tsx:5` (เฉพาะ `accent`) | `glow-y` | ยอดเงิน ✔ (ถ้าคนเรียกใช้ `accent` เฉพาะกับเงินจริง — **ต้องไล่ดู caller**) |
-  | `src/screens/DisplayScreen.tsx:84` | `glow-y` | ⚠️ **เลขคิวของ "คิวถัดไป" ไม่ใช่ "เลขคิวที่กำลังทำ"** — น่าสงสัยที่สุด **ตรวจว่าผิดเกณฑ์จริงไหม** ถ้าผิดคือบั๊กจริง ต้องแก้ production |
-- `tailwind.config.js` extend ไว้แค่ `colors` / `fontFamily` / `boxShadow`
-  แต่สเปก §3 บอกให้ extend `radius scale` + `fontSize scale (+20%)` ด้วย — **ยังไม่มี**
-  → ตรวจว่านี่คือช่องว่างจริง หรือ `html { font-size: 120% }` ทำหน้าที่แทนได้ครบแล้ว (แล้วบันทึกเหตุผล)
+**recon รอบ 0051 ทำไว้ให้แล้ว** (อ่านทุกหน้าจริงในรอบที่แล้ว — แต่ **ต้องเปิดดูเอง** อย่าเชื่อตารางนี้ล้วนๆ):
+- **`min-h-[44px]` ถูกโรยไว้ที่ call site เกือบทุกที่แล้ว** (`App.tsx:32` · `SetupScreen` ChoiceChip ·
+  `PinGate` input+ปุ่ม · `OrderStation` การ์ดสินค้า/ปุ่ม ±/ตัวเลือก/ปุ่มจ่าย · `QueuePanel` ทุกปุ่ม ·
+  `DashboardScreen` select+input+ปุ่ม · `AlertButtons` · `BroadcastBar` · `CommsToast` · `PresenceBoard` แถว)
+- ⚠️ **แต่ primitive `Button` เองไม่มีพื้น 44px** (`src/ui/Button.tsx:26` = `px-5 py-3` เฉยๆ)
+  ทุก caller ต้องพิมพ์ `min-h-[44px]` เอง → **คนที่ลืมคือคนที่ได้ปุ่มเตี้ย** นี่คือจุดที่น่าจะเป็นบั๊กจริงที่สุด
+  **ตรวจก่อนว่ามี caller ไหนลืมบ้าง** (กวาด source หา `<Button` ที่ไม่มี `min-h-`) แล้วตัดสินว่า
+  ควรย้ายพื้น 44px เข้าไปอยู่ใน primitive เลยไหม (แก้ที่เดียว คุมทุกหน้า — เป็น presentation ล้วน)
+  หมายเหตุการคำนวณ: `py-3`+line-height ที่ root 19.2px น่าจะเกิน 44px อยู่แล้วโดยบังเอิญ
+  **แต่ jsdom พิสูจน์ไม่ได้** และมันพังทันทีถ้าใครลด `py` หรือใส่ `text-xs` — พื้นที่ประกาศไว้ตรงๆ ดีกว่า
+- **จุดที่เสี่ยง horizontal scroll** (ต้องไล่ดูของจริง): `OrderStation:98` `lg:grid-cols-[1fr_380px]`
+  (คอลัมน์ตายตัว 380px) · `QrCode.tsx:16` `width={240}` · `PinGate:246` `tracking-[0.3em]` ·
+  `w-16`/`w-8` ในตะกร้า · `DisplayScreen` `text-[clamp(96px,22vw,320px)]` (320px บนจอ 360px = พอดีเป๊ะ)
+- **ของที่ทำถูกอยู่แล้ว**: `max-w-[90vw] break-words` ที่ `DisplayScreen:63`, `flex-wrap` แทบทุกแถว,
+  grid ทุกอันมี base 1 คอลัมน์ (`grid-cols-1 md:…` / `grid-cols-2 md:grid-cols-4`)
 
-**ข้อ "สม่ำเสมอทุกหน้า" ต้องกวาดให้ครบทั้ง 5 หน้า** — `SetupScreen` · `OrderStation` ·
-`DisplayScreen` · `QueuePanel` · `DashboardScreen` (+ `PinGate`): ใช้ token `phantom-*` กับ
-primitive `Button`/`Panel`/`Chip`/`StatTile` หรือแอบมีสี/เงา hard-code นอกระบบ
+**วิธี assert (สำคัญ — ข้อนี้พิสูจน์ยากกว่าข้อที่แล้วมาก)**: jsdom **ไม่ layout เลย**
+→ **พิสูจน์ "ไม่มี horizontal scroll" ตรงๆ ไม่ได้** ห้ามเขียนเทสต์ที่ทำเหมือนพิสูจน์ได้
+สิ่งที่พิสูจน์ได้จริงคือ **กฎเชิงโครงสร้าง** ที่ถ้าละเมิดแล้วจอจะล้นแน่ๆ เช่น
+(ก) ทุก interactive element มีพื้น 44px (กวาด source ทั้ง `src/` แบบเดียวกับรอบ 0051)
+(ข) ไม่มี fixed width ที่กว้างกว่าจอเล็กสุด (360px) โดยไม่มี guard `max-w-full`/breakpoint prefix
+(ค) grid/flex ทุกอันมี base เป็นคอลัมน์เดียวก่อนแล้วค่อย `md:`/`lg:` (iPad ตั้ง = คอลัมน์เดียว)
+(ง) เลขคิวใช้ `clamp()` ไม่ใช่ขนาดตายตัว (ข้อนี้ทับกับเกณฑ์ข้อสุดท้ายของ spec นี้พอดี)
+แล้ว **เขียนขอบเขตไว้ตรงๆ** ว่าไม่มีพิกเซลไหนถูกวัด — เหมือนที่รอบ 0051 ทำ
 
-**วิธี assert ที่เข้ากับกับดักที่เจอมาแล้ว**: อย่า list จุดที่รู้จักทีละจุด —
-เขียนเทสต์ที่ **อ่านไฟล์ source ทั้ง `src/` แล้วกวาดหา `glow`** (แบบเดียวกับที่ `labels.coverage.test.ts`
-และ `pwaConfig.test.ts` อ่าน config) แล้ว fail พร้อม**พิมพ์ชื่อไฟล์:บรรทัดที่เกิน allow-list ออกมาเอง**
-→ จุด glow ที่ **ใครเพิ่มใหม่ในอนาคต** จะโดนจับตั้งแต่วันแรก ต่างจากเทสต์ที่ hard-code รายชื่อ
-(หมายเหตุ: เทสต์แบบอ่าน source ใช้ `fs` ใน vitest ได้ ไม่ต้อง render — และมันจับได้ทุกหน้าพร้อมกัน
-ซึ่งตรงกับคำว่า "**ทุกหน้า**สม่ำเสมอ" มากกว่าการ render ทีละจอ)
+⚠️ ห้ามแตะ logic — แก้ได้เฉพาะ presentation (`className`, `src/ui/*`, `tailwind.config.js`, `src/index.css`)
 
-⚠️ **ระวังสองอย่าง**: (ก) jsdom ไม่รัน cascade → เทสต์ระดับ class/ไฟล์พิสูจน์ได้แค่ว่า
-**token ถูกประกาศ/ถูกใช้ตรงไหน** ไม่ได้พิสูจน์ว่าเรืองแสงจริงบนจอ — ต้องเขียนขอบเขตนี้ไว้ตรงๆ
-(ข) ห้ามแตะ logic — ถ้าเจอว่าต้องแก้ ให้แก้เฉพาะ presentation (`className`, `src/ui/*`,
-`tailwind.config.js`, `src/index.css`) ตามที่ spec ข้อ "Firestore/logic ไม่เปลี่ยน" กำหนดไว้เอง
-
-**เขียนผลลง `docs/autopilot/2026-08-21-neon-clarity-audit.md`** แล้วค่อยติ๊ก checkbox ในไฟล์นี้
+**เขียนผลลง `docs/autopilot/2026-08-21-responsive-audit.md`** แล้วค่อยติ๊ก checkbox ในไฟล์นี้
+(ตัวอย่างรูปแบบที่ใช้ได้ผล: `docs/autopilot/2026-08-21-neon-clarity-audit.md` จากรอบ 0051)
 
 <details>
 <summary>อ้างอิง: วิธี audit ที่ใช้ปิดข้อสุดท้ายของ queue-pro (รอบ 0036 — เก็บไว้ดูวิธี)</summary>
@@ -296,7 +316,8 @@ build exit 0, production ที่งาน spec นี้แตะมี 4 ไ�
 ⚠️ เตือนซ้ำ: branch นี้แตกจาก `main` เหมือนเดิม → **ไม่มี** ไฟล์เทสต์ของรอบก่อนๆ เลย
 (`*.callSpecific.test.tsx`, `*.idempotency.test.tsx`, `*.centering.test.tsx`, `*.glanceable.test.tsx`)
 เช็ค `git log --all --oneline` ก่อนเสมอ **และ sync `AUTOPILOT.md` จาก branch ล่าสุดก่อนแก้**
-(รอบนี้ tip คือ `auto/Booth_Management_6_7/2026-08-21_0036`)
+(รอบนี้ tip คือ `auto/Booth_Management_6_7/2026-08-21_0051` — รอบ 0051 sync มาจาก `_0036` แล้ว
+และเพิ่ม `src/neonClarity.audit.test.tsx` + `docs/autopilot/2026-08-21-neon-clarity-audit.md`)
 
 **กับดักที่เจอแล้ว (อย่าพลาดซ้ำ):**
 - ปุ่ม label ไทย `เรียก` / `เรียกคิวถัดไป` / `เรียกซ้ำ` ขึ้นต้นเหมือนกัน → **ต้องใช้ `/^เรียก$/`**
@@ -334,6 +355,21 @@ build exit 0, production ที่งาน spec นี้แตะมี 4 ไ�
   redirect ออกนอก repo (`> /tmp/...`) ก็ถูกบล็อกเหมือนกัน
 - **(ใหม่ รอบ 0036)** **จำนวนเทสต์ข้าม branch เชื่อไม่ได้** — แผนบอก 148 แต่บน branch นี้คือ 133
   เพราะเลข 148 นับรวมไฟล์เทสต์ของ branch ที่ไม่เคย merge **ต้องรัน `npm test` เองทุกครั้ง**
+- **(ใหม่ รอบ 0051)** **grep คำเดียวไม่พอสำหรับ "สไตล์"** — บั๊ก glow ตัวที่ใหญ่กว่าเขียนเป็น
+  `shadow-[0_0_40px_rgba(...)]` ซึ่ง **ไม่มีคำว่า `glow` อยู่เลย** grep `glow` มองข้ามสนิท
+  ต้องกวาด**รูปแบบของสิ่งนั้น** (เงาที่มีค่าสีอยู่ข้างใน) ไม่ใช่ชื่อที่คนตั้งให้มัน
+- **(ใหม่ รอบ 0051)** `\bglow-o\b` **แมตช์ข้างใน `shadow-glow-o` ด้วย** (`-` เป็นขอบคำ)
+  → ต้องใช้ negative lookbehind `(?<!shadow-)` ไม่งั้นบัญชีนับซ้ำและกลบของจริง
+- **(ใหม่ รอบ 0051)** เทสต์ allow-list ระดับ **ไฟล์** ยังหลวม: ย้าย glow จาก `primary:`
+  ไป `ghost:` ในไฟล์เดิม บัญชีก็ยังเขียว → **บังคับให้แต่ละบรรทัดถือหลักฐานของตัวเอง**
+  (บรรทัดนั้นต้องมี `primary:` / `accent ?` / `data-testid="cart-total"` อยู่ด้วย)
+- **(ใหม่ รอบ 0051)** เทสต์ที่อ่าน source ด้วย `fs` ทำงานได้ปกติใน vitest (`process.cwd()` = repo root)
+  และเป็นวิธีเดียวที่ครอบคลุมคำว่า "**ทุกหน้า**" รวมถึงหน้าที่ยังไม่มี — ให้ fail พร้อมพิมพ์ `file:line`
+  แต่มันอ่าน **source ไม่ใช่ผลลัพธ์ที่ build แล้ว**: class ที่ต่อสตริงตอน runtime จะมองไม่เห็น
+- **(ใหม่ รอบ 0051)** shell บล็อกคำสั่งที่ผสม `cd` กับการเขียนไฟล์ (`rm`, `git clean`) ไว้ใน
+  บรรทัดเดียวกัน และบล็อก `git -C … checkout` แบบต่อ `&&` หลายท่อน → ยิงทีละคำสั่ง
+- **(ใหม่ รอบ 0051)** เวลาทำ mutation check ให้ **revert ด้วย `git checkout -- <file>`** ทันที
+  ในคำสั่งถัดไป แล้วเช็ค `git status --short` ว่าสะอาดก่อน commit (รอบนี้ break 12 แบบ ไม่หลงเหลือ)
 
 สิ่งที่ต้องทำ: เพิ่มเทสต์ใน **ไฟล์ใหม่แยก** เสมอ (branch อื่นเป็นเจ้าของไฟล์เดิมอยู่)
 ถ้าเจอว่าเป็นบั๊กจริงให้แก้ production ด้วย ไม่ใช่แค่บันทึก
@@ -347,8 +383,10 @@ build exit 0, production ที่งาน spec นี้แตะมี 4 ไ�
 ก็**ไม่ได้อยู่บน branch นี้** — แผนรอบ 0020 อ้างว่า "👉 กับ ขนาด มีเทสต์แล้ว" ซึ่ง**ผิด** สำหรับ branch นี้
 จึงเขียนครอบใหม่ทั้ง 5 ข้ออ้างย่อยให้ไฟล์เดียวจบในตัวเอง — **ทำแบบนี้ต่อไป** อย่าอ้างไฟล์ข้าม branch)
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อที่สองของ spec `2026-08-03-ui-overhaul-design.md`:
-"อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px")
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไปของ spec `2026-08-03-ui-overhaul-design.md`:
+"tests เขียวครบ + `npm run build` ผ่าน + PWA generate"
+(⚠️ ข้อนั้นเคยถูก audit มาแล้วบน branch `_0005`/`_0023` และพบว่า **PWA icons ยังว่าง** —
+`vite.config.ts` `manifest.icons: []` — ให้เช็คก่อนว่ายังเป็นแบบนั้นอยู่ไหม แล้วค่อยตัดสิน)
 
 ---
 
