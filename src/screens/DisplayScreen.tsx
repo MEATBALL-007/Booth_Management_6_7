@@ -44,11 +44,17 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
 
       <section className="flex flex-col items-center gap-6 md:gap-8">
         <h2 className="font-kanit text-2xl md:text-3xl font-semibold text-phantom-muted">
-          🔔 {nowServing.th} · {nowServing.en}
+          🔔 {nowServing.th}
+          <span className="ml-2 text-base md:text-lg font-normal text-phantom-muted/70">
+            · {nowServing.en}
+          </span>
         </h2>
         {serving.length === 0 ? (
           <p className="font-kanit text-xl md:text-2xl text-phantom-muted">
-            {L('display.noQueue').th} · {L('display.noQueue').en}
+            {L('display.noQueue').th}
+            <span className="ml-2 text-sm md:text-base font-normal text-phantom-muted/70">
+              · {L('display.noQueue').en}
+            </span>
           </p>
         ) : (
           <div className="flex flex-wrap items-center justify-center gap-10 md:gap-16">
@@ -91,7 +97,10 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
       {rest.length > 0 && (
         <section className="flex flex-col items-center gap-4 md:gap-5">
           <h2 className="font-kanit text-lg md:text-xl font-semibold text-phantom-muted">
-            {L('display.upNext').th} · {L('display.upNext').en}
+            {L('display.upNext').th}
+            <span className="ml-2 text-xs md:text-sm font-normal text-phantom-muted/70">
+              · {L('display.upNext').en}
+            </span>
           </h2>
           <div className="flex flex-wrap items-center justify-center gap-4">
             {rest.map((u) => (
