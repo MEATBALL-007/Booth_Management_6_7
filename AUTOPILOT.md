@@ -109,7 +109,30 @@
       ⚠️ **ช่องว่างที่ตั้งใจไม่แก้**: ป้าย LIVE (`:41`) โชว์ `.en` อย่างเดียว ไม่มีไทยคู่
       ตัดสินว่า**ไม่ผิดเกณฑ์** เพราะเกณฑ์พูดถึง label ที่เป็น**คู่สองภาษา** และจุดเขียวกระพริบ
       สื่อความหมายอยู่แล้วโดยไม่ต้องอ่าน — บันทึกไว้ตรงนี้ ไม่ปล่อยเป็นสถานะ "ไม่รู้"
-- [ ] เทสต์ทั้งชุดเขียว + `npm run build` ผ่าน; ไม่เปลี่ยน logic บัญชี/เมนู/comms
+- [x] เทสต์ทั้งชุดเขียว + `npm run build` ผ่าน; ไม่เปลี่ยน logic บัญชี/เมนู/comms
+      — ✅ รอบ 2026-08-21 (0036): เป็น **audit** ไม่ได้แก้โค้ดเลยสักบรรทัด
+      ผลเต็มอยู่ที่ `docs/autopilot/2026-08-21-queue-pro-final-audit.md` (ใช้ซ้ำได้)
+      1. **เทสต์** — รันเอง: **133 tests / 39 files passed, exit 0**
+         ⚠️ **เลข 148 ในแผนผิด** นั่นเป็นของ branch `_0020` เองซึ่ง**ไม่เคย merge**
+         บน branch นี้ (= main) คือ 133/39 — **ห้ามเชื่อจำนวนเทสต์ข้าม branch ต้องรันเอง**
+      2. **build** — exit 0, `built in 1.30s`, PWA `generateSW`, precache 5 entries
+         warning "chunk > 500 kB" มีจริงและ**จงใจไม่แก้** (เป็น warning ไม่ใช่ error)
+      3. **ไม่แตะโดเมน** — ⚠️ ชื่อไฟล์ในแผนเดาผิด: **ไม่มี `src/money/`, `src/menu/`, `src/booth/`**
+         ของจริง: บัญชี = `order/cart|buildOrder|promptpay|QrCode` + `expense/` + `dashboard/metrics`
+         + `screens/DashboardScreen`; เมนู = `domain/catalog` + `order/options`; comms = `comms/`
+         ตรวจ 3 ก้อน: (A) งานที่ merge แล้ว `4f2a6b9^..81763eb` (B) **ทุก branch ทั้ง 24 อัน**
+         (C) commit บน main หลัง merge — union ของไฟล์ **production** ที่งาน spec นี้แตะมี**แค่ 4 ไฟล์**:
+         `order/ordersRepo.ts`, `queue/queueActions.ts`, `screens/QueuePanel.tsx`,
+         `screens/DisplayScreen.tsx` → **ไม่มีไฟล์โดเมนสักไฟล์** ✅
+         ตรวจอีกชั้น: `updateOrderStatus` เป็น repo กลางของ `orders` (มี field เงินอยู่ด้วย)
+         แต่ grep แล้ว caller production มีแค่ `QueuePanel` 2 จุด ส่งเฉพาะ status/timestamp
+      **ช่องว่างที่บันทึกไว้ (ไม่แก้ในรอบนี้ — คนละงาน)**:
+      (1) branch ไม่เคย merge → "ทั้งชุดเขียว" พิสูจน์ทีละ branch เท่านั้น และชื่อไฟล์เทสต์ซ้ำกัน
+          หลายคู่ (`idempotency`, `glanceable`, `callSpecific`, `reannounce`) เนื้อในคนละแบบ
+          + `confirmCancel` ใน `QueuePanel.tsx` ถูกแก้คนละทางที่ `16_0030` กับ `19_0039`
+      (2) build บนเครื่องนี้ฝัง `promptpayId:""` (ไม่มี `.env` มีแต่ `.env.example`) และ
+          `src/test/setup.ts:7` ยัดค่าปลอมไว้ → `appConfig.test.ts:12` เขียวเสมอ จับไม่ได้
+      (3) เกณฑ์ข้อนี้เป็น "ณ เวลาที่ตรวจ" ไม่มีเทสต์ล็อกได้ ผูกกับ `main = 735de75` เท่านั้น
 
 **จาก `2026-08-03-ui-overhaul-design.md`**
 
@@ -146,11 +169,73 @@ npm test && npm run build
 
 ## Next task
 
-ตรวจข้อ **สุดท้ายของ spec queue-pro-upgrade** ให้จบ:
+ขึ้น spec ใหม่ `2026-08-03-ui-overhaul-design.md` — **ข้อแรก**:
 
-> เทสต์ทั้งชุดเขียว + `npm run build` ผ่าน; ไม่เปลี่ยน logic บัญชี/เมนู/comms
+> ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)
 
-ข้อนี้ **ไม่ใช่การเขียนฟีเจอร์** แต่เป็น **audit** — แตกเป็น 3 ข้ออ้างย่อยที่ต้องพิสูจน์แยกกัน:
+สเปกกางกฎไว้ที่ `docs/superpowers/specs/2026-08-03-ui-overhaul-design.md` §2–§3 (อ่านก่อน):
+**"glow เฉพาะ 3 จุดสำคัญ (เลขคิว · ยอดเงิน · ปุ่มหลัก) — ที่เหลือสะอาด ห้าม glow พื้น/การ์ด/ข้อความทั่วไป"**
+
+**recon รอบ 0036 ทำไว้ให้แล้ว** (ยังไม่ได้ตัดสินอะไร แค่ชี้พิกัด — ต้องเปิดดูเอง):
+- **base +20% มีจริง**: `src/index.css:5` → `html { font-size: 120%; }` (rem utility เลยสเกลตาม)
+  → พิสูจน์ได้ระดับ config เหมือน `src/theme.test.ts` / `pwaConfig.test.ts` ที่มีอยู่แล้ว
+- **glow มีสองกลไก อย่าสับสน**:
+  `src/index.css:9-10` → `.glow-o` (drop-shadow) / `.glow-y` (text-shadow) — เป็น class เปล่า
+  `tailwind.config.js:24-25` → `boxShadow['glow-o'|'glow-y']` — ใช้ผ่าน **`shadow-glow-o`** เท่านั้น
+  ⚠️ ชื่อคล้ายกันมาก `glow-o` ≠ `shadow-glow-o` เทสต์ที่ค้นด้วย substring `glow-o` จะ**เจอทั้งคู่**
+- **จุดที่ใช้ glow อยู่ตอนนี้ทั้งหมด 5 แห่ง** (grep `glow` ใน `src/` ตัดไฟล์เทสต์):
+  | ไฟล์ | class | เข้าข่าย 3 จุดที่อนุญาตไหม |
+  |---|---|---|
+  | `src/ui/QueueNumber.tsx:3-4` | `glow-o` | เลขคิว ✔ |
+  | `src/ui/Button.tsx:6` (`primary`) | `shadow-glow-o` | ปุ่มหลัก ✔ |
+  | `src/screens/OrderStation.tsx:160` (`cart-total`) | `glow-y` | ยอดเงิน ✔ |
+  | `src/ui/StatTile.tsx:5` (เฉพาะ `accent`) | `glow-y` | ยอดเงิน ✔ (ถ้าคนเรียกใช้ `accent` เฉพาะกับเงินจริง — **ต้องไล่ดู caller**) |
+  | `src/screens/DisplayScreen.tsx:84` | `glow-y` | ⚠️ **เลขคิวของ "คิวถัดไป" ไม่ใช่ "เลขคิวที่กำลังทำ"** — น่าสงสัยที่สุด **ตรวจว่าผิดเกณฑ์จริงไหม** ถ้าผิดคือบั๊กจริง ต้องแก้ production |
+- `tailwind.config.js` extend ไว้แค่ `colors` / `fontFamily` / `boxShadow`
+  แต่สเปก §3 บอกให้ extend `radius scale` + `fontSize scale (+20%)` ด้วย — **ยังไม่มี**
+  → ตรวจว่านี่คือช่องว่างจริง หรือ `html { font-size: 120% }` ทำหน้าที่แทนได้ครบแล้ว (แล้วบันทึกเหตุผล)
+
+**ข้อ "สม่ำเสมอทุกหน้า" ต้องกวาดให้ครบทั้ง 5 หน้า** — `SetupScreen` · `OrderStation` ·
+`DisplayScreen` · `QueuePanel` · `DashboardScreen` (+ `PinGate`): ใช้ token `phantom-*` กับ
+primitive `Button`/`Panel`/`Chip`/`StatTile` หรือแอบมีสี/เงา hard-code นอกระบบ
+
+**วิธี assert ที่เข้ากับกับดักที่เจอมาแล้ว**: อย่า list จุดที่รู้จักทีละจุด —
+เขียนเทสต์ที่ **อ่านไฟล์ source ทั้ง `src/` แล้วกวาดหา `glow`** (แบบเดียวกับที่ `labels.coverage.test.ts`
+และ `pwaConfig.test.ts` อ่าน config) แล้ว fail พร้อม**พิมพ์ชื่อไฟล์:บรรทัดที่เกิน allow-list ออกมาเอง**
+→ จุด glow ที่ **ใครเพิ่มใหม่ในอนาคต** จะโดนจับตั้งแต่วันแรก ต่างจากเทสต์ที่ hard-code รายชื่อ
+(หมายเหตุ: เทสต์แบบอ่าน source ใช้ `fs` ใน vitest ได้ ไม่ต้อง render — และมันจับได้ทุกหน้าพร้อมกัน
+ซึ่งตรงกับคำว่า "**ทุกหน้า**สม่ำเสมอ" มากกว่าการ render ทีละจอ)
+
+⚠️ **ระวังสองอย่าง**: (ก) jsdom ไม่รัน cascade → เทสต์ระดับ class/ไฟล์พิสูจน์ได้แค่ว่า
+**token ถูกประกาศ/ถูกใช้ตรงไหน** ไม่ได้พิสูจน์ว่าเรืองแสงจริงบนจอ — ต้องเขียนขอบเขตนี้ไว้ตรงๆ
+(ข) ห้ามแตะ logic — ถ้าเจอว่าต้องแก้ ให้แก้เฉพาะ presentation (`className`, `src/ui/*`,
+`tailwind.config.js`, `src/index.css`) ตามที่ spec ข้อ "Firestore/logic ไม่เปลี่ยน" กำหนดไว้เอง
+
+**เขียนผลลง `docs/autopilot/2026-08-21-neon-clarity-audit.md`** แล้วค่อยติ๊ก checkbox ในไฟล์นี้
+
+<details>
+<summary>อ้างอิง: วิธี audit ที่ใช้ปิดข้อสุดท้ายของ queue-pro (รอบ 0036 — เก็บไว้ดูวิธี)</summary>
+
+ผลเต็มอยู่ที่ `docs/autopilot/2026-08-21-queue-pro-final-audit.md` สรุปวิธีที่ได้ผล:
+
+1. **ใช้ `git diff --stat main...<branch>` สามจุด ไม่ใช่สองจุด** — `main` เดินหน้าไปหลัง branch
+   ถูกตัด (merge photo-booth 08-17) สองจุดจะทำให้ commit ของ main โผล่มาเป็น "ไฟล์ที่ branch ลบ"
+   สามจุด = diff จาก merge-base พอดี **และไม่ต้องใช้ `$(git merge-base …)`** ซึ่งสำคัญมาก
+   เพราะ shell ในกล่องนี้ **บล็อก command substitution และ `$var`** (error `Contains expansion`)
+   → เขียน loop ไม่ได้ ต้องยิงทีละ branch ด้วยชื่อเต็ม
+2. **ตัดไฟล์ `.test.*` ทิ้งก่อน** — เทสต์เปลี่ยนพฤติกรรม production ไม่ได้
+   24 branch × ~400 บรรทัด ยุบเหลือไฟล์ production **4 ไฟล์** ที่ต้องอ่านจริง
+3. **ตรวจ caller ด้วย ไม่ใช่แค่ชื่อไฟล์** — `updateOrderStatus` เป็น repo กลางของ `orders`
+   (มี field เงินอยู่ด้วย) การเปลี่ยนเป็น `deleteField()` อาจกระทบเงินได้ **ถ้ามีคนส่ง
+   `{total: undefined}`** → grep caller แล้วพบว่ามีแค่ `QueuePanel` 2 จุด จึงสรุปได้ว่าไปไม่ถึง
+4. **แยกก้อนที่ตรวจให้ชัด**: (A) งานที่ merge แล้ว (B) branch ที่ยังไม่ merge (C) commit บน main
+   หลังจากนั้น — ก้อน C มี `17e8c2e` ที่แตะ `appConfig.ts`/`pinStore.ts` จริง แต่ **ไม่ใช่งาน spec นี้**
+   จึงไม่ทำให้เกณฑ์ตก แต่ต้องบันทึกไว้ ไม่ใช่เงียบ
+
+</details>
+
+<details>
+<summary>อ้างอิงเก่า: 3 ข้ออ้างย่อยของเกณฑ์ queue-pro ข้อสุดท้าย (ปิดแล้วรอบ 0036)</summary>
 
 1. **เทสต์ทั้งชุดเขียว** — รอบ 0020 รันแล้ว: **148 tests / 40 files เขียวหมด**
    → ข้อนี้แค่รันซ้ำแล้วแปะผลจริงลง SUMMARY ก็จบ **ห้ามนับจำนวนจากความจำ** ให้รันเอง
@@ -168,14 +253,14 @@ npm test && npm run build
      → `git diff main..<branch> --stat` ทีละ branch ของ `auto/Booth_Management_6_7/2026-08-*`
    - ถ้าเจอไฟล์โดเมนถูกแตะ = **เกณฑ์ไม่ผ่าน** ให้บันทึกว่าแตะตรงไหน อย่าติ๊ก
 
-**เขียนผลลง `docs/autopilot/2026-08-21-queue-pro-final-audit.md`** ให้รอบหน้าใช้ซ้ำได้
-(ธรรมเนียมนี้เคยกู้ทั้งรอบที่ถูกลบทิ้งมาแล้ว) แล้วค่อยติ๊ก checkbox ในไฟล์นี้
+**ผลจริงรอบ 0036: ผ่านครบทั้ง 3 ข้ออ้างย่อย ติ๊กแล้ว** — 133 tests/39 files เขียว (ไม่ใช่ 148),
+build exit 0, production ที่งาน spec นี้แตะมี 4 ไฟล์ ไม่มีไฟล์โดเมนเลย
+**→ spec `queue-pro-upgrade` ครบทั้ง 7 ข้อแล้ว**
 
-จบข้อนี้แล้ว spec `queue-pro-upgrade` ครบทั้ง 7 ข้อ → รอบถัดไปขึ้น spec `2026-08-03-ui-overhaul`
-ข้อแรก ("ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ — glow เฉพาะ 3 จุด, base +20%")
+</details>
 
 <details>
-<summary>อ้างอิง: รายละเอียดข้อ Display glanceable (ทำเสร็จแล้วรอบ 0020 — เก็บไว้ดูวิธี)</summary>
+<summary>อ้างอิงเก่า: รายละเอียดข้อ Display glanceable (ทำเสร็จแล้วรอบ 0020 — เก็บไว้ดูวิธี)</summary>
 
 สเปกกางข้อนี้ไว้ละเอียดที่ `docs/superpowers/specs/2026-08-04-queue-pro-upgrade-design.md:57-63`
 (อ่านก่อน — มันแตกเป็น **5 ข้ออ้างย่อย** ให้แล้ว ไม่ต้องเดาเอง):
@@ -211,7 +296,7 @@ npm test && npm run build
 ⚠️ เตือนซ้ำ: branch นี้แตกจาก `main` เหมือนเดิม → **ไม่มี** ไฟล์เทสต์ของรอบก่อนๆ เลย
 (`*.callSpecific.test.tsx`, `*.idempotency.test.tsx`, `*.centering.test.tsx`, `*.glanceable.test.tsx`)
 เช็ค `git log --all --oneline` ก่อนเสมอ **และ sync `AUTOPILOT.md` จาก branch ล่าสุดก่อนแก้**
-(รอบนี้ tip คือ `auto/Booth_Management_6_7/2026-08-21_0020`)
+(รอบนี้ tip คือ `auto/Booth_Management_6_7/2026-08-21_0036`)
 
 **กับดักที่เจอแล้ว (อย่าพลาดซ้ำ):**
 - ปุ่ม label ไทย `เรียก` / `เรียกคิวถัดไป` / `เรียกซ้ำ` ขึ้นต้นเหมือนกัน → **ต้องใช้ `/^เรียก$/`**
@@ -243,6 +328,12 @@ npm test && npm run build
   (`hue()` คืน `'orange+yellow'` ถ้าโซนโดนทาสองสี) — คืน match แรกจะกลบเคสสีซ้ำเงียบๆ
 - **(ใหม่ รอบ 0020)** จุดเขียว LIVE (`DisplayScreen.tsx:40`) มี `animate-pulse` **ติดถาวร**
   → เทสต์เรื่อง pulse ที่ค้นด้วย class จะเขียวเสมอ (vacuous) **ต้อง assert ที่ root element ตรงๆ**
+- **(ใหม่ รอบ 0036)** **shell ในกล่องนี้บล็อก `$var` และ `$(...)`** (ตอบ `Contains expansion` /
+  `Contains simple_expansion`) → เขียน `for` loop ที่อ้างตัวแปรไม่ได้เลย ต้องยิงคำสั่งทีละอันด้วย
+  ชื่อเต็ม และเลี่ยง `$(git merge-base …)` ด้วยการใช้ `git diff main...<branch>` (สามจุด) แทน
+  redirect ออกนอก repo (`> /tmp/...`) ก็ถูกบล็อกเหมือนกัน
+- **(ใหม่ รอบ 0036)** **จำนวนเทสต์ข้าม branch เชื่อไม่ได้** — แผนบอก 148 แต่บน branch นี้คือ 133
+  เพราะเลข 148 นับรวมไฟล์เทสต์ของ branch ที่ไม่เคย merge **ต้องรัน `npm test` เองทุกครั้ง**
 
 สิ่งที่ต้องทำ: เพิ่มเทสต์ใน **ไฟล์ใหม่แยก** เสมอ (branch อื่นเป็นเจ้าของไฟล์เดิมอยู่)
 ถ้าเจอว่าเป็นบั๊กจริงให้แก้ production ด้วย ไม่ใช่แค่บันทึก
@@ -256,8 +347,8 @@ npm test && npm run build
 ก็**ไม่ได้อยู่บน branch นี้** — แผนรอบ 0020 อ้างว่า "👉 กับ ขนาด มีเทสต์แล้ว" ซึ่ง**ผิด** สำหรับ branch นี้
 จึงเขียนครอบใหม่ทั้ง 5 ข้ออ้างย่อยให้ไฟล์เดียวจบในตัวเอง — **ทำแบบนี้ต่อไป** อย่าอ้างไฟล์ข้าม branch)
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อแรกของ spec `2026-08-03-ui-overhaul-design.md`:
-"ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ — glow เฉพาะ 3 จุด, base +20%")
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อที่สองของ spec `2026-08-03-ui-overhaul-design.md`:
+"อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px")
 
 ---
 
