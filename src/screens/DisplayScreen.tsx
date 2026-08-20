@@ -72,7 +72,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
       </section>
 
       {next && (
-        <section className="flex flex-col items-center gap-3 rounded-3xl border-2 border-phantom-yellow/50 bg-phantom-yellow/10 px-10 py-6 md:px-16 md:py-8 shadow-[0_0_40px_rgba(255,199,44,0.25)]">
+        <section className="flex flex-col items-center gap-3 rounded-3xl border-2 border-phantom-yellow/50 bg-phantom-yellow/10 px-10 py-6 md:px-16 md:py-8">
           <h2 className="font-kanit text-xl md:text-2xl font-bold text-phantom-yellow">
             👉 {L('display.next').th} · {L('display.getReady').th}
             <span className="ml-2 text-sm md:text-base font-normal text-phantom-yellow/70">
@@ -81,7 +81,7 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
           </h2>
           <span
             data-testid="next-up"
-            className="glow-y font-mono font-extrabold text-phantom-yellow text-[clamp(56px,10vw,140px)] leading-none"
+            className="font-mono font-extrabold text-phantom-yellow text-[clamp(56px,10vw,140px)] leading-none"
           >
             {next.queueNumber}
           </span>
