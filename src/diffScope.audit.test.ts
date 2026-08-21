@@ -120,8 +120,12 @@ describe('bucket census (a sweep over the wrong file list proves nothing)', () =
     expect(missing, 'these bucket entries no longer exist — fix the list, do not delete the rule').toStrictEqual([])
     const dupes = named.filter((f, i) => named.indexOf(f) !== i)
     expect(dupes, 'a file is in two buckets').toStrictEqual([])
-    // DOMAIN is the remainder, so nothing can be unclassified; this states it for the reader.
-    expect([...named, ...DOMAIN].sort()).toStrictEqual(SHIPPED)
+    // DOMAIN is the remainder, so an unclassified new file falls into the PROTECTED bucket
+    // and starts tripping C1/C2 the moment it carries a className. That is deliberate — a
+    // new screen must be declared here — but a primitive or a screen sliding in unnoticed
+    // should say so in its own words rather than surfacing as a mystery styling violation.
+    const strays = DOMAIN.filter((f) => /^src\/(ui|screens)\//.test(f) || /^src\/(comms|i18n)\/.*\.tsx$/.test(f))
+    expect(strays, 'a view file is unclassified — add it to PRESENTATION or UI').toStrictEqual([])
   })
 
   test('A2: DOMAIN holds every module the spec names by role', () => {
