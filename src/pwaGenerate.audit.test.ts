@@ -48,11 +48,14 @@ const config = (await import('../vite.config')).default
 const options = spy.calls[0] as PwaOptions | undefined
 const manifest = (options?.manifest || undefined) as ManifestOptions | undefined
 
-// อ่าน palette จาก tailwind.config จริงๆ ไม่ hardcode → ถ้าใครขยับ token อีก เทสต์ E1 ยังเทียบถูก
-const tailwind = (await import('../tailwind.config.js')) as unknown as {
-  default: { theme: { extend: { colors: Record<string, string> } } }
-}
-const neonBase = tailwind.default.theme.extend.colors['phantom-bg']
+// อ่าน palette จาก `tailwind.config.js` จริงๆ ไม่ hardcode → ถ้าใครขยับ token อีก เทสต์ E1 ยังเทียบถูก
+//
+// ⚠️ อ่านเป็น **ข้อความ** ไม่ใช่ `await import(...)` — ไฟล์นั้นเป็น `.js` ที่ไม่มี type declaration
+// `npm test` จะผ่าน (vitest ไม่ typecheck) แต่ `npm run build` จะพังที่ `tsc -b` ด้วย TS7016
+// (เจอจริงตอนรัน Verify รอบนี้ — เทสต์เขียว 144 ตัวแต่ build แดง)
+const NEON_BASE_IN_TAILWIND = /'phantom-bg':\s*'(#[0-9a-fA-F]{3,8})'/
+const neonBaseMatch = NEON_BASE_IN_TAILWIND.exec(readFileSync('tailwind.config.js', 'utf8'))
+const neonBase = neonBaseMatch?.[1]
 
 // ───────────────────────────── A. กันเทสต์ทั้งไฟล์ผ่านแบบว่างเปล่า ─────────────────────────────
 
@@ -152,6 +155,9 @@ test('E1: GAP: the splash colours are the PRE-overhaul palette, not Neon Clarity
   // ซึ่ง **เคยถูกต้อง** — ตอน 75659de เขียน manifest นั้น `phantom-bg` ก็คือ `#1A1A1A` พอดี
   // แต่ Neon Clarity ย้าย `phantom-bg` ไปเป็น `#0a0a0c` (2026-08-03) **แล้วลืม manifest ไว้ข้างหลัง**
   // → splash screen ตอนเปิดแอปที่ติดตั้งแล้วจะวาบเทาอ่อนกว่าตัวแอปจริงหนึ่งจังหวะ
+  //
+  // บรรทัดนี้ทำสองหน้าที่: ยืนยันค่า palette **และ** ยืนยันว่า regex ข้างบนแมตช์จริง
+  // (ถ้าไม่แมตช์ `neonBase` จะเป็น undefined แล้วแดงตรงนี้ ไม่ใช่ไปเงียบอยู่บรรทัดล่าง)
   expect(neonBase).toBe('#0a0a0c')
   expect({
     theme_color: manifest?.theme_color,
@@ -159,7 +165,7 @@ test('E1: GAP: the splash colours are the PRE-overhaul palette, not Neon Clarity
   }).toStrictEqual({ theme_color: '#1A1A1A', background_color: '#1A1A1A' })
 
   // ยืนยันตรงๆ ว่านี่คือ drift ไม่ใช่ความบังเอิญที่อ่านผิด
-  expect(manifest?.background_color?.toLowerCase()).not.toBe(neonBase.toLowerCase())
+  expect(manifest?.background_color?.toLowerCase()).not.toBe(neonBase?.toLowerCase())
 })
 
 test('E2: GAP: the manifest declares no lang, so it defaults to en while index.html says th', () => {
