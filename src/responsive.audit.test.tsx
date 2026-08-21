@@ -219,11 +219,12 @@ test('A5 · the Setup choice chips are ≥44px on both axes', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * A width class, not a shadow. `shadow-[0_0_40px_rgba(…)]` contains the literal
- * substring `w-[0_0_40px_…]` — round 0051 hit the mirror image of this trap with
- * `\bglow-o\b` matching inside `shadow-glow-o`. The lookbehind rejects any
- * preceding `-` or word character, so only a real `w-[…]` / `min-w-[…]` class
- * at a token boundary is counted.
+ * A width *floor*, not a width *cap*. `max-w-[900px]` ends in the literal substring
+ * `w-[900px]`, and a cap is the fix for this criterion rather than a violation of it
+ * — flagging it would invert the rule. Round 0051 hit the same shape of trap with
+ * `\bglow-o\b` matching inside `shadow-glow-o`: `-` is a word boundary, so `\b` is
+ * no protection. The lookbehind rejects any preceding `-` or word character, so only
+ * a real `w-[…]` / `min-w-[…]` class at a token start is counted.
  */
 const FIXED_WIDTH = /(?<![-\w])(?:(sm|md|lg|xl|2xl):)?(min-)?w-\[(\d+)px\]/g
 
@@ -241,13 +242,17 @@ test('B1 · no unguarded fixed width exceeds the narrowest supported screen', ()
   expect(offenders, `fixed widths over ${SMALLEST_SCREEN_PX}px with no breakpoint guard:\n${show(offenders)}`).toEqual([])
 })
 
-test('B1b · the fixed-width sweep does not mistake a box-shadow for a width class', () => {
-  // Proves B1 is reading class tokens, not substrings — the exact bug pattern that
-  // let a 40px glow hide from a `glow` grep in round 0051.
-  const decoy = 'className="shadow-[0_0_40px_rgba(255,199,44,0.25)] rounded-3xl"'
-  expect([...decoy.matchAll(FIXED_WIDTH)]).toEqual([])
-  const real = 'className="w-[900px]"'
-  expect([...real.matchAll(FIXED_WIDTH)].map((m) => m[3])).toEqual(['900'])
+test('B1b · the fixed-width sweep reads class tokens, not substrings', () => {
+  // A cap must not be reported as a floor. Drop the lookbehind from FIXED_WIDTH and
+  // `max-w-[900px]` — which is the *remedy* for this criterion — starts failing it.
+  const caps = 'className="w-full max-w-[900px] md:max-w-[1200px]"'
+  expect([...caps.matchAll(FIXED_WIDTH)].map((m) => m[0])).toEqual([])
+  const floor = 'className="w-[900px]"'
+  expect([...floor.matchAll(FIXED_WIDTH)].map((m) => m[3])).toEqual(['900'])
+  // A breakpoint-prefixed floor is still captured, so B1 can decide to allow it
+  // rather than never seeing it at all.
+  const guarded = 'className="lg:w-[900px]"'
+  expect([...guarded.matchAll(FIXED_WIDTH)].map((m) => [m[1], m[3]])).toEqual([['lg', '900']])
 })
 
 test('B2 · every image is capped at max-width:100% (spec §4, in those words)', () => {
