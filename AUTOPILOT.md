@@ -162,7 +162,35 @@
       ⚠️ **ชนกับ branch `_0007`**: เทสต์ `DisplayScreen.centering.test.tsx` ของรอบนั้น assert ว่า
       การ์ดเหลือง **มี shadow glow** — ถ้าวันหนึ่ง merge มาชนกัน **ให้แก้เทสต์ตัวนั้น ไม่ใช่คืน glow**
       (queue-pro §4 ไม่เคยสั่งให้มี glow ส่วน ui-overhaul §2 สั่งห้ามไว้ตรงตัว)
-- [ ] อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
+- [x] อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
+      — ✅ รอบ 2026-08-22 (0006): **เจอบั๊กจริง 2 จุดและแก้แล้ว** ไม่ใช่แค่ช่องว่างเทสต์
+      ผลเต็มอยู่ที่ `docs/autopilot/2026-08-21-responsive-audit.md` (ใช้ซ้ำได้)
+      เทสต์ 26 ตัวที่ `src/responsive.audit.test.tsx` (ไฟล์ใหม่) — commit `ef01a6a`, `fe73ddb`, `273fa73`
+      **บั๊ก 1 — พื้น 44px อยู่ที่ call site ไม่ได้อยู่ที่ primitive → มีคนลืมจริง**
+      `src/ui/Button.tsx` เดิมมีแค่ `px-5 py-3` **ไม่มี `min-h` เลย** ทุก caller ต้องพิมพ์เอง
+      มี 15 call site **14 อันจำได้ 1 อันลืม**: `SetupScreen.tsx:107` ปุ่ม `ยืนยัน`
+      = **ปุ่มแรกที่ทุกเครื่องเห็น** ⚠️ **กวาดหา `<button` ในไฟล์ source มองไม่เห็นเลย**
+      เพราะสิ่งที่เขียนอยู่คือ `<Button …>` (B ใหญ่ = component) → กฎ "ทุก raw tag ต้องมี
+      min-h" เขียวได้ทั้งที่ปุ่มจริงเตี้ย แก้โดย**ย้ายพื้นเข้าไปใน primitive** (แก้ที่เดียว คุมทุกหน้า)
+      caller ยัง override padding ได้ (`className` ต่อท้าย) แต่ลดพื้นไม่ได้ — เทสต์ `A2c` ล็อกไว้
+      หมายเหตุ: `py-3` ที่ root 120% ≈ 62px **บังเอิญเกิน 44 อยู่แล้ว** แต่ `<Button py-2 text-sm>`
+      ที่ `CommsToast.tsx:40` ≈ 43px → "บังเอิญพอดี" ไม่ใช่หลักฐาน
+      **บั๊ก 2 — QR ของ PromptPay เป็นภาพกว้างตายตัวไม่มีเพดาน**
+      `src/order/QrCode.tsx:16` `<img width={240} height={240}>` ไม่มี `max-w-full`
+      spec §4 เขียนตรงตัวว่า "รูป/การ์ด `max-width:100%`" → ผิดเกณฑ์ตามตัวอักษร
+      คำนวณ: จอ 360px เหลือพื้นที่ 273.6px รูปกิน 259.2px (เหลือ 14px), จอ 320px = **ล้นแน่นอน**
+      เติม `max-w-full h-auto` — `h-auto` สำคัญพอกัน เพราะ `max-w-full` เดี่ยวๆ บนภาพที่มี
+      `height={240}` ตายตัวจะ**บีบ QR ให้แบน** และ **QR ที่ยืดผิดสัดส่วนสแกนไม่ติด**
+      **ข้ออ้างย่อยที่เหลือ 8 ข้อ โค้ดถูกอยู่แล้ว** (ตารางเต็มใน audit): iPad ตั้ง/นอนถูกแยกด้วย
+      `lg:` (=1024 ติดพอดีแนวนอน ไม่ติดที่ 768) · HQ `md:grid-cols-4` · clamp · ไม่มี `overflow-x`
+      · viewport meta มีอยู่แล้วแต่**ก่อนรอบนี้ไม่มีเทสต์ตัวไหนล็อกไว้เลย**
+      ⚠️ **ขอบเขตของหลักฐาน**: jsdom ไม่รัน cascade ไม่ layout ไม่มี viewport ไม่มี `scrollWidth`
+      → **"ไม่มี horizontal scroll" พิสูจน์ในไฟล์นี้ไม่ได้** และไม่มีเทสต์ตัวไหนแกล้งทำเป็นพิสูจน์ได้
+      พิสูจน์ได้แค่ **เงื่อนไขเชิงโครงสร้างที่ถ้าละเมิดแล้วจอจะล้นแน่ๆ** + touch target ที่เป็น
+      **ค่าที่ประกาศไว้** ไม่ใช่ค่าที่วัดได้ · ปิดระดับพิกเซลต้องเปิดเบราว์เซอร์จริงที่
+      360/768/1024/1920 แล้ววัด `scrollWidth` vs `clientWidth` — **บันทึกเป็นงานถัดไปที่ทำได้จริง**
+      break โค้ด 22 แบบ (5 ชุด ทำนายผลไว้ล่วงหน้าทุกชุดและตรงทุกชุด)
+      — **ทุกเทสต์ทั้ง 26 ตัวถูกฆ่าอย่างน้อย 1 แบบ**
 - [ ] tests เขียวครบ + `npm run build` ผ่าน + PWA generate
 - [ ] Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)
 - [ ] Display เลขคิวสเกลใหญ่ตามจอด้วย clamp
@@ -194,44 +222,71 @@ npm test && npm run build
 
 ## Next task
 
-spec `2026-08-03-ui-overhaul-design.md` — **ข้อที่สอง**:
+spec `2026-08-03-ui-overhaul-design.md` — **ข้อที่สาม**:
 
-> อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal scroll, touch target ≥44px
+> tests เขียวครบ + `npm run build` ผ่าน + PWA generate
 
-สเปกกางกฎไว้ที่ `docs/superpowers/specs/2026-08-03-ui-overhaul-design.md` §4 (อ่านก่อน) — มันแตก
-ข้ออ้างย่อยให้แล้ว: breakpoint mobile `<640` / tablet `640–1024` (iPad) / desktop `>1024` (HQ) ·
-iPad ตั้ง = คอลัมน์เดียว **touch target ≥44px** · iPad นอน = 2 คอลัมน์ · HQ = grid หลายคอลัมน์ ·
-จอใหญ่ = เลขคิว `clamp()` · ทุกหน้า **ไม่มี `overflow-x`** ใช้ relative unit + `max-width:100%`
+⚠️ **ข้อนี้เคยถูก audit มาแล้วสองรอบ และ "เกือบผ่าน" ทั้งสองรอบ — ข้อที่ค้างคือ PWA**
+- รอบ `_0005` (commit `bd46974` / `e59bf3d`) audit แล้ว **ไม่ติ๊ก** เพราะ **PWA icons ยังว่าง**
+- รอบ `_0023` (commit `69227f0`) audit ซ้ำ ได้ผลเดิม
+- **ตรวจเองก่อนว่ายังเป็นแบบนั้นอยู่ไหม** — บน branch นี้ (= main) `vite.config.ts:17`
+  ยังเป็น `icons: []` อยู่จริง (เช็คแล้วรอบ 0006 ระหว่างทำเกณฑ์ข้อ responsive)
+- `_0005` ยังทิ้ง `src/pwa.manifest.test.ts` (commit `895e0a6`) ไว้ที่ branch นั้นด้วย
+  **ไฟล์นั้นไม่ได้อยู่บน branch นี้** — `git show auto/Booth_Management_6_7/2026-08-17_0005:src/pwa.manifest.test.ts`
+  ดูของจริงก่อน แล้ว**เขียนใหม่ให้ไฟล์เดียวจบในตัวเอง** อย่าอ้างไฟล์ข้าม branch
 
-**recon รอบ 0051 ทำไว้ให้แล้ว** (อ่านทุกหน้าจริงในรอบที่แล้ว — แต่ **ต้องเปิดดูเอง** อย่าเชื่อตารางนี้ล้วนๆ):
-- **`min-h-[44px]` ถูกโรยไว้ที่ call site เกือบทุกที่แล้ว** (`App.tsx:32` · `SetupScreen` ChoiceChip ·
-  `PinGate` input+ปุ่ม · `OrderStation` การ์ดสินค้า/ปุ่ม ±/ตัวเลือก/ปุ่มจ่าย · `QueuePanel` ทุกปุ่ม ·
-  `DashboardScreen` select+input+ปุ่ม · `AlertButtons` · `BroadcastBar` · `CommsToast` · `PresenceBoard` แถว)
-- ⚠️ **แต่ primitive `Button` เองไม่มีพื้น 44px** (`src/ui/Button.tsx:26` = `px-5 py-3` เฉยๆ)
-  ทุก caller ต้องพิมพ์ `min-h-[44px]` เอง → **คนที่ลืมคือคนที่ได้ปุ่มเตี้ย** นี่คือจุดที่น่าจะเป็นบั๊กจริงที่สุด
-  **ตรวจก่อนว่ามี caller ไหนลืมบ้าง** (กวาด source หา `<Button` ที่ไม่มี `min-h-`) แล้วตัดสินว่า
-  ควรย้ายพื้น 44px เข้าไปอยู่ใน primitive เลยไหม (แก้ที่เดียว คุมทุกหน้า — เป็น presentation ล้วน)
-  หมายเหตุการคำนวณ: `py-3`+line-height ที่ root 19.2px น่าจะเกิน 44px อยู่แล้วโดยบังเอิญ
-  **แต่ jsdom พิสูจน์ไม่ได้** และมันพังทันทีถ้าใครลด `py` หรือใส่ `text-xs` — พื้นที่ประกาศไว้ตรงๆ ดีกว่า
-- **จุดที่เสี่ยง horizontal scroll** (ต้องไล่ดูของจริง): `OrderStation:98` `lg:grid-cols-[1fr_380px]`
-  (คอลัมน์ตายตัว 380px) · `QrCode.tsx:16` `width={240}` · `PinGate:246` `tracking-[0.3em]` ·
-  `w-16`/`w-8` ในตะกร้า · `DisplayScreen` `text-[clamp(96px,22vw,320px)]` (320px บนจอ 360px = พอดีเป๊ะ)
-- **ของที่ทำถูกอยู่แล้ว**: `max-w-[90vw] break-words` ที่ `DisplayScreen:63`, `flex-wrap` แทบทุกแถว,
-  grid ทุกอันมี base 1 คอลัมน์ (`grid-cols-1 md:…` / `grid-cols-2 md:grid-cols-4`)
+**สามข้ออ้างย่อย — สองข้อแรกแค่รันคำสั่ง ข้อที่สามคือข้อที่ต้องตัดสิน:**
+1. **tests เขียวครบ** — รันเอง **ห้ามนับจากความจำ** รอบ 0006 บน branch นี้ได้ **159 / 40 files**
+   (= 133 ของ main + 26 ตัวใหม่) เลขจะขยับตามงานของรอบตัวเอง
+2. **`npm run build` ผ่าน** — รอบ 0006 ผ่าน (`built in 1.76s`) ⚠️ มี warning "chunk > 500 kB"
+   **เป็น warning ไม่ใช่ error อย่าไปไล่แก้** (จะกลายเป็น scope creep) บันทึกว่ามีก็พอ
+3. **PWA generate** — ⚠️ **นี่คือข้อที่ต้องทำงานจริง** build พ่น `generateSW` + precache 5 entries
+   + `dist/manifest.webmanifest` + `dist/sw.js` ออกมาจริง **แต่ `manifest.icons: []`**
+   → ต้องตัดสินให้ชัดว่า **"PWA generate" หมายถึงอะไร**:
+   - ถ้าหมายถึง "vite-plugin-pwa รันแล้วออก sw.js + manifest" → **ผ่านแล้ว** ให้ล็อกด้วยเทสต์
+   - ถ้าหมายถึง "ติดตั้งเป็นแอปบนโฮมสกรีนได้จริง" → **ยังไม่ผ่าน** เพราะ iOS/Android
+     ต้องมี icon อย่างน้อย 192×192 และ 512×512 ถึงจะขึ้น "Add to Home Screen"
+   spec §8 เขียนแค่ "PWA generate" ลอยๆ — **อ่าน spec เองแล้วตัดสิน อย่าเดา**
+   ถ้าตัดสินว่ายังไม่ผ่าน: **การเพิ่มไฟล์ icon จริงเป็นไบนารีซึ่งเครื่องนี้สร้างไม่ได้ตามใจ**
+   → บันทึกเป็นช่องว่างที่ระบุชัดว่าขาดอะไร (ตรงตาม Goal: "ไม่มีข้อไหนถูกทิ้งในสถานะ ไม่รู้")
+   แล้ว**ติ๊กหรือไม่ติ๊กก็ได้ แต่ต้องเขียนเหตุผลไว้** ห้ามติ๊กเงียบๆ
 
-**วิธี assert (สำคัญ — ข้อนี้พิสูจน์ยากกว่าข้อที่แล้วมาก)**: jsdom **ไม่ layout เลย**
-→ **พิสูจน์ "ไม่มี horizontal scroll" ตรงๆ ไม่ได้** ห้ามเขียนเทสต์ที่ทำเหมือนพิสูจน์ได้
-สิ่งที่พิสูจน์ได้จริงคือ **กฎเชิงโครงสร้าง** ที่ถ้าละเมิดแล้วจอจะล้นแน่ๆ เช่น
-(ก) ทุก interactive element มีพื้น 44px (กวาด source ทั้ง `src/` แบบเดียวกับรอบ 0051)
-(ข) ไม่มี fixed width ที่กว้างกว่าจอเล็กสุด (360px) โดยไม่มี guard `max-w-full`/breakpoint prefix
-(ค) grid/flex ทุกอันมี base เป็นคอลัมน์เดียวก่อนแล้วค่อย `md:`/`lg:` (iPad ตั้ง = คอลัมน์เดียว)
-(ง) เลขคิวใช้ `clamp()` ไม่ใช่ขนาดตายตัว (ข้อนี้ทับกับเกณฑ์ข้อสุดท้ายของ spec นี้พอดี)
-แล้ว **เขียนขอบเขตไว้ตรงๆ** ว่าไม่มีพิกเซลไหนถูกวัด — เหมือนที่รอบ 0051 ทำ
+**วิธี assert ที่ใช้ได้**: `vite.config.ts` เป็น config ไม่ใช่ DOM → เทสต์ควรเป็น
+**config-level** (import `vite.config.ts` แล้วอ่าน `manifest`) หรือ **อ่าน `dist/` หลัง build**
+⚠️ ถ้าอ่าน `dist/` ต้องระวังว่ามันอาจเป็นของ build เก่า — ให้ assert เฉพาะสิ่งที่ config บอกได้
+`_0005` เลือกทาง config-level ไว้ (`895e0a6` = "pin the web-app manifest at config level
+(new file, no production change)") ดูวิธีนั้นก่อน
 
-⚠️ ห้ามแตะ logic — แก้ได้เฉพาะ presentation (`className`, `src/ui/*`, `tailwind.config.js`, `src/index.css`)
+⚠️ ห้ามแตะ logic — ถ้าจะแก้ ให้แก้เฉพาะ `vite.config.ts` (build config) ซึ่งไม่ใช่ domain
 
-**เขียนผลลง `docs/autopilot/2026-08-21-responsive-audit.md`** แล้วค่อยติ๊ก checkbox ในไฟล์นี้
-(ตัวอย่างรูปแบบที่ใช้ได้ผล: `docs/autopilot/2026-08-21-neon-clarity-audit.md` จากรอบ 0051)
+**เขียนผลลง `docs/autopilot/2026-08-22-pwa-generate-audit.md`** แล้วค่อยตัดสินเรื่อง checkbox
+(ตัวอย่างรูปแบบที่ใช้ได้ผล: `docs/autopilot/2026-08-21-responsive-audit.md` จากรอบ 0006)
+
+<details>
+<summary>อ้างอิง: วิธีปิดเกณฑ์ responsive (รอบ 0006 — เก็บไว้ดูวิธี)</summary>
+
+ผลเต็มอยู่ที่ `docs/autopilot/2026-08-21-responsive-audit.md` สรุปวิธีที่ได้ผล:
+
+1. **บั๊กที่ grep มองไม่เห็นเพราะชื่อ tag ไม่ตรง** — พื้น 44px หายไปจาก `SetupScreen.tsx:107`
+   แต่กวาดหา `<button` ไม่เจอ เพราะสิ่งที่เขียนอยู่คือ `<Button` (component)
+   → **เมื่อกฎเป็นเรื่อง "ทุก X" ต้องถามว่า X ปรากฏในโค้ดได้กี่รูปแบบ** แล้วคุมทุกรูปแบบ
+   ทางแก้ที่ดีกว่าการไล่ปะ: **ย้าย invariant เข้าไปอยู่ใน primitive** แล้ว assert ที่ primitive
+2. **แยกค่าที่ assert ออกจากค่าที่พิมพ์** — ฉบับแรก `.slice(0,160)` opening tag **ก่อน**เช็คกฎ
+   → `<input>` 4 ตัวที่ className อยู่เลยตัวที่ 160 ขึ้นเป็น "ละเมิด" ทั้งที่ถูก
+3. **JSX opening tag ข้ามหลายบรรทัด** — กวาดทีละบรรทัดใช้ไม่ได้ ต้องเก็บทั้ง tag โดยนับ
+   brace depth (prop handler มี `>` อยู่ข้างใน: `onClick={() => …}`)
+4. **`git checkout -- src` ตอน mutation check ลบงานที่ยังไม่ commit ด้วย** และ
+   `git status --short` **ขึ้น clean** (สะอาดเพราะทิ้งงานไป ไม่ใช่เพราะถอน mutation อย่างเดียว)
+   → **commit ให้เรียบร้อยก่อนเริ่ม break เสมอ**
+5. **decoy ของ mutation test ต้องพิสูจน์ว่ามันฆ่าได้จริง** — decoy ฉบับแรกของ `FIXED_WIDTH`
+   ใช้ `shadow-[0_0_40px_…]` ซึ่ง **ไม่แมตช์อยู่แล้ว** → ถอด lookbehind ออกเทสต์ยังเขียว = ไร้ค่า
+   decoy ที่ถูกคือ `max-w-[900px]` ซึ่งลงท้ายด้วย `w-[900px]` เป๊ะ
+6. **Tailwind ที่ root 120% ไม่ตรงกับเอกสาร** — `max-w-sm` = 460.8px ไม่ใช่ 384px
+   **ทุกการคำนวณความกว้างในโปรเจคนี้ต้องคูณ 1.2**
+7. **ทำนายชุดเทสต์ที่ควรแดงไว้ก่อน break** แล้วเทียบกับผลจริง — 5 ชุด ตรงทุกชุด
+   ถ้าไม่ตรง แปลว่าเข้าใจเทสต์ตัวเองผิด (รอบนี้จับ decoy ไร้ค่าได้จากตรงนี้)
+
+</details>
 
 <details>
 <summary>อ้างอิง: วิธี audit ที่ใช้ปิดข้อสุดท้ายของ queue-pro (รอบ 0036 — เก็บไว้ดูวิธี)</summary>
@@ -384,9 +439,13 @@ build exit 0, production ที่งาน spec นี้แตะมี 4 ไ�
 จึงเขียนครอบใหม่ทั้ง 5 ข้ออ้างย่อยให้ไฟล์เดียวจบในตัวเอง — **ทำแบบนี้ต่อไป** อย่าอ้างไฟล์ข้าม branch)
 
 จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไปของ spec `2026-08-03-ui-overhaul-design.md`:
-"tests เขียวครบ + `npm run build` ผ่าน + PWA generate"
-(⚠️ ข้อนั้นเคยถูก audit มาแล้วบน branch `_0005`/`_0023` และพบว่า **PWA icons ยังว่าง** —
-`vite.config.ts` `manifest.icons: []` — ให้เช็คก่อนว่ายังเป็นแบบนั้นอยู่ไหม แล้วค่อยตัดสิน)
+"Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)"
+(⚠️ ข้อนั้นเป็น audit แบบเดียวกับที่รอบ 0036 ทำให้ queue-pro — ดูวิธีใน
+`docs/autopilot/2026-08-21-queue-pro-final-audit.md` แต่ **คนละ spec** คราวนี้ต้องกวาด
+งานของ `ui-overhaul` ซึ่งกระจายอยู่หลาย branch ที่ไม่เคย merge เหมือนกัน
+และเกณฑ์เขียนขอบเขต diff ไว้แคบกว่า: **เฉพาะ presentation + Tailwind config + `src/ui`**
+→ ไฟล์อย่าง `src/order/QrCode.tsx` ที่รอบ 0006 แก้ `className` **อยู่นอกสามหมวดนั้นตามชื่อ
+แต่เป็น presentation ล้วน** ต้องตัดสินและบันทึกให้ชัด ไม่ใช่เดา)
 
 ---
 
