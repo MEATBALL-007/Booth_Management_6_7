@@ -167,6 +167,8 @@ manifest **เคยถูกต้อง** ตอน 2026-07-24 แล้ว ov
 - **ทำไมไม่อ่าน `dist/`**: Verify command คือ `npm test && npm run build` → เทสต์รัน **ก่อน** build เสมอ
   `dist/` ที่อ่านได้จึงเป็นของ build รอบก่อนซึ่งเชื่อไม่ได้ และบนเครื่องที่ยังไม่เคย build จะไม่มีเลย
   → เทสต์ที่ `if (exists) …` จะกลายเป็นเทสต์ที่ **ข้ามตัวเองเงียบๆ**
+- ส่วน `tailwind.config.js` อ่านด้วย `fs` เป็น **ข้อความ** แล้ว regex เอาค่า `phantom-bg`
+  (เหตุผลอยู่ที่ §4.3 — ไม่ใช่เรื่องสไตล์ แต่เป็นเรื่อง build พัง)
 
 | กลุ่ม | เทสต์ | พิสูจน์อะไร |
 |---|---|---|
@@ -188,6 +190,30 @@ D2 คือเทสต์ที่ "ผ่านแบบไม่มีอะ
 D1 จึงยิง fixture ที่ผิดจริง 3 แบบ (ลืม `src` / ลืม `sizes` / ลืม `type`) เข้าไป
 แล้วบังคับให้ validator ชี้ตัวผู้ร้ายออกมาครบ — **พิสูจน์ตอน mutation ว่ามันจำเป็น** (ดู M8 ใน §5)
 
+### 4.3 ⚠️ `npm test` เขียว ไม่ได้แปลว่า `npm run build` ผ่าน (เจอจริงรอบนี้)
+
+ฉบับแรกของ E1 เขียนว่า `await import('../tailwind.config.js')` เพื่ออ่าน palette
+**`npm test` ผ่าน 144/144** แต่พอรัน Verify เต็ม:
+
+```
+$ npm run build
+> tsc -b && vite build
+src/pwaGenerate.audit.test.ts(52,32): error TS7016: Could not find a declaration file
+for module '../tailwind.config.js'. … implicitly has an 'any' type.
+```
+
+**บทเรียนสองชั้น:**
+1. **vitest ไม่ typecheck** มันแค่ transpile → ไฟล์เทสต์ที่ type ผิดยังรันเขียวได้สบาย
+2. **`tsc -b` กินไฟล์เทสต์ด้วย** → เทสต์ที่เขียวสนิทสามารถทำให้ **build แดง** ได้
+
+→ นี่คือเหตุผลตรงๆ ว่าทำไมกฎถึงบังคับให้รัน **Verify command เต็ม** เอง
+ไม่ใช่แค่ `npm test` แล้วสรุปว่าเรียบร้อย รอบนี้ถ้าหยุดที่ `npm test` จะ commit ของพัง
+
+**ทางแก้:** อ่าน `tailwind.config.js` ด้วย `fs` เป็นข้อความแล้ว regex
+`/'phantom-bg':\s*'(#[0-9a-fA-F]{3,8})'/` — ไม่ต้องพึ่ง type declaration
+และ `expect(neonBase).toBe('#0a0a0c')` ทำหน้าที่ยืนยันว่า regex แมตช์จริงไปในตัว
+(ถ้าไม่แมตช์ → `undefined` → แดงตรงนั้น ไม่ไหลไปเงียบที่บรรทัดล่าง)
+
 ### 4.2 เทสต์ `GAP:` คืออะไร
 
 D3 / E1 / E2 **ยืนยันว่าช่องว่างยังอยู่** ไม่ได้ยืนยันความถูกต้อง
@@ -208,6 +234,10 @@ D3 / E1 / E2 **ยืนยันว่าช่องว่างยังอ�
 | M7 | `icons: [{ src: '/pwa-192.png' }]` (ลืม sizes/type) | D2 D3 | D2 D3 (2 failed) | ✅ |
 | M10+M11 | **ปิดช่องว่าง**: colour → `#0a0a0c` + เพิ่ม `lang:'th'` | E1 E2 | E1 E2 (2 failed) | ✅ |
 | M12+M8 | `index.html` → `lang="en"` + stub validator เป็น `() => false` | E2 D1 | E2 D1 (2 failed) | ✅ |
+| M9 | `tailwind.config.js` → `phantom-bg: '#1A1A1A'` (ย้อน palette) | E1 | E1 (1 failed) | ✅ |
+
+> M9 รันซ้ำ **หลัง**เขียน E1 ใหม่เป็นแบบ `fs`+regex (§4.3) เพื่อยืนยันว่าการเปลี่ยนวิธีอ่าน
+> ไม่ได้ทำให้เทสต์เสียฟัน — แก้วิธี assert แล้วต้อง mutation check ซ้ำเสมอ
 
 **ครบทั้ง 11 เทสต์ ถูกฆ่าอย่างน้อย 1 แบบ**
 
@@ -222,8 +252,12 @@ D3 / E1 / E2 **ยืนยันว่าช่องว่างยังอ�
 | D1 | M8 |
 | D2 | M7 |
 | D3 | M1, M7 |
-| E1 | M1, M10 |
+| E1 | M1, M9, M10 |
 | E2 | M11, M12 |
+
+รวม **13 mutation ใน 6 ชุด** — ทำนายชุดที่ควรแดงไว้ก่อนรันทุกชุด **ตรงทุกชุด**
+ทุก mutation revert ด้วย `git checkout -- <file>` แล้วยืนยัน `git status --short` สะอาด
+(commit เทสต์ก่อนเริ่ม break — `git checkout -- src` ลบไฟล์ที่ยังไม่ commit ทิ้งด้วย)
 
 ### 5.1 สิ่งที่ mutation check เปิดเผย (สำคัญกว่าตัวเลข)
 
