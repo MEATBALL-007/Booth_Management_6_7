@@ -64,6 +64,7 @@ const LABELS = {
   'dashboard.expenseAmount': { th: 'จำนวนเงิน', en: 'Amount' },
   'dashboard.save': { th: 'บันทึก', en: 'Save' },
   'dashboard.expenseError': { th: 'บันทึกต้นทุนไม่สำเร็จ', en: 'Failed to save expense' },
+  'donation.goal': { th: 'เป้าหมาย', en: 'Goal' },
   'comms.needHelp': { th: 'ขอคนช่วย', en: 'Need help' },
   'comms.lowStock': { th: 'ของใกล้หมด', en: 'Low stock' },
   'comms.cleared': { th: 'เคลียร์แล้ว', en: 'Cleared' },

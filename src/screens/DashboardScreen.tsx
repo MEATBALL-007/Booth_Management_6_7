@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import type { Order, Expense, BoothId } from '../domain/types'
+import type { Order, Expense, BoothId, GlobalConfig } from '../domain/types'
 import { BOOTH_IDS } from '../domain/types'
 import { subscribeAllOrders } from '../order/ordersRepo'
 import { subscribeAllExpenses, addExpense } from '../expense/expensesRepo'
+import { subscribeGlobalConfig } from '../domain/configRepo'
 import { computeDashboardMetrics } from '../dashboard/metrics'
+import { DonationThermometer } from '../donation/DonationThermometer'
 import { isDashboardUnlocked } from '../dashboard/pinStore'
 import { PinGate } from '../dashboard/PinGate'
 import { L } from '../i18n/labels'
@@ -25,6 +27,7 @@ export function DashboardScreen() {
   const [desc, setDesc] = useState('')
   const [amount, setAmount] = useState('')
   const [error, setError] = useState<string | null>(null)
+  const [config, setConfig] = useState<Partial<GlobalConfig> | null>(null)
   const hqBooth = loadDeviceConfig()?.booth ?? 'photo'
 
   useHeartbeat(unlocked ? { id: getDeviceId(), deviceId: getDeviceId(), booth: hqBooth, mode: 'dashboard' } : null)
@@ -33,7 +36,8 @@ export function DashboardScreen() {
     if (!unlocked) return
     const u1 = subscribeAllOrders(setOrders)
     const u2 = subscribeAllExpenses(setExpenses)
-    return () => { u1(); u2() }
+    const u3 = subscribeGlobalConfig(setConfig)
+    return () => { u1(); u2(); u3() }
   }, [unlocked])
 
   if (!unlocked) return <PinGate onUnlock={() => setUnlocked(true)} />
@@ -62,6 +66,10 @@ export function DashboardScreen() {
         <PresenceBoard />
         <BroadcastBar booth={hqBooth} />
       </Panel>
+
+      {/* HQ gets the thermometer "ใหญ่": full width, above the stat grid,
+          where it is the first thing read on a laptop screen. */}
+      <DonationThermometer amount={m.netDonation} target={config?.donationTarget} variant="hq" />
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatTile testid="total-sales" label={`${L('dashboard.totalSales').th} · ${L('dashboard.totalSales').en}`} value={`${m.totalSales}฿`} />
