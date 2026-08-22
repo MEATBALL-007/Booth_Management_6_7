@@ -14,6 +14,12 @@ vi.mock('../expense/expensesRepo', () => ({
   subscribeAllExpenses: (cb: (e: unknown[]) => void) => { emitExpenses = cb; return () => {} },
   addExpense: addExpenseSpy,
 }))
+// Without this the screen's donation-goal listener would reach a real Firestore
+// client during the test run. The thermometer's own behaviour is covered in
+// `src/donationThermometer.audit.test.tsx`.
+vi.mock('../domain/configRepo', () => ({
+  subscribeGlobalConfig: () => () => {},
+}))
 vi.mock('../comms/commsRepo', () => ({
   sendMessage: vi.fn().mockResolvedValue('m1'),
   subscribeMessages: () => () => {},

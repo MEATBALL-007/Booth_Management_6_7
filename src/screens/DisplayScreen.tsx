@@ -1,6 +1,10 @@
 import { useEffect, useState } from 'react'
-import type { BoothId, Order } from '../domain/types'
-import { subscribeBoothOrders } from '../order/ordersRepo'
+import type { BoothId, Expense, GlobalConfig, Order } from '../domain/types'
+import { subscribeAllOrders, subscribeBoothOrders } from '../order/ordersRepo'
+import { subscribeAllExpenses } from '../expense/expensesRepo'
+import { subscribeGlobalConfig } from '../domain/configRepo'
+import { computeDashboardMetrics } from '../dashboard/metrics'
+import { DonationThermometer } from '../donation/DonationThermometer'
 import { servingOrders, upNextOrders } from '../display/queueView'
 import { useServingAlert } from '../display/useServingAlert'
 import { L, nowServingLabel } from '../i18n/labels'
@@ -19,6 +23,24 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [ready, setReady] = useState(false)
   useEffect(() => subscribeBoothOrders(booth, (o) => { setOrders(o); setReady(true) }), [booth])
+
+  // The thermometer is event-wide, not booth-wide: one goal, one running total,
+  // the same number on every screen. That needs its own subscriptions — the
+  // queue above deliberately stays scoped to this booth, and is left untouched.
+  const [allOrders, setAllOrders] = useState<Order[]>([])
+  const [expenses, setExpenses] = useState<Expense[]>([])
+  const [config, setConfig] = useState<Partial<GlobalConfig> | null>(null)
+  useEffect(() => {
+    const unsubOrders = subscribeAllOrders(setAllOrders)
+    const unsubExpenses = subscribeAllExpenses(setExpenses)
+    const unsubConfig = subscribeGlobalConfig(setConfig)
+    return () => { unsubOrders(); unsubExpenses(); unsubConfig() }
+  }, [])
+
+  // Reusing the dashboard's formula rather than re-deriving it is the whole
+  // point: the customer screen and HQ cannot disagree about the total, because
+  // there is only one place the total is computed.
+  const { netDonation } = computeDashboardMetrics(allOrders, expenses)
 
   const serving = servingOrders(orders)
   const upNext = upNextOrders(orders)
@@ -106,6 +128,17 @@ export function DisplayScreen({ booth }: { booth: BoothId }) {
           </div>
         </section>
       )}
+
+      {/* Bottom-LEFT corner, not bottom-right: `App.tsx` already parks the
+          back-to-Setup button at `fixed bottom-3 right-3`. `fixed` also takes
+          this out of the centred column entirely, which is what "ไม่บังคิว"
+          requires — the queue above is laid out exactly as it was before. */}
+      <div
+        data-testid="donation-corner"
+        className="fixed bottom-3 left-3 z-30 w-[min(420px,45vw)] max-w-[calc(100vw-1.5rem)] text-left"
+      >
+        <DonationThermometer amount={netDonation} target={config?.donationTarget} variant="display" />
+      </div>
     </div>
   )
 }

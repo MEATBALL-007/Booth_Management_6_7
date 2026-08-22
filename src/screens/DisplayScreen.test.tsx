@@ -11,8 +11,20 @@ beforeEach(() => { playChimeSpy.mockClear() })
 let emit: (orders: Order[]) => void = () => {}
 vi.mock('../order/ordersRepo', () => ({
   subscribeBoothOrders: (_booth: string, cb: (o: Order[]) => void) => { emit = cb; return () => {} },
+  // The donation thermometer in the corner reads event-wide totals, so the
+  // screen subscribes to these too. This file is about the queue, so they are
+  // stubbed to never emit — the thermometer's own behaviour is covered in
+  // `src/donationThermometer.audit.test.tsx`.
+  subscribeAllOrders: () => () => {},
   createOrder: vi.fn(),
   updateOrderStatus: vi.fn(),
+}))
+vi.mock('../expense/expensesRepo', () => ({
+  subscribeAllExpenses: () => () => {},
+  addExpense: vi.fn(),
+}))
+vi.mock('../domain/configRepo', () => ({
+  subscribeGlobalConfig: () => () => {},
 }))
 
 import { DisplayScreen } from './DisplayScreen'
