@@ -250,7 +250,7 @@ test('B3: both browsers offer the same controls (§4.1 "2 เครื่อง�
   const b = openHq('windows-hq')
 
   const names = (view: ReturnType<typeof within>) =>
-    view.getAllByRole('button').map((el) => el.textContent).sort()
+    view.getAllByRole('button').map((el: HTMLElement) => el.textContent).sort()
 
   // spine: ถ้าไม่มีปุ่มเลย การเทียบ [] กับ [] จะเขียวว่างเปล่า
   expect(names(a.view).length).toBeGreaterThanOrEqual(2)
