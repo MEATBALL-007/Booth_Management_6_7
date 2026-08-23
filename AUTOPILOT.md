@@ -14,11 +14,50 @@
 
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
-- [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
+- [x] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+      — ✅ รอบ 2026-08-24 (0053): **เจอบั๊กจริงและแก้แล้ว** (ทำซ้ำงานรอบ 0813 ที่ commit ไม่ได้
+      เพราะเครื่องไม่มี git identity ตอนนั้น — ใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md`
+      เป็นสเปก **แต่ยืนยันทุกข้ออ้างกับโค้ดจริงก่อน** เลขบรรทัดยังตรงทั้งหมด)
+      ผลเต็มอยู่ที่ `docs/autopilot/2026-08-24-undo-round-trip-audit.md` (ใช้ซ้ำได้)
+      เทสต์ 36 ตัวใน **ไฟล์ใหม่ 2 ไฟล์**: `src/undoRoundTrip.audit.test.tsx` (31)
+      + `src/undoDeleteField.audit.test.ts` (5) — commit `6c2dafa`
+      **บั๊ก: field ที่ action ประดิษฐ์ขึ้นใหม่ รอดจากการ undo เสมอ**
+      `orderSnapshot()` (`queueActions.ts:36`) คัดลอกเฉพาะ field ที่ `!== undefined`
+      และ `updateOrderStatus` เป็น `updateDoc` = **merge** → key ที่ snapshot ไม่เอ่ยถึงคงค่าเดิมไว้
+      กด "เสร็จ" แล้ว undo → `status` กลับเป็น serving แต่ **`doneAt` ยังค้างอยู่ในเอกสาร**
+      เช่นเดียวกับ `servingAt`+`announcedAt` (undo ของ เรียก/เรียกคิวถัดไป) และ `cancelReason`
+      **แก้ 3 ไฟล์ (สองอย่างแรกผูกกันแน่น ไม่ใช่ทางเลือก)**:
+      (1) `queueActions.ts` — snapshot คืน **ทุก** field ที่ undo ได้ (`undefined` = "ไม่เคยมี") + type `OrderSnapshot`
+      (2) `ordersRepo.ts` — แปลง `undefined` → `deleteField()` ⚠️ **จำเป็น ไม่ใช่ของแถม**:
+          `lib/firebase.ts` **ไม่ได้ตั้ง `ignoreUndefinedProperties`** → พอ snapshot เอ่ยถึง field
+          ที่ไม่มี `updateDoc` จะ **reject การเขียนทิ้งทั้งก้อน** ถ้าไม่มีตัวแปลง
+      (3) `QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ที่เขียน **inline** ออกมาเป็น `Q.cancel(reason)`
+          (patch เหมือนเดิมเป๊ะ) เพราะ action ตัวที่ 7 นี้ **round-trip test ระดับ pure function มองไม่เห็น**
+      **ไม่แตะ logic บัญชี**: grep caller ของ `updateOrderStatus` ซ้ำเอง — production มีแค่
+      `QueuePanel` 2 จุด ส่งเฉพาะ status/timestamp/cancelReason · ตัวแปลงแตะเฉพาะ key ที่เป็น
+      `undefined` (D3 ยิง `total`/`paymentStatus` เข้าไปแล้วต้องออกมาเท่าเดิม + `deleteField` ห้ามถูกเรียก)
+      + D5 ล็อกว่า `createOrder` ไม่ผ่านตัวแปลง
+      **แก้เทสต์เดิม 1 ตัว** `queueActions.test.ts:47` ชื่อเดิมคือ "captures **only defined** mutable
+      fields" = **คำบรรยายของตัวบั๊ก** → เปลี่ยนชื่อให้ตรงความจริง + `toEqual` → `toStrictEqual`
+      (**เข้มขึ้น ไม่ได้อ่อนลง**; ของเดิมยังเขียวหลังแก้ด้วยซ้ำ เพราะ `toEqual` มองข้าม key ที่เป็น `undefined`)
+      **หลักฐานว่าช่องว่างเป็นของจริง (M1)**: คืน `orderSnapshot` เป็นของเดิม (= บั๊กกลับมาเต็มรูปแบบ)
+      → `Test Files 2 failed | 39 passed` — **ไฟล์เทสต์เดิมทั้ง 39 ไฟล์เขียวหมด**
+      break โค้ด 13 แบบ ทำนายผลไว้ก่อนทุกแบบและ**ตรงทุกแบบ**
+      — **ทุกเทสต์ทั้ง 36 ตัวถูกฆ่าอย่างน้อย 1 แบบ**
+      **M10 คุ้มที่สุด**: ทำให้ helper `write()` เมิน patch ทั้งก้อน → **A2 ทั้ง 10 เคสแดง
+      แต่ A1 ทั้ง 10 เคสเขียว** ทั้งที่ไม่มีอะไรเกิดขึ้นเลย = เทสต์ตระกูล "ของกลับมาเหมือนเดิม"
+      **เป็น vacuous โดยธรรมชาติ** (`undone === before` จริงเสมอเมื่อไม่มีการกระทำ) ต้องมีคู่ spine เสมอ
+      **M6 คือเหตุผลที่ต้องมีเทสต์ระดับ panel**: ให้พาเนลกรอง `undefined` ทิ้งก่อนส่ง undo
+      → B1–B7 แดงครบ 7 ขณะที่ **section A เขียวหมด และเทสต์ undo เดิมใน `QueuePanel.test.tsx` ก็เขียว**
+      ⚠️ **ขอบเขตของหลักฐาน**: `ordersRepo` และ `firebase/firestore` ถูก mock
+      → **ไม่เคยเขียน Firestore จริงเลย** พิสูจน์ได้แค่ว่า **ส่ง sentinel ที่ถูกต้องออกไป**
+      ไม่ได้พิสูจน์ว่า field หายจากเอกสารจริง · helper `write()` จำลอง semantics ของ Firestore เอง
+      ความถูกต้องของมันฝากไว้กับ D1/D2/D4 ในอีกไฟล์ (M2 พิสูจน์: ถอดตัวแปลงทิ้ง → D แดง แต่ **A1 ยังเขียว**)
+      **ต้องอ่านสองไฟล์คู่กัน** · `deleteField()` ไม่เคยถูกใช้กับ Firestore จริงในโปรเจคนี้มาก่อน —
+      ถ้า `firestore.rules` บังคับว่า field ต้องมีอยู่ การลบอาจถูก reject (**rules เป็น Out of scope**)
+      ⚠️ **จงใจไม่ทำ**: ไม่ใส่ idempotency guard ให้ `cancel` (action อื่นคืน `null` เมื่อ status ไม่ตรง)
+      — Idempotency เป็นเกณฑ์แยกที่ปิดไปแล้วรอบ 0042 **บน branch อื่น** ใส่ตอนนี้คือแก้ล่วงหน้า
+      โดยไม่มีเทสต์รองรับ และจะชนกับงาน branch นั้นตอน merge
 - [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [x] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
@@ -483,21 +522,77 @@ npm test && npm run build
 
 ## Next task
 
-spec `2026-08-04-queue-pro-upgrade-design.md` — เกณฑ์ **Undo** (`:17`):
+spec `2026-08-04-queue-pro-upgrade-design.md` — เกณฑ์ **No-show** (`:22`):
 
-> Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+> No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 
-**บัญชีของไฟล์นี้ ณ จบรอบ 0009 (2026-08-24): ติ๊ก 13 / เหลือ 7 / รวม 20**
+**บัญชีของไฟล์นี้ ณ จบรอบ 0053 (2026-08-24): ติ๊ก 14 / เหลือ 6 / รวม 20**
 (นับจาก `grep -c "^- \[x\]"` — **นับเองก่อนเชื่อ**)
-`hq-comms-crosssell` ปิดไปแล้ว 3 ข้อ (Donation thermometer · inter-booth alert · HQ สองเครื่อง) **เหลือ 4**
-`queue-pro-upgrade` ติ๊กแล้ว 5 **เหลือ 3** — Undo (`:17`) · No-show (`:22`) · ประกาศซ้ำ (`:23`)
+`hq-comms-crosssell` ปิดไปแล้ว 3 ข้อ **เหลือ 4** — Happy-Hour (`:24`) · ปิดซุ้ม/expectedCash (`:25`)
+· Passport (`:26`) · offline sync (`:27`)
+`queue-pro-upgrade` ติ๊กแล้ว 6 **เหลือ 2** — No-show (`:22`) · ประกาศซ้ำ (`:23`)
 `ui-overhaul` **ครบทั้ง 5 ข้อแล้ว**
 
-⚠️ สามข้อของ queue-pro เคยทำเสร็จจริงบน branch `_0009`/`_0019_0039`/`_0018` **ที่ไม่เคยถูก merge**
+⚠️ สองข้อที่เหลือของ queue-pro เคยทำเสร็จจริงบน branch `_0019_0039`/`_0018` **ที่ไม่เคยถูก merge**
 → ticks อยู่ในบัญชีของ branch เหล่านั้น ไม่ใช่ที่นี่ (commit `9f23a83` บันทึก cross-branch ledger drift ไว้)
-**บน branch นี้ต้องทำใหม่** — และรอบนี้มีของพร้อมให้ทำ ดูหัวข้อถัดไป
+**บน branch นี้ต้องทำใหม่**
 
 ---
+
+### ทำไมเลือกข้อนี้ (recon จริงรอบ 0053 — แต่ยังต้องเปิดไฟล์ยืนยันเองอยู่ดี)
+
+**No-show เป็นเพื่อนบ้านของ Undo ในไฟล์เดียวกัน** (`QueuePanel` + `queueActions`) และรอบ 0053
+เพิ่งไล่โค้ดตรงนั้นมาทั้งรอบ → ต้นทุนความเข้าใจต่ำที่สุดในบรรดาที่เหลือ
+
+recon ที่ยิงจริงตอนจบรอบ 0053 (`grep -rn "skipped" src/ | grep -v test`):
+
+```
+src/domain/types.ts:11         'skipped' อยู่ใน OrderStatus
+src/queue/queueActions.ts:23   skip()   -> { status: 'skipped' }
+src/queue/queueActions.ts:27   recall() -> guard status !== 'skipped'
+src/screens/QueuePanel.tsx:21  const skipped = mine.filter(...)
+src/screens/QueuePanel.tsx:95  โซน "พักไว้" + ปุ่ม เรียกซ้ำ  (:96-108)
+src/display/queueView.ts       ตัวกรองที่จอลูกค้าใช้
+src/display/useServingAlert.ts + chime.ts   chime + flash
+```
+
+→ **เครื่องจักรครบทุกชิ้นแล้ว** เกณฑ์นี้จึง**น่าจะ**เป็นช่องว่างของเทสต์ล้วน
+⚠️ **แต่อย่าเชื่อประโยคนั้น** — รอบ 0032 แผนเดาแบบเดียวกันแล้ว **ต้องเขียน production จริง**
+ทั้งสองแบบเกิดได้ **เปิดไฟล์อ่านเองก่อนตัดสิน**
+
+**ทำไมไม่ใช่ ประกาศซ้ำ (`:23`)** — ทำได้เหมือนกันและอยู่ในไฟล์เดียวกัน แต่ No-show กว้างกว่า
+(กิน `queueView` + `useServingAlert` ด้วย) และ **ครึ่งหลังของ No-show คือ "เรียกซ้ำ → Display ประกาศ"
+ซึ่งเป็นเครื่องจักรตัวเดียวกับที่ประกาศซ้ำใช้** → ทำ No-show ก่อน แล้วรอบ ประกาศซ้ำ จะเหลือแค่
+ส่วนต่างเล็กๆ ถ้าทำกลับกันจะต้องแตะ `useServingAlert` สองรอบ
+
+**ทำไมไม่ใช่ 4 ข้อที่เหลือของ `hq-comms-crosssell`** — grep ยืนยันซ้ำแล้วหลายรอบ:
+Happy-Hour (`pricingOverride|happyHour|Happy`) · Cash reconciliation (`cashSession|countedCash`)
+· Passport (`passport|stampedBooths`) → **0 hit ทั้งสามตัว** = เขียนฟีเจอร์ใหม่ทั้งอัน ไม่ใช่พิสูจน์ของที่มี
+และ **Happy-Hour ถูกตัดด้วยเหตุผลที่แข็งกว่าความยาก**: §4.3 สั่งให้ Order Station **เปลี่ยนวิธีคิด
+subtotal** ซึ่งชนกับ Out of scope ตรงตัว (**"ห้ามเปลี่ยน logic บัญชี"**) → รอบที่หยิบมันควรบันทึกเป็น
+**ช่องว่างพร้อมเหตุผล** ไม่ใช่เขียนสูตรราคาใหม่ · ข้อ offline เป็นเกณฑ์ครอบทั้ง spec ควรทำ**หลังสุด**
+
+### สิ่งที่ต้องตัดสินก่อนเขียนเทสต์ — รอบ No-show
+
+1. **"หายจากจอลูกค้า" ตรวจที่ไหน** — `src/display/queueView.ts` เป็นตัวกรอง แต่การพิสูจน์ที่แข็ง
+   คือ **กวาด `root.textContent` ทั้ง DOM ว่าไม่มีเลขนั้นอยู่เลย** ไม่ใช่แค่ "ไม่อยู่ใน testid ที่รู้จัก"
+   (วิธีนี้ได้ผลมาแล้วรอบ 0007) และต้องมีคู่ spine: เลขอื่นที่ **ต้อง**โชว์ ยังโชว์อยู่
+2. **"Display ประกาศ (chime+flash)" ตอน recall — พิสูจน์ยังไงให้ไม่ vacuous**
+   `useServingAlert` คีย์จาก `announcedAt` (`DisplayScreen.tsx:26`) และ `recall()` เซ็ต `announcedAt`
+   ใหม่ → **ต้องกด 2 snapshot คร่อมกัน** (skipped → recall) ไม่ใช่ render ครั้งเดียว
+   ⚠️ **กับดักรอบ 0020 ยังอยู่**: จุดเขียว LIVE (`DisplayScreen.tsx:40`) มี `animate-pulse` **ติดถาวร**
+   → เช็ค "มีอะไรกระพริบไหม" จะเขียวเสมอ **ต้อง assert ที่ root element ตรงๆ**
+   ⚠️ **อย่าใส่ `new AudioContext()` ลงโค้ดที่จอ render** — jsdom ไม่มี ทุกเทสต์ที่ render จอจะพังหมด
+   ดูว่า `chime.ts` วันนี้ป้องกันตัวเองยังไง (`playChime` ถูกเรียกตอนไหน) ก่อนแตะอะไร
+3. **`skip` ไม่เปลี่ยน `announcedAt`** — ตอน order หายจาก serving จอ**ต้องไม่**ประกาศอะไร
+   นี่คือข้ออ้างที่ควรล็อกไว้ด้วย (false alert บนจอลูกค้าคือบั๊กที่คนดูเห็นทันที)
+   และเป็นเทสต์ประเภท "อะไรบางอย่างไม่เกิดขึ้น" → **ต้องเปิดโอกาสให้มันเกิดก่อน** (ยิง snapshot จริง)
+   ไม่งั้นเขียวเปล่าๆ (บทเรียนรอบ 0009)
+4. **"ขึ้นโซนพักไว้" ที่ `QueuePanel`** — โซนนี้ render เฉพาะเมื่อ `skipped.length > 0` (`:96`)
+   → ต้องกดทั้งสองสถานะ (ไม่มีของพัก = ไม่มีโซน / มีของพัก = มีโซน + ปุ่ม เรียกซ้ำ)
+
+<details>
+<summary>อ้างอิงเก่า: เหตุผลที่รอบ 0053 เลือกทำ Undo (ปิดแล้ว — เก็บไว้ดูวิธี)</summary>
 
 ### ทำไมเลือกข้อนี้ (ตรวจของจริงแล้วรอบ 0009 — ไม่ใช่การเดา)
 
@@ -588,16 +683,23 @@ src/order/ordersRepo.ts:25-27     updateOrderStatus = updateDoc ตรงๆ (me
 (ถ้าจะให้แน่นกว่านั้นต้องมีเทสต์ที่ pin ว่า `updateOrderStatus` แปลง `undefined` → `deleteField()`
 ซึ่งเอกสาร 0813 ก็เลือกทางนี้)
 
+**ผลจริงรอบ 0053: ทำครบตามนี้ทุกข้อ ติ๊กแล้ว** — เจอบั๊กจริงตามที่เอกสาร 0813 ระบุ แก้ 3 ไฟล์
+เทสต์ 36 ตัว 2 ไฟล์ใหม่ ผลเต็มที่ `docs/autopilot/2026-08-24-undo-round-trip-audit.md`
+
+</details>
+
 ---
 
 ### วิธีที่ใช้ได้ผลมาแล้ว (ทำซ้ำได้)
 
-- **ไฟล์เทสต์ใหม่แยกเสมอ** — `src/undoRoundTrip.audit.test.tsx` (ชื่อนี้ยังไม่มีใครใช้ ไม่ชน branch ไหน)
+- **ไฟล์เทสต์ใหม่แยกเสมอ** — รอบ No-show ใช้ `src/noShowRecall.audit.test.tsx`
+  (ชื่อนี้ยังไม่มีใครใช้ ไม่ชน branch ไหน — **เช็ค `git log --all` ยืนยันเองก่อน**)
   branch อื่นเป็นเจ้าของไฟล์เทสต์เดิมอยู่ **อย่าแก้ไฟล์เทสต์เดิมถ้าไม่จำเป็น**
-  ⚠️ **ข้อยกเว้นของรอบ Undo**: เกณฑ์นี้ต้อง **แก้ production** (`queueActions.ts` · `ordersRepo.ts`
-  · อาจรวม `QueuePanel.tsx`) → เทสต์เดิมที่ล็อกพฤติกรรมเก่าไว้ **จะแดง และควรแดง**
-  โดยเฉพาะ `src/queue/queueActions.test.ts:47` ที่ชื่อมันคือ "captures **only defined** mutable fields"
-  = เทสต์ที่ล็อกตัวบั๊กไว้ **ต้องแก้เทสต์ตัวนั้น ไม่ใช่ยอมแพ้** และเขียนใน SUMMARY ว่าแก้เพราะอะไร
+  ⚠️ **ข้อยกเว้นที่ชอบธรรม (รอบ 0053 ใช้จริง)**: ถ้าเจอเทสต์เดิมที่ **ชื่อมันประกาศสัญญาที่เป็นเท็จ**
+  ให้แก้ ไม่ใช่หลบ — รอบ 0053 แก้ `queueActions.test.ts:47` ("captures **only defined** mutable
+  fields" = คำบรรยายของตัวบั๊ก) ⚠️ **จุดที่ต้องระวัง**: เทสต์ตัวนั้น **ยังเขียวอยู่**หลังแก้ production
+  ด้วยซ้ำ เพราะใช้ `toEqual` ซึ่งมองข้าม key ที่เป็น `undefined` → **"เทสต์ไม่แดง" ไม่แปลว่า
+  "เทสต์ยังพูดความจริง"** ต้องอ่านชื่อมันด้วย และเขียนใน SUMMARY ว่าแก้เพราะอะไร
 - **`toStrictEqual` บน `mock.calls` ทั้งลิสต์** ไม่ใช่ `objectContaining`
   (`objectContaining` ปล่อย field ส่วนเกินผ่าน และมองไม่เห็น "ยิงซ้ำสองครั้ง")
 - **เทสต์ที่ assert `[]` / assert "ไม่มีอะไร" ต้องมีคู่ spine เสมอ** ที่ยืนยันว่าตัวสแกน/ตัวกรอง
@@ -611,7 +713,23 @@ src/order/ordersRepo.ts:25-27     updateOrderStatus = updateDoc ตรงๆ (me
   `2026-08-23-inter-booth-alert-audit.md` "อยู่บน branch นี้จริง" ซึ่ง **ผิด** (รอบ 0009 เช็คแล้ว)
   ใช้ `2026-08-24-hq-two-devices-audit.md` เป็นรูปแบบแทน มันอยู่ตรงนี้จริง
 
-**⚠️ บทเรียนรอบ 0009 (2026-08-24) — เพิ่งเจอสดๆ**:
+**⚠️ บทเรียนรอบ 0053 (2026-08-24) — เพิ่งเจอสดๆ**:
+- **เทสต์ตระกูล "ของกลับมาเหมือนเดิม" เป็น vacuous โดยธรรมชาติ** — `undone === before`
+  **จริงเสมอ**เมื่อ action ไม่ได้ทำอะไรเลย (M10 พิสูจน์: helper เมิน patch → A2 แดงครบ 10
+  **A1 เขียวครบ 10**) → round-trip test ทุกตัวต้องมีคู่ spine ที่ยืนยันว่า **มีอะไรเปลี่ยนไปจริง**
+  ก่อนจะย้อนกลับ (ญาติของ `expect([]).toEqual([])` แต่หน้าตาไม่เหมือน จับได้ยากกว่า)
+- **`git reset` ถูกบล็อกในกล่องนี้** (ทั้ง `--soft` และเปล่าๆ) → **แยก commit ให้ถูกตั้งแต่ครั้งแรก**
+  `git add -A` แล้ว `git commit` = ทุกอย่างไปก้อนเดียว แก้ทีหลังไม่ได้ ทำได้แค่ `git commit --amend`
+  ข้อความให้ตรงกับของที่อยู่ข้างใน (ซึ่งซื่อสัตย์กว่าปล่อยข้อความผิดไว้)
+- **`as X` ใน test file ทำ `npm test` เขียวแต่ `tsc -b` แดง** — `next as Order` บน
+  `Record<string, unknown>` ได้ `TS2352` ต้องเป็น `as unknown as Order`
+  (ยืนยันบทเรียนเดิมอีกครั้ง: **vitest ไม่ typecheck แต่ `tsc -b` กินไฟล์เทสต์ด้วย**)
+- **`vi.mock` ทั้งโมดูลบังคับให้แตกเป็นสองไฟล์เทสต์** — section ที่ mock `ordersRepo` ทิ้ง
+  อยู่ไฟล์เดียวกับ section ที่ต้องเรียก `updateOrderStatus` **ตัวจริง** ไม่ได้ → วางแผนเผื่อตั้งแต่ต้น
+- **`toEqual` มองข้าม key ที่มีค่า `undefined` เหมือน `objectContaining`** — ไม่ใช่แค่
+  `objectContaining`/`toHaveBeenCalledWith` ที่ตาบอด **`toEqual` ก็ด้วย** มีแค่ `toStrictEqual` ที่เห็น
+
+**⚠️ บทเรียนรอบ 0009 (2026-08-24)**:
 - **`vi.useFakeTimers()` ทับ `Date.now` ที่ spy ไว้** → `clock` ที่คุมเองจะไม่มีผลเงียบๆ
   ถ้าต้องคุมเวลาเองด้วยและเดิน timer ด้วย ใช้
   `vi.useFakeTimers({ toFake: ['setInterval','clearInterval','setTimeout','clearTimeout'] })`
