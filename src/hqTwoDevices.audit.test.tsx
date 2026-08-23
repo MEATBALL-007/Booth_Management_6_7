@@ -213,6 +213,13 @@ test('B1: one snapshot gives both browsers the same numbers, and the numbers are
   const m = computeDashboardMetrics(orders, expenses)
   const expected = Object.fromEntries(TILES.map(([id, read]) => [id, read(m)]))
 
+  // ปักตัวเลขไว้ตรงๆ ด้วย ไม่งั้นถ้าใครแก้สูตรกลาง **ทั้งสองฝั่งของการเทียบจะขยับตามกัน**
+  // แล้วเทสต์จะเขียวต่อไปทั้งที่ยอดเปลี่ยน (สูตรเองมีเทสต์ของตัวเองที่ `dashboard/metrics.test.ts`)
+  expect(expected).toStrictEqual({
+    'total-sales': '420฿', 'net-donation': '220฿', 'cash-total': '300฿', 'qr-total': '120฿',
+    'total-cost': '200฿', 'expected-cash': '300฿', 'paid-orders': '2', 'done-count': '1',
+  })
+
   // ตรงกันระหว่างสองเครื่อง — กวาดครบทุกช่อง ไม่ใช่สุ่มดูสองช่อง
   expect(tileMap(b.view)).toStrictEqual(tileMap(a.view))
   // และตรงกับสูตรกลาง ไม่ใช่ตรงกันเพราะผิดเหมือนกันทั้งคู่
@@ -314,7 +321,7 @@ test('C4: the surviving browser can still record an expense', async () => {
 })
 
 test('C5: a closed browser stops claiming to be online — its heartbeat is cleaned up', () => {
-  vi.useFakeTimers()
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'] })
   try {
     const a = openHq('macbook-hq')
     openHq('windows-hq')
@@ -368,29 +375,39 @@ test('D2 (spine): a machine that is still beating reads as ออนไลน์
 })
 
 test('D3 GAP: the หลุด flip needs a snapshot — the presence board has no clock of its own', () => {
-  const b = openHq('windows-hq')
-  emitPresence([
-    p({ id: 'macbook-hq', station: 'A', lastSeen: NOW }),
-    p({ id: 'windows-hq', station: 'B', lastSeen: NOW }),
-  ])
-  expect(b.view.getAllByTestId('presence-row')[0]).toHaveTextContent('ออนไลน์')
+  // นาฬิกาของ Date ต้องไม่ถูก fake ทับ (`clock` ยังต้องเป็นตัวคุม) — fake แค่ timer
+  vi.useFakeTimers({ toFake: ['setInterval', 'clearInterval', 'setTimeout', 'clearTimeout'] })
+  try {
+    const b = openHq('windows-hq')
+    emitPresence([
+      p({ id: 'macbook-hq', station: 'A', lastSeen: NOW }),
+      p({ id: 'windows-hq', station: 'B', lastSeen: NOW }),
+    ])
+    expect(b.view.getAllByTestId('presence-row')[0]).toHaveTextContent('ออนไลน์')
 
-  // เวลาเดินผ่านเกณฑ์ไปแล้ว แต่ไม่มี snapshot ใหม่เข้ามา
-  clock = NOW + 300_000
-  expect(b.view.getAllByTestId('presence-row')[0]).toHaveTextContent('ออนไลน์') // ← ยังเขียวอยู่
+    // เวลาเดินผ่านเกณฑ์ไปไกลแล้ว และ **timer ทุกตัวได้เดินจริง** แต่ไม่มี snapshot ใหม่เข้ามา
+    clock = NOW + 300_000
+    act(() => { vi.advanceTimersByTime(300_000) })
+    expect(b.view.getAllByTestId('presence-row')[0]).toHaveTextContent('ออนไลน์') // ← ยังเขียวอยู่
 
-  // พอมี snapshot อะไรก็ได้เข้ามา (ในของจริงคือ heartbeat ของเครื่องที่ยังเปิดอยู่เอง — ดู D4)
-  // การ์ดถึงคำนวณ now ใหม่แล้วพลิกเป็น "หลุด"
-  emitPresence([
-    p({ id: 'macbook-hq', station: 'A', lastSeen: NOW }),
-    p({ id: 'windows-hq', station: 'B', lastSeen: clock }),
-  ])
-  expect(b.view.getAllByTestId('presence-row')[0]).toHaveTextContent('หลุด')
+    // พอมี snapshot อะไรก็ได้เข้ามา การ์ดถึงคำนวณ now ใหม่แล้วพลิกเป็น "หลุด"
+    emitPresence([
+      p({ id: 'macbook-hq', station: 'A', lastSeen: NOW }),
+      p({ id: 'windows-hq', station: 'B', lastSeen: clock }),
+    ])
+    expect(b.view.getAllByTestId('presence-row')[0]).toHaveTextContent('หลุด')
+  } finally {
+    cleanup()
+    vi.useRealTimers()
+  }
 
   // ⚠️ เทสต์นี้บันทึก **ช่องว่าง** ไว้ ไม่ได้บันทึกว่ามันถูก: `PresenceBoard.tsx:10` อ่าน
-  // `Date.now()` ตอน render และไม่มี timer ของตัวเอง → การ์ดของเครื่องที่ **ไม่ได้เต้น**
-  // (เช่นถ้าวันหนึ่งเอา PresenceBoard ไปแปะจอที่ไม่มี heartbeat) จะค้างเขียวถาวร
-  // ปิดช่องนี้ต้องเพิ่ม tick เข้าไปใน PresenceBoard = **แก้คอมโพเนนต์ comms ซึ่ง Out of scope ห้ามแตะ**
+  // `Date.now()` ตอน render และไม่มี timer ของตัวเอง → สถานะ "หลุด" เป็นเรื่องที่ **snapshot ผลัก**
+  // ไม่ใช่ **นาฬิกาผลัก** — เอา PresenceBoard ไปแปะจอที่ไม่มีอะไรเขียน presence เมื่อไหร่ จะค้างเขียวถาวร
+  // **บนของจริงเกณฑ์ยังผ่าน** เพราะ heartbeat ของเครื่องที่ยังเปิดอยู่เองเขียน `/presence` ทุก 30 วิ
+  // → Firestore สะท้อน snapshot กลับมาเอง → การ์ดคำนวณใหม่ (D4 ล็อกว่า 30 วิ ถี่พอเทียบเกณฑ์ 90 วิ)
+  // กลไกนั้นอยู่ฝั่ง Firestore ซึ่งไฟล์นี้ mock ทิ้ง → **จำลองไม่ได้ จึงไม่แกล้งทำเป็นพิสูจน์**
+  // ปิดช่องนี้ให้ตรงไปตรงมาต้องเพิ่ม tick เข้าไปใน PresenceBoard = **แก้คอมโพเนนต์ comms ซึ่ง Out of scope**
   // วันที่มีคนแก้ เทสต์นี้จะแดง — **ตั้งใจให้แดง** ให้ลบเทสต์นี้แล้วมาอัปเดตบัญชีใน AUTOPILOT.md
 })
 
