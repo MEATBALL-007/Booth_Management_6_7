@@ -23,7 +23,16 @@
       พิสูจน์ด้วย 36 เทสต์ใน `src/undoRoundTrip.audit.test.tsx` + `src/undoDeleteField.audit.test.ts`
       บันทึกการวิเคราะห์: `docs/autopilot/2026-08-24-undo-round-trip-audit.md`
       (สเปกตั้งต้น: `docs/autopilot/2026-08-13-undo-audit-findings.md`)
-- [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+- [x] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+      — ✅ **ผ่านแล้วบน branch นี้ (2026-08-28)** โค้ดถูกต้องอยู่แล้ว ไม่ต้องแก้ production เลย
+      สิ่งที่ขาดคือเทสต์ ยกไฟล์ `src/noShowRecall.audit.test.tsx` (14 เทสต์) มาจาก `4fdcf2b`
+      (branch `_2026-08-25_0002` ซึ่งแตกจาก `735de75` จุดเดียวกับ branch นี้ จึงยกมาได้สะอาด)
+      **แล้ว mutation check เองครบ 8 ตัว ทำนายไว้ก่อนรัน ตรงทั้ง 8 ตัว** — เทสต์ทั้ง 14 ตัว
+      มีอย่างน้อย 1 mutation ที่ฆ่ามันได้ ไม่มีตัวไหนเขียวฟรี
+      บันทึกการวิเคราะห์ + ตาราง mutation + ขอบเขตของหลักฐาน:
+      `docs/autopilot/2026-08-28-no-show-recall-audit.md`
+      ⚠️ **ห้ามลบเทสต์ D1** — M3 พิสูจน์แล้วว่าถ้า `recall()` ไม่ใส่ `announcedAt`
+      เทสต์ Display (D2–D4) เขียวหมด มีแต่ D1 ที่จับได้
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
 - [ ] Idempotency: กดซ้ำ/สองเครื่องพร้อมกัน ไม่ดึงซ้อน/ข้ามผิด (guard คืน no-op)
@@ -66,30 +75,44 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **No-show** — ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้);
-เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+ทำข้อ **ประกาศซ้ำ** — กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 
 **อ่านก่อนเริ่ม — งานนี้เคยทำเสร็จแล้วบน branch อื่นที่ไม่เคย merge เข้า main**
-commit `4fdcf2b test(queue): prove a skipped order leaves the customer screen for the parked zone,
-and comes back announced` อยู่บน `auto/Booth_Management_6_7/2026-08-25_0002`
-วิธีที่เร็วและเสี่ยงน้อยที่สุด (รอบ 2026-08-28 ใช้วิธีนี้กับข้อ Undo แล้วได้ผล):
+commit `68eb1c4 test(queue): prove ประกาศซ้ำ reaches the customer screen by the announcedAt path,
+not by luck` อยู่บน `auto/Booth_Management_6_7/2026-08-25_0030`
+วิธีที่เร็วและเสี่ยงน้อยที่สุด (รอบ 2026-08-28 ใช้วิธีนี้กับข้อ No-show แล้วได้ผล — เสร็จใน 1 รอบ):
 
-1. `git show --stat 4fdcf2b` ดูว่าแตะไฟล์ไหนบ้าง
-2. `git checkout 4fdcf2b -- <เฉพาะ path ใน src/ และ docs/autopilot/>` — **อย่าเอา AUTOPILOT.md มาด้วย**
-   เพราะ ledger ของ branch นั้นเดินไปคนละทางกับไฟล์นี้
-3. `npm test` ให้เขียว แล้ว **commit ทันที**
-4. **อย่าเชื่อของที่ยกมาเฉยๆ — ต้อง mutation check เอง**: ทำนายชุดเทสต์ที่จะแดงก่อน
+1. `git show --stat 68eb1c4` ดูว่าแตะไฟล์ไหนบ้าง
+2. **เช็คแล้วในรอบ 2026-08-28 — ยกมาได้สะอาด** `git diff HEAD 68eb1c4 -- src/` ให้ผลว่า
+   production code เหมือนกันทุกไฟล์ ต่างกันแค่ไฟล์เทสต์ ดังนั้นไม่ต้องพึ่งโค้ดของ branch นั้นเลย
+3. 🚨 **`git checkout 68eb1c4 -- src/reannounce.audit.test.tsx` เท่านั้น — ระบุ path ให้ตรงตัว**
+   **ห้ามสั่ง `git checkout 68eb1c4 -- src/` แบบกวาดทั้งโฟลเดอร์เด็ดขาด**
+   เพราะ `4fdcf2b` **ไม่ได้** เป็น ancestor ของ `68eb1c4` (เช็คแล้ว) แปลว่า branch `_0030`
+   ไม่มีไฟล์ `src/noShowRecall.audit.test.tsx` การกวาดทั้งโฟลเดอร์จะ **ลบงานข้อ No-show
+   ของรอบ 2026-08-28 ทิ้งเงียบๆ** แล้วเทสต์จะยังเขียว 133 ตัว ดูเหมือนไม่มีอะไรผิด
+   และ **อย่าเอา AUTOPILOT.md มาด้วย** เพราะ ledger ของ branch นั้นเดินไปคนละทางกับไฟล์นี้
+   หลัง checkout ให้เช็คว่า `src/noShowRecall.audit.test.tsx` ยังอยู่ และนับเทสต์ได้ 147+14=161
+4. `npm test` ให้เขียว แล้ว **commit ทันที**
+5. **อย่าเชื่อของที่ยกมาเฉยๆ — ต้อง mutation check เอง**: ทำนายชุดเทสต์ที่จะแดงก่อน
    แล้วพังโค้ด production ที่มันอ้างว่าคุ้มครอง ดูว่าแดงตรงตามที่ทำนายจริงไหม
    (ถ้าไม่แดง แปลว่าเทสต์นั้นไม่ได้พิสูจน์อะไร ให้เขียนใหม่)
+   mutation ที่ต้องลองแน่ๆ สำหรับข้อนี้: ลบ `announcedAt` ออกจาก `reannounce()`,
+   ทำให้ `newlyAnnounced` เทียบ `>=` แทน `>`, และปิด flash ทั้งสองทิศ (ทั้งไม่แฟลชเลย/แฟลชตลอด)
+6. เขียนบันทึกลง `docs/autopilot/` ให้บอก **ขอบเขตของหลักฐาน** ด้วย (chime = ฟังก์ชันถูกเรียก
+   ไม่ใช่เสียงจริง, flash = className ไม่ใช่พิกเซล) — ดูรูปแบบที่
+   `docs/autopilot/2026-08-28-no-show-recall-audit.md`
 
 **หมายเหตุสำคัญเรื่องสถานะโครงการ:** branch `auto/*` แต่ละอันแตกจาก main แล้วไม่เคย merge กลับ
 main จึงยังไม่มีทั้ง Undo, No-show, ประกาศซ้ำ ถึงแม้ทั้งสามข้อจะเคยถูกพิสูจน์บน branch ไปแล้ว
-ข้อที่เหลือและ branch ที่ทำไว้แล้ว: **ประกาศซ้ำ** → `68eb1c4` (branch `_2026-08-25_0030`)
-รอบถัดๆ ไปควรยก 2 ข้อนี้มารวมบน branch เดียวกันให้ครบก่อน แล้วค่อยไปข้อใหม่
+สถานะบน branch นี้: **No-show ✅ อยู่แล้ว** (รอบนี้), **Undo ❌ ยังไม่มี** (อยู่บน `_0009`, commit `ca1179f`),
+**ประกาศซ้ำ ❌ ยังไม่มี** (อยู่บน `_2026-08-25_0030`, commit `68eb1c4`)
+หลังทำข้อประกาศซ้ำเสร็จ รอบถัดไปควร **ยก Undo (`ca1179f`) มารวมบน branch นี้** ให้ครบ 3 ข้อ
+ก่อนไปข้อใหม่ — Undo แตะ production code จริง (`queueActions.ts`, `ordersRepo.ts`, `QueuePanel.tsx`)
+จึงจะยากกว่า 2 ข้อแรกที่เป็นเทสต์ล้วน ให้เผื่อเวลา
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ ประกาศซ้ำ)
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ยก Undo `ca1179f` มารวม)
 
 ---
 
