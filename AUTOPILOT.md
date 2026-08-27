@@ -14,11 +14,14 @@
 
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
-- [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
+- [x] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
+      — ✅ **ผ่านแล้วบน branch นี้ (2026-08-28)** เจอบั๊กจริงและแก้แล้ว: `orderSnapshot` เก็บเฉพาะ
+      field ที่มีค่า แต่ `updateDoc` เป็น merge → field ที่ action สร้างขึ้นเองรอดจาก undo เสมอ
+      แก้ที่ `queueActions.ts` (snapshot ครบทุก field, `undefined` = ไม่เคยมี),
+      `ordersRepo.ts` (`undefined` → `deleteField()`), `QueuePanel.tsx` (`Q.cancel`)
+      พิสูจน์ด้วย 36 เทสต์ใน `src/undoRoundTrip.audit.test.tsx` + `src/undoDeleteField.audit.test.ts`
+      บันทึกการวิเคราะห์: `docs/autopilot/2026-08-24-undo-round-trip-audit.md`
+      (สเปกตั้งต้น: `docs/autopilot/2026-08-13-undo-audit-findings.md`)
 - [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
@@ -62,22 +65,30 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+ทำข้อ **No-show** — ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้);
+เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+**อ่านก่อนเริ่ม — งานนี้เคยทำเสร็จแล้วบน branch อื่นที่ไม่เคย merge เข้า main**
+commit `4fdcf2b test(queue): prove a skipped order leaves the customer screen for the parked zone,
+and comes back announced` อยู่บน `auto/Booth_Management_6_7/2026-08-25_0002`
+วิธีที่เร็วและเสี่ยงน้อยที่สุด (รอบ 2026-08-28 ใช้วิธีนี้กับข้อ Undo แล้วได้ผล):
+
+1. `git show --stat 4fdcf2b` ดูว่าแตะไฟล์ไหนบ้าง
+2. `git checkout 4fdcf2b -- <เฉพาะ path ใน src/ และ docs/autopilot/>` — **อย่าเอา AUTOPILOT.md มาด้วย**
+   เพราะ ledger ของ branch นั้นเดินไปคนละทางกับไฟล์นี้
+3. `npm test` ให้เขียว แล้ว **commit ทันที**
+4. **อย่าเชื่อของที่ยกมาเฉยๆ — ต้อง mutation check เอง**: ทำนายชุดเทสต์ที่จะแดงก่อน
+   แล้วพังโค้ด production ที่มันอ้างว่าคุ้มครอง ดูว่าแดงตรงตามที่ทำนายจริงไหม
+   (ถ้าไม่แดง แปลว่าเทสต์นั้นไม่ได้พิสูจน์อะไร ให้เขียนใหม่)
+
+**หมายเหตุสำคัญเรื่องสถานะโครงการ:** branch `auto/*` แต่ละอันแตกจาก main แล้วไม่เคย merge กลับ
+main จึงยังไม่มีทั้ง Undo, No-show, ประกาศซ้ำ ถึงแม้ทั้งสามข้อจะเคยถูกพิสูจน์บน branch ไปแล้ว
+ข้อที่เหลือและ branch ที่ทำไว้แล้ว: **ประกาศซ้ำ** → `68eb1c4` (branch `_2026-08-25_0030`)
+รอบถัดๆ ไปควรยก 2 ข้อนี้มารวมบน branch เดียวกันให้ครบก่อน แล้วค่อยไปข้อใหม่
 
 **commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ ประกาศซ้ำ)
 
 ---
 
