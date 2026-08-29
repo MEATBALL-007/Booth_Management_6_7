@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { BoothId, Station, Order } from '../domain/types'
 import { subscribeBoothOrders, updateOrderStatus } from '../order/ordersRepo'
 import * as Q from '../queue/queueActions'
@@ -13,7 +13,26 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   const [reason, setReason] = useState('')
   const [undo, setUndo] = useState<{ id: string; before: Q.OrderSnapshot; label: string } | null>(null)
 
-  useEffect(() => subscribeBoothOrders(booth, setOrders), [booth])
+  /**
+   * Ids whose status-transition write has been sent but is not yet reflected in
+   * a snapshot. The guards in `queueActions` test the order object the panel
+   * hands them, and that object only changes when a snapshot arrives — so two
+   * presses inside one render generation both see the OLD status and both write.
+   * A pure action handed one order has no memory and cannot refuse a repeat, so
+   * this write-once half of the guard has to live here.
+   */
+  const moved = useRef(new Set<string>())
+
+  useEffect(() => subscribeBoothOrders(booth, (next) => {
+    // A snapshot is this panel's only source of truth; once one lands every
+    // closure is fresh and the action guards can be trusted again. Clearing the
+    // whole set — rather than only the ids we can see changed — is deliberate: a
+    // write that never comes back would otherwise latch a button shut forever,
+    // and a permanently dead button is far worse at a live booth than one extra
+    // write in a race we already lost.
+    moved.current.clear()
+    setOrders(next)
+  }), [booth])
 
   const mine = orders.filter((o) => o.station === station)
   const waiting = mine.filter((o) => o.status === 'waiting').sort((a, b) => a.createdAt - b.createdAt)
@@ -23,6 +42,13 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   // apply a patch to one order, recording an undo snapshot first
   const apply = (order: Order, patch: Partial<Order> | null, label: string) => {
     if (!patch) return
+    // Only status transitions are held to once-per-snapshot. ประกาศซ้ำ moves no
+    // status — "serving (ไม่เปลี่ยนสถานะ)" in the spec's action table — and is
+    // meant to be pressed again and again, so it must not be caught here.
+    if (patch.status !== undefined) {
+      if (moved.current.has(order.id)) return
+      moved.current.add(order.id)
+    }
     setUndo({ id: order.id, before: Q.orderSnapshot(order), label })
     updateOrderStatus(order.id, patch)
   }
@@ -33,7 +59,10 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
     const target = mine.find((o) => o.id === r.id)!
     apply(target, r.patch, L('queue.callNext').th)
   }
-  const runUndo = () => { if (undo) { updateOrderStatus(undo.id, undo.before); setUndo(null) } }
+  // Undo reverses the very transition `moved` is holding, so the hold is void:
+  // release the id here too, or an undo with no snapshot behind it would leave
+  // the order unable to move again.
+  const runUndo = () => { if (undo) { moved.current.delete(undo.id); updateOrderStatus(undo.id, undo.before); setUndo(null) } }
   const confirmCancel = () => {
     if (!cancelId || !reason.trim()) return
     const order = mine.find((o) => o.id === cancelId)
