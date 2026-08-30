@@ -419,10 +419,15 @@ test('T5: nothing is English-only — every Latin run has Thai beside it, LIVE i
   expect(badge.textContent).toContain('LIVE')
   expect(latinBearers(badge).every(subordinate)).toBe(true)
 
-  // stated as a rule rather than as one example
+  // Stated as a rule rather than as one example. `ownText`, not `textContent`:
+  // the whole screen is full of Thai, so asking whether an ANCESTOR's subtree
+  // contains any is a question that answers itself. The real relationship is
+  // that the Thai sits in the same element, immediately beside the English —
+  // that is what a bilingual pair IS, and the mutation check caught the weaker
+  // form passing an English-only heading dropped straight onto the root.
   for (const el of latinBearers(root)) {
     const block = el.parentElement!
-    expect(THAI.test(block.textContent ?? ''), `no Thai beside ${idOf(el)}`).toBe(true)
+    expect(THAI.test(ownText(block)), `no Thai beside ${idOf(el)}`).toBe(true)
   }
 })
 
