@@ -48,6 +48,10 @@
  *     all the same. P1 is the only net under that bucket and it catches exactly
  *     one species — a raw Firestore SDK call. Business logic written in plain
  *     TypeScript inside a screen passes.
+ *   - **A brand-new `.tsx` needs no declaration.** `presentation` is an allowed
+ *     category, so adding a whole new screen is silent here. `frozenZones`'s P1
+ *     is what catches that: an undeclared production file. The two censuses
+ *     overlap deliberately.
  *   - **Behaviour.** Same limit `frozenZones` records: the import closure is not
  *     walked. A file can be in an allowed bucket and still change what an
  *     unchanged module does.
@@ -84,16 +88,36 @@ function branchPoint(): string {
   return git('merge-base', 'main', 'HEAD')[0]
 }
 
+function untrackedPaths(): string[] {
+  return git('ls-files', '--others', '--exclude-standard')
+}
+
 /** Tracked edits since the branch point, PLUS untracked new files. */
 function changedPaths(): string[] {
-  return [
-    ...git('diff', '--name-only', branchPoint(), '--'),
-    ...git('ls-files', '--others', '--exclude-standard'),
-  ].sort()
+  return [...git('diff', '--name-only', branchPoint(), '--'), ...untrackedPaths()].sort()
+}
+
+/**
+ * Every line of a brand-new file counts as added.
+ *
+ * `git diff` reports NOTHING for an untracked path — it is not in the index, so
+ * there is no "before" to diff against. `changedPaths()` does list untracked
+ * files, so without this branch a brand-new `src/ui/Evil.tsx` full of
+ * `updateDoc` calls would be scanned by P1 and yield zero lines: allowed by the
+ * census (it is `ui-primitive`) and invisible to the purity sweep.
+ */
+function newFileAddedLines(text: string): string[] {
+  return text
+    .split('\n')
+    .map((line) => `+${line.trim()}`)
+    .filter((line) => line !== '+')
 }
 
 /** The +/- lines of a diff, without the +++/--- file headers. */
 function diffBodyLines(path: string): string[] {
+  if (untrackedPaths().includes(path)) {
+    return newFileAddedLines(readFileSync(join(REPO, path), 'utf8'))
+  }
   return git('diff', '-U0', branchPoint(), '--', path).filter(
     (line) => /^[+-]/.test(line) && !/^(\+\+\+|---)/.test(line),
   )
@@ -338,6 +362,12 @@ test('P0: the Firestore SDK matcher, pinned to fixtures', () => {
   expect(FIRESTORE_SDK.test('+  const runUndo = () => updateOrderStatus(undo.id, undo.before)')).toBe(false)
   expect(FIRESTORE_SDK.test('+  useEffect(() => subscribeBoothOrders(booth, setOrders), [booth])')).toBe(false)
   expect(FIRESTORE_SDK.test('+          {L(`booth.${booth}`).th} <En>· {L(`booth.${booth}`).en}</En>')).toBe(false)
+
+  // A brand-new file has no diff at all, so its whole body is the added lines.
+  expect(newFileAddedLines('const a = 1\n\n  updateDoc(ref, {})\n')).toStrictEqual([
+    '+const a = 1',
+    '+updateDoc(ref, {})',
+  ])
 })
 
 test('P1: no src/ui, Tailwind/CSS or .tsx file added or removed a direct Firestore SDK call', () => {
