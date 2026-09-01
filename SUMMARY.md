@@ -1,90 +1,139 @@
-# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-01_0037`
+# Round summary — 2026-09-02, branch `auto/Booth_Management_6_7/2026-09-02_0007`
 
-เกณฑ์ที่ปิด: **`ui-overhaul` ข้อ 4 — "Firestore/logic ไม่เปลี่ยน (diff เฉพาะ presentation + Tailwind config + src/ui)"**
-`queue-pro-upgrade` 8/8 · `ui-overhaul` 2/5 · รวม **10 จาก 20 ข้อ**
+Task: close the `ui-overhaul` criterion
+**"106 tests เขียวครบ + `npm run build` ผ่าน + PWA generate"**.
 
 ## What I did
 
-- **ยกงาน 9 เกณฑ์จากรอบก่อนขึ้น branch นี้ก่อน** — branch ถูกตัดสดจาก `main` (735de75) จึงมี 0 ข้อ
-  พิสูจน์ superset ก่อน (`merge-base HEAD <tip>` คืน HEAD เอง) แล้วค่อย checkout แบบระบุ path
-  ยืนยันด้วย `npm test` = 271 เทสต์ (ไม่ใช่ 131 ของ main เปล่า)
-- **เขียน `src/uiOverhaulDiffScope.audit.test.ts` (12 เทสต์)** — census ที่ครบถ้วนของดิฟฟ์ทั้ง branch:
-  R (Firestore ไม่เปลี่ยน) · T (Tailwind config เป็นหมวดที่อนุญาต) · S (ทุก path ถูกจัดหมวด)
-  D (รายการที่ประกาศไม่ใช่เรื่องแต่ง) · P (ไม่มี Firestore SDK แอบเข้ามาในหน้าจอ)
-- **เจอและแก้บั๊กในตัวเทสต์เอง** ระหว่างวางแผน mutation: `git diff` ไม่รายงานอะไรเลยสำหรับ path
-  ที่ยัง untracked → P1 สแกนไฟล์ใหม่ได้ศูนย์บรรทัด แก้ด้วย `newFileAddedLines()`
-- **mutation check 15 ตัว ทำนายก่อนรัน (commit แยกก่อนผล) ตรง 14 จาก 15**
-- **บันทึก `docs/autopilot/2026-09-01-ui-overhaul-diff-scope-audit.md`** · ติ๊ก checkbox · อัปเดต Next task
+- **Carried the ten already-proven criteria onto this branch.** The runner cut it
+  from `main` again, so it started at 131 tests with 0 ticks. Verified
+  `auto/…/2026-09-01_0037` is a strict superset (`git merge-base` returns `HEAD`,
+  and the `--name-status` diff has no `D` rows) and checked it out by path.
+  Result: 50 files, 283 tests green.
+- **Wrote `src/pwaGenerate.audit.test.ts` — 17 tests.** It reads the real
+  `vite.config.ts` with a brace-matching extractor (not regexes) and proves the
+  PWA plugin is registered, `registerType` is `autoUpdate`, the manifest identity
+  fields are non-empty, and the mode is `generateSW`. Six of the 17 are aimed at
+  the checker itself and four are a spine of what it actually found.
+- **Recorded the icons gap rather than papering over it.** `manifest.icons` is
+  `[]`, no image asset exists anywhere in the repo, and the built
+  `manifest.webmanifest` carries `"icons":[]` through — so the app cannot be
+  installed to an iPad home screen. Pinned by two tests that name the gap and
+  locate it. No assertion was loosened to let it pass.
+- **Ran 14 mutations with the red sets predicted and committed beforehand.**
+  14 of 14 matched.
+- Ticked the criterion in `AUTOPILOT.md` (`ui-overhaul` is now 3/5, overall
+  11/20), wrote `docs/autopilot/2026-09-02-pwa-generate-audit.md`, and rewrote
+  the handoff.
 
-**ไม่ได้แก้ `src/` production เลยสักบรรทัด** — โค้ดผ่านเกณฑ์นี้อยู่แล้ว สิ่งที่ขาดคือเทสต์
+**No `src/` production file was changed. `vite.config.ts` was not changed.**
 
 ## Why
 
-`src/frozenZones.audit.test.ts` (รอบ `_0044`) ปิดครึ่งพี่น้องของประโยคนี้ไว้แล้ว แต่มันเป็น
-**whitelist** — พูดได้อย่างเดียวว่า "ไฟล์ที่ลิสต์ไว้ไม่เปลี่ยน" มันเงียบสนิทกับไฟล์ที่ไม่มีใครนึกจะลิสต์
-และ **ไม่เคยมองไปที่ Firestore เลยแม้แต่เทสต์เดียว** ทั้งที่ `firestore.rules` / `firestore.indexes.json`
-คือคำแรกของเกณฑ์
-
-คำว่า *"diff เฉพาะ …"* ตามตัวอักษรคือคำกล่าวเรื่อง **ขอบเขตของดิฟฟ์ทั้งก้อน** จึงต้องเป็น census
-ที่ครบถ้วน + ทางออกที่ประกาศไว้ ไม่ใช่ freeze list เพิ่มอีกใบ ผลพลอยได้: `src/lib/firebase.ts`
-ซึ่ง SCOPE ของ `frozenZones` **เขียนเตือนตัวเองว่าเป็นรูที่มองไม่เห็น** ตกในหมวด `other` ที่นี่
-ถ้ามันเปลี่ยนเมื่อไร S2 แดงและบังคับให้เขียนเหตุผล
-
-เลือก **ไม่แช่แข็ง `.tsx`** ตามคำเตือนของ `_0044`: หมวด `presentation` อนุญาตโดยไม่ต้องประกาศ
-เพื่อให้รอบ Neon Clarity ที่ต้องรื้อหน้าตาทุกหน้าไม่ไปเจอด่านที่ผ่านไม่ได้แล้วลบเทสต์ทิ้ง
-
-เลือก **ไม่แก้ `frozenZones.classify()`** ให้รู้จัก `tailwind.config.js` ทั้งที่รู้ว่ารอบหน้าจะทำ C1 แดง
-— การแก้ไฟล์ที่พิสูจน์แล้วเพื่อกันปัญหาในอนาคตแลกมาด้วยความเสี่ยงตอนนี้ จึงเลือก **พิสูจน์รอยต่อนั้น
-ด้วย M13 แล้วเขียนทางแก้ไว้** ในทั้งบันทึกและ AUTOPILOT แทน
+- **The criterion splits in three and only one part has work in it.** "tests
+  green" and "build passes" are the Verify command verbatim; a test asserting
+  that the tests pass is circular, so none was written — the same call round
+  `_0044` made for the twin criterion. The evidence is the recorded run.
+  "PWA generate" is the part nothing had ever touched.
+- **Config, not artifact.** `npm run build` prints `mode generateSW / precache 5
+  entries / dist/sw.js` today, but nothing pinned that it keeps happening — M1
+  confirmed that deleting the plugin leaves `npm test` green and the build
+  exiting 0 with no service worker shipped. `dist/` is gitignored, so a sweep
+  reading `dist/sw.js` would be green on a machine that just built and red on a
+  clean checkout. The config is the only durable thing to assert.
+- **"106" was read as "no test is red", not "exactly 106 exist".** It is 300 now.
+  Editing the spec to match the code is forbidden outright, and is the one thing
+  that would make this whole exercise worthless.
+- **The icons gap is a real defect but not this criterion's.** The criterion's
+  words are "PWA generate", and generation is fully proved. Installability is
+  adjacent and unstated. Fixing it means authoring school artwork and creating a
+  `public/` directory that does not exist — a design decision, not an audit, and
+  a second task. So it is recorded loudly (I1/I2) in the same shape as the E1
+  two-device gap from the Idempotency round.
+- **A brace-matching extractor, not regexes**, because `_0044` proved a blind
+  sweep and a clean sweep produce byte-identical output. M11 reproduced that on
+  this new scanner — see Risk.
 
 ## Verification
 
-`npm test && npm run build` — รันเองแล้ว **ผ่านทั้งคู่**
+Verify command, run after every mutation was reverted and `git status --short`
+came back empty:
 
 ```
-Test Files  50 passed (50)
-     Tests  283 passed (283)
+$ npm test
+ Test Files  51 passed (51)
+      Tests  300 passed (300)
+   Duration  30.19s
 
-tsc -b ผ่าน · PWA v1.3.0 · mode generateSW · precache 5 entries (847.52 KiB)
-files generated: dist/sw.js, dist/workbox-9c191d2f.js
+$ npm run build
+> tsc -b && vite build
+✓ 116 modules transformed.
+✓ built in 926ms
+PWA v1.3.0
+mode      generateSW
+precache  5 entries (847.55 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-9c191d2f.js
 ```
 
-**Mutation check 15 ตัว — ทำนายก่อนรัน ตรง 14 จาก 15** (ตารางเต็มอยู่ในบันทึก)
-commit ของ *คำทำนาย* อยู่ก่อน commit ของ *ผล* ตรวจได้ที่ `git log`
+**Mutation check — 14 predicted, 14 correct.** Predictions were committed in
+`0e1725a` *before* the first mutation ran, so the table cannot have been written
+backwards. Full results in `docs/autopilot/2026-09-02-pwa-generate-audit.md` §5.
+M1 was run against the whole 300-test suite to catch anything unanticipated
+outside the three files involved; nothing else moved.
 
-- ที่พลาด **M6**: เพิ่ม import Firestore ที่ `DisplayScreen.tsx` → P1 แดงตามทำนาย
-  **แต่ `displayClampScale` Q2 แดงด้วย** เพราะมันปัก `'DisplayScreen.tsx:83'` เป็น**เลขบรรทัด**
-- ทำนายว่า **เขียวทั้งที่ควรแดง** เกิดจริงครบ: M2 → R2/S2 เขียว · M3 → R2 เขียว ·
-  M12 → S2 เขียว · M15 → P1 เขียว **`[].filter()` แยกรีโปสะอาดกับ scanner ตาบอดไม่ออก**
-  R0/P0/S0/D0 (เทสต์ที่ปัก checker เอง) คือเหตุผลเดียวที่ mutation พวกนี้ตาย
-- 11 จาก 12 เทสต์มี killer · **R1 ไม่มี และเป็นความตั้งใจ** (ดู Risk)
+Every test has a killer except S0, which is deliberate and explained.
 
 ## What I did NOT do
 
-- **ไม่แตะ `src/` production เลย** ไม่แตะ `firestore.rules` / `firestore.indexes.json` /
-  `.env*` / `.firebaserc` / `docs/superpowers/specs/` ไม่เพิ่ม dependency
-- **ไม่เขียนเทสต์พิสูจน์ R1 ด้วยการ mutate `firestore.rules`** — ต้องแก้ไฟล์ที่ contract
-  ระบุว่า out of scope ห้ามแตะ **จึงเลือกไม่ทำ และบันทึกไว้ตรงๆ ว่า R1 ไม่มี killer**
-- **ไม่แก้ `frozenZones.audit.test.ts`** แม้จะรู้ว่ารอบหน้าจะทำ C1 แดง (เหตุผลอยู่ใน Why)
-- **ไม่ทำเกณฑ์ข้ออื่น** แม้ข้อ "PWA generate" จะดูใกล้มือ — เจอ `icons: []` ว่างเปล่า
-  ระหว่างเขียน brief ให้รอบหน้า **บันทึกไว้แล้วหยุด ไม่ลงมือ** (หนึ่งงานต่อรอบ)
+- **Did not fix `icons: []`.** Reasoning above. It is committed as a documented,
+  located gap, not as a passing test.
+- **Did not assert the `"lang":"en"` in the emitted manifest**, on an app whose
+  UI is entirely Thai. Recorded in the note as an observation; it is not part of
+  this criterion and guessing at a fix would be scope creep.
+- **Did not write any test asserting that the tests pass or the build succeeds.**
+  Deliberate, and stated in the test file's own header so a future reader does
+  not "fix" the omission.
+- **Did not touch `dist/`, the spec files, `firestore.rules`, or any accounting /
+  menu / comms logic.** Did not add a dependency.
+- Did not start the next criterion (Neon Clarity), though I did sweep the source
+  for glow usage while writing the handoff and left the findings there.
 
-## Risk — สิ่งที่ reviewer ควรดูใกล้ๆ
+## Risk — read these closely
 
-1. 🚨 **`presentation` ตัดสินจาก path ไม่ใช่เนื้อหา** — และนี่ไม่ใช่ความเสี่ยงเชิงทฤษฎี:
-   วันนี้ `src/screens/QueuePanel.tsx` มี `useRef` Set ของ idempotency อยู่จริง = **logic
-   ที่อาศัยในหน้าจอ** และ census ก็ยังเรียกมันว่า presentation
-   P1 คือตาข่ายเดียวใต้หมวดนี้ จับได้แค่ **การเรียก Firestore SDK ตรงๆ** สปีชีส์เดียว
-   **business logic ที่เขียนด้วย TypeScript ธรรมดาในหน้าจอ ผ่านฉลุย** — เขียนไว้ในไฟล์แล้ว
-2. 🚨 **R1 ไม่มี mutation ตัวไหนฆ่าได้** เพราะการฆ่ามันต้องแก้ไฟล์ที่ห้ามแตะ มันไม่ vacuous
-   (R0 พิสูจน์ plumbing ตัวเดียวกันว่าคืนค่าจริงเมื่อไฟล์เปลี่ยน + R1 อ่านเนื้อไฟล์ยืนยันว่าเป็น
-   rules จริง) **แต่ก็ยังเป็นเทสต์ที่ไม่เคยเห็นสถานะแดงของตัวเอง**
-3. ⚠️ **census นี้พิสูจน์ *รูปทรงของดิฟฟ์* ไม่ได้พิสูจน์พฤติกรรม** — ไม่ได้เดินตาม import closure
-   (ข้อจำกัดเดียวกับที่ `frozenZones` เขียนเตือนไว้) ไฟล์ในหมวดที่อนุญาตยังเปลี่ยนสิ่งที่โมดูล
-   ที่ไม่ได้แก้ทำได้อยู่ดี
-4. ⚠️ **รอบหน้าที่แก้ `tailwind.config.js` จะเห็น `frozenZones` C1 แดง** — M13 พิสูจน์แล้ว
-   เป็นรอยต่อที่รู้ตัว ไม่ใช่บั๊ก **ทางแก้คือเพิ่มหมวด config ห้ามคลายกฎ ห้ามลบเทสต์**
-   เขียนไว้ทั้งใน AUTOPILOT.md, บันทึก และหัวไฟล์เทสต์แล้ว
-5. 📌 **เจอของจริงรอรอบหน้า: `vite.config.ts` มี `icons: []` ว่างเปล่า** — manifest ไม่มี icon
-   ติดตั้งเป็นแอปบนหน้าจอโฮมไม่ได้ ซึ่งคือเหตุผลทั้งหมดที่ทำ PWA `npm run build` "ผ่าน" เงียบๆ
-   **ยังไม่ได้ตัดสินว่าเป็นบั๊กหรือช่องว่าง** — เขียน brief ไว้ให้รอบหน้าตัดสินพร้อมเหตุผล
+1. **🚨 V1 is vacuous without the K group, and this was measured, not assumed.**
+   M11 made the scanner report nothing at all, and `V1`
+   (`expect(violations).toStrictEqual([])` — the test that looks like the point
+   of the file) **stayed green**, as did K2. Only K1/K3/K4 caught it. The same
+   hazard one level down: with `iconCount` hard-wired to `0`, **I1 stays green**
+   and K5 is its only killer. If a future round deletes the "redundant-looking"
+   fixture tests, the sweep keeps passing while proving nothing.
+2. **🚨 M11 had to be run twice, and the first run was my error.** I declared
+   "make the scanner blind" but wrote `violations.push = () => 0`, which installs
+   an **own property on the array** — and `toStrictEqual` compares those, so K2
+   and V1 died from the assignment rather than from blindness. Re-run faithfully
+   it produced exactly the predicted K1/K3/K4. Scored 14/14 on the faithful runs;
+   a reviewer who thinks the botched run should count against the prediction rate
+   would score it 13/14. Both numbers are in the note.
+3. **The config is proved; the service worker is not.** No test runs vite. If the
+   config were perfect and the build broke for an unrelated reason, only
+   `npm run build` would say so. `strategies` being *absent* is read as
+   vite-plugin-pwa's documented `generateSW` default — documentation taken on
+   trust, corroborated only by the recorded build output.
+4. **The PWA demonstrably does not fully work.** With no icon it cannot be
+   installed, which is the whole reason this app is a PWA. I ticked the criterion
+   as written; a reviewer who reads "PWA generate" as including installability
+   should untick it and treat I1 as the failing test it would then be.
+5. **S3 is a canary and will go red on any legitimate manifest edit** (M7 —
+   changing `theme_color` to a different valid colour — kills S3 and nothing
+   else). The fix is to update the pinned values in S3, not to relax it.
+6. **Every mutation touching `vite.config.ts` also reddened `frozenZones` C1 and
+   `uiOverhaulDiffScope` S2**, because the path is undeclared in both. Expected
+   and warned about by round `_0037`. I did not add it to either list, since I
+   did not change the file — the next round that does must add it *with a reason*
+   rather than loosen the classifiers.
+7. **Audit test files are inside Tailwind's content glob**
+   (`./src/**/*.{ts,tsx}`), so fixture strings emit dead utility classes into the
+   production CSS. Adding this file moved the bundle 14.64 → 14.67 kB. Harmless
+   now, but the Neon Clarity round will be measuring the stylesheet.

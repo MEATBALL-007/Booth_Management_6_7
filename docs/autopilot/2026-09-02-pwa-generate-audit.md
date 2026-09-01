@@ -248,13 +248,96 @@ tests that can tell the difference are the ones aimed at the scanner itself.
 - **M13 does NOT kill K1.** The scanner returns early on a missing plugin,
   before the manifest is ever inspected, so the extra requirement never runs.
 
-### Results
+### Results — **14 predicted, 14 correct**
 
-<!-- RESULTS -->
+Every row below is the observed red set from this file. `fz C1` and `census S2`
+also fired on M1–M9 and M14 exactly as stated above, and on nothing else.
+
+| # | Predicted | Observed | |
+|---|---|---|---|
+| M1 | S1, S2, S3, P1, R1, M1t, V1, I1 | S1, S2, S3, P1, R1, M1t, V1, I1 | ✅ |
+| M2 | R1 | R1 | ✅ |
+| M3 | S2, R1, V1 | S2, R1, V1 | ✅ |
+| M4 | S2, G1, V1 | S2, G1, V1 | ✅ |
+| M5 | S3, M1t, V1 | S3, M1t, V1 | ✅ |
+| M6 | S3, M1t, V1 | S3, M1t, V1 | ✅ |
+| M7 | S3 | S3 | ✅ |
+| M8 | S3, I1 | S3, I1 | ✅ |
+| M9 | S3, M1t, V1, I1 | S3, M1t, V1, I1 | ✅ |
+| M10 | K5 | K5 | ✅ |
+| M11 | K1, K3, K4 | K1, K3, K4 | ✅ |
+| M12 | K0 | K0 | ✅ |
+| M13 | K2, K3, K4, M1t, V1 | K2, K3, K4, M1t, V1 | ✅ |
+| M14 | I2 | I2 | ✅ |
+
+M1 was run against the **whole** suite (300 tests) rather than the three-file
+subset, to catch anything unanticipated outside these files. Nothing else moved.
+Only `src/pwaGenerate.audit.test.ts` reads `vite.config.ts` — the other two
+reactions are to the *path* changing, via git, not to its contents.
+
+### 🚨 M11 had to be run twice — the first attempt was not the declared mutation
+
+The first M11 edit was `violations.push = () => 0`. It reported **K1, K2, K3, K4,
+V1** — two more than predicted. The extra two were not a weakness in the
+prediction; the edit was not the mutation it claimed to be:
+
+> **`toStrictEqual` on an array also compares extra own properties.** Assigning
+> to `violations.push` installs an own property on the array *instance*, so
+> `expect(scan.violations).toStrictEqual([])` fails on `[]` — not because a
+> violation was reported, but because the array object now carries a stray key.
+
+So K2 and V1 died from the *assignment*, not from blindness. Re-run faithfully
+as `return { ...scanViteConfigInner(source), violations: [] }`, the declared
+mutation produced exactly K1, K3, K4. Recorded as 14/14 with this incident
+written out, per AUTOPILOT rule (ช): *re-run so it matches what was declared,
+before recording a prediction as missed*. Round `_0037` learned the same lesson
+about a mutation that renamed a key while claiming to delete a declaration.
+
+### The result that matters: M11
+
+**A completely blind scanner leaves K2 and V1 green.** V1 —
+`expect(real.violations).toStrictEqual([])`, the test that looks like the whole
+point of the file — passes identically whether the config is clean or the
+checker inspected nothing at all. K1, K3 and K4 are the only things standing
+between V1 and vacuity. This is round `_0044`'s M6/M7 result reproduced on a
+brand-new scanner, and it is why the K group exists.
+
+M10 is the same hazard one level down: with `iconCount` hard-wired to `0`, **I1
+stays green** — the gap-pinning test agrees the gap exists while measuring
+nothing. K5 is its only killer.
 
 ### Coverage of the red sets
 
-<!-- COVERAGE -->
+Every test in the file has a killer **except S0**, and the union of the red sets
+covers all 17.
+
+Tests with exactly **one** killer — 🚫 **do not delete these**:
+
+| Test | Only killer | What is lost if it goes |
+|---|---|---|
+| K0 | M12 | the extractor could stop skipping strings and nothing would notice |
+| K1 | M11 | the scanner could go blind; V1 and K2 would still be green |
+| K2 | M13 | an over-strict rule could creep in; the sweep would cry wolf forever |
+| K5 | M10 | `iconCount` could hard-wire `0` and I1 would agree with it |
+| S1 | M1 | the plugin list would stop being pinned |
+| P1 | M1 | the criterion's own headline claim |
+| G1 | M4 | the mode could flip to `injectManifest` silently |
+| I2 | M14 | the gap would stop being located |
+
+**S0 has no killer, and that is intentional.** It asserts that
+`vite.config.ts` was read off disk at all. The only mutation that could kill it
+is deleting or renaming the config, which breaks `npm run build` outright — a
+louder alarm than any test. S0 is not vacuous: if `CONFIG_PATH` were wrong,
+`readFileSync` throws at module load and the file reports **0 tests while the
+suite still says "passed"**, which is the `import.meta.url` trap this project
+has already been bitten by. S0 makes that failure mode explicit and cheap to
+read. Same posture as R1 in `uiOverhaulDiffScope`.
+
+📌 **S3 is the canary.** M7 — changing `theme_color` to a different, perfectly
+valid colour — kills S3 and nothing else. Any legitimate manifest edit will make
+S3 red; the fix is to update the pinned values in S3, then let M1/G1/V1 re-prove
+that the new values still satisfy the rules. **S3 pins *these values*; the rest
+pin *properties*.**
 
 ---
 
