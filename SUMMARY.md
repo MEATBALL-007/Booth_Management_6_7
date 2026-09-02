@@ -1,139 +1,149 @@
-# Round summary — 2026-09-02, branch `auto/Booth_Management_6_7/2026-09-02_0007`
+# Round summary — 2026-09-03, branch `auto/Booth_Management_6_7/2026-09-03_0012`
 
 Task: close the `ui-overhaul` criterion
-**"106 tests เขียวครบ + `npm run build` ผ่าน + PWA generate"**.
+**"ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)"**.
+
+Round `_2026-09-02_0041` started this criterion and **died mid-mutation-run**.
+It left behind everything except the finish: the test file, the production fix,
+and — crucially — its 18 mutation predictions committed *before* running any of
+them. This round finished it.
 
 ## What I did
 
-- **Carried the ten already-proven criteria onto this branch.** The runner cut it
-  from `main` again, so it started at 131 tests with 0 ticks. Verified
-  `auto/…/2026-09-01_0037` is a strict superset (`git merge-base` returns `HEAD`,
-  and the `--name-status` diff has no `D` rows) and checked it out by path.
-  Result: 50 files, 283 tests green.
-- **Wrote `src/pwaGenerate.audit.test.ts` — 17 tests.** It reads the real
-  `vite.config.ts` with a brace-matching extractor (not regexes) and proves the
-  PWA plugin is registered, `registerType` is `autoUpdate`, the manifest identity
-  fields are non-empty, and the mode is `generateSW`. Six of the 17 are aimed at
-  the checker itself and four are a spine of what it actually found.
-- **Recorded the icons gap rather than papering over it.** `manifest.icons` is
-  `[]`, no image asset exists anywhere in the repo, and the built
-  `manifest.webmanifest` carries `"icons":[]` through — so the app cannot be
-  installed to an iPad home screen. Pinned by two tests that name the gap and
-  locate it. No assertion was loosened to let it pass.
-- **Ran 14 mutations with the red sets predicted and committed beforehand.**
-  14 of 14 matched.
-- Ticked the criterion in `AUTOPILOT.md` (`ui-overhaul` is now 3/5, overall
-  11/20), wrote `docs/autopilot/2026-09-02-pwa-generate-audit.md`, and rewrote
-  the handoff.
+- **Carried the twelve criteria forward.** The runner cut this branch from
+  `main` again (`735de75`, 131 tests, 0 ticks) — the ninth round in a row.
+  Proved `_0041` was a strict superset first (`git merge-base HEAD <tip>`
+  returns `HEAD`; `--name-status` has no `D` rows), then checked out by path.
+- **Found and reverted a live mutation that the runner had committed.**
+  `_0041` timed out mid-run and the harness's "rescue uncommitted work" step
+  (`941539e`) froze an un-reverted mutation into history: `sourceFiles()` was
+  still skipping `src/screens`. That is **M15 of its own prediction table**, and
+  it was reddening exactly the predicted G2/G3/T2. The branch was inheriting a
+  3-test failure that looked like a broken audit but was a stranded experiment.
+  The same commit also contained real work (the G4 `perTarget` canary), so this
+  was fixed one line at a time rather than reverted wholesale.
+- **Ran all 18 mutations against the pre-committed predictions. 17 of 18
+  matched.** Each was applied through a harness that *throws* if its anchor
+  does not match, so a mutation cannot be silently scored as "no killer" without
+  ever having been applied — which nearly happened, because the tree is CRLF and
+  four anchors were multi-line.
+- **Re-measured the one miss instead of relaying it.** `_0041` recorded that M6
+  left G4 green and that it strengthened G4 in response. I reproduced that state
+  (`M6orig` — M6 applied with the canary stripped) and confirmed it: **all 18
+  green** while two of three `queue-number` census entries are relabelled.
+- Filled in §5 of `docs/autopilot/2026-09-02-neon-clarity-audit.md` with the
+  results, ticked the criterion (`ui-overhaul` now 4/5, overall **12/20**), and
+  rewrote the handoff.
 
-**No `src/` production file was changed. `vite.config.ts` was not changed.**
+**No `src/` production file was changed this round.** The one production change
+this criterion required (`DisplayScreen.tsx:98`) was made by `_0041` and is
+already declared in `frozenZones`' `PRODUCTION_CHANGES` with its reason.
 
 ## Why
 
-- **The criterion splits in three and only one part has work in it.** "tests
-  green" and "build passes" are the Verify command verbatim; a test asserting
-  that the tests pass is circular, so none was written — the same call round
-  `_0044` made for the twin criterion. The evidence is the recorded run.
-  "PWA generate" is the part nothing had ever touched.
-- **Config, not artifact.** `npm run build` prints `mode generateSW / precache 5
-  entries / dist/sw.js` today, but nothing pinned that it keeps happening — M1
-  confirmed that deleting the plugin leaves `npm test` green and the build
-  exiting 0 with no service worker shipped. `dist/` is gitignored, so a sweep
-  reading `dist/sw.js` would be green on a machine that just built and red on a
-  clean checkout. The config is the only durable thing to assert.
-- **"106" was read as "no test is red", not "exactly 106 exist".** It is 300 now.
-  Editing the spec to match the code is forbidden outright, and is the one thing
-  that would make this whole exercise worthless.
-- **The icons gap is a real defect but not this criterion's.** The criterion's
-  words are "PWA generate", and generation is fully proved. Installability is
-  adjacent and unstated. Fixing it means authoring school artwork and creating a
-  `public/` directory that does not exist — a design decision, not an audit, and
-  a second task. So it is recorded loudly (I1/I2) in the same shape as the E1
-  two-device gap from the Idempotency round.
-- **A brace-matching extractor, not regexes**, because `_0044` proved a blind
-  sweep and a clean sweep produce byte-identical output. M11 reproduced that on
-  this new scanner — see Risk.
+- **The stranded mutation is the interesting failure, and it is a new one.**
+  Every previous round's hazard was *losing* uncommitted work. This is the
+  inverse: an unattended round died mid-experiment and the rescue step preserved
+  the experiment as if it were work. The tell was that the three red tests
+  matched a table row exactly. Had I "fixed" the audit to accommodate it, I
+  would have written a permanently blind scanner — one that never reads a single
+  screen — into the guarantees, and it would have looked green forever. The new
+  handoff leads with this as a procedure.
+- **A prediction table committed before the run is worth more than the run.**
+  It survived the round that wrote it. Because `219eabe` predates every
+  mutation, I could execute someone else's experiment and the result still
+  cannot have been written backwards. That is the whole value of the convention.
+- **M6 is scored as a MISS even though M6 kills G4 today.** It kills it only
+  because G4 was strengthened after seeing it survive. Scoring it as a hit would
+  be scoring the fix, not the prediction. 17/18 is the honest number.
+- **I did not take `_0041`'s account of M6 on trust.** A prior agent's report of
+  a result I am about to publish is a claim, not a measurement. Re-running it
+  cost one command.
 
 ## Verification
 
-Verify command, run after every mutation was reverted and `git status --short`
-came back empty:
+Verify command, run with the tree clean (`git status --short` empty) after every
+mutation had been reverted:
 
 ```
 $ npm test
- Test Files  51 passed (51)
-      Tests  300 passed (300)
-   Duration  30.19s
+ Test Files  52 passed (52)
+      Tests  318 passed (318)
+   Duration  30.77s
 
 $ npm run build
 > tsc -b && vite build
 ✓ 116 modules transformed.
-✓ built in 926ms
+✓ built in 938ms
 PWA v1.3.0
 mode      generateSW
-precache  5 entries (847.55 KiB)
+precache  5 entries (848.73 KiB)
 files generated
   dist/sw.js
   dist/workbox-9c191d2f.js
 ```
 
-**Mutation check — 14 predicted, 14 correct.** Predictions were committed in
-`0e1725a` *before* the first mutation ran, so the table cannot have been written
-backwards. Full results in `docs/autopilot/2026-09-02-pwa-generate-audit.md` §5.
-M1 was run against the whole 300-test suite to catch anything unanticipated
-outside the three files involved; nothing else moved.
+**Mutation check — 18 run, 17 predicted correctly.** Full table in
+`docs/autopilot/2026-09-02-neon-clarity-audit.md` §5.
 
-Every test has a killer except S0, which is deliberate and explained.
+Killer counts were computed from the 18 recorded red sets rather than
+eyeballed — I had drafted a wrong "corrections" paragraph and the computation
+overturned it. Measured single-killer set is **G0 G5 G8 B0 B1 B2 B4 T0**, which
+is *exactly* what `_0041` predicted, and **no test has zero killers**.
 
 ## What I did NOT do
 
-- **Did not fix `icons: []`.** Reasoning above. It is committed as a documented,
-  located gap, not as a passing test.
-- **Did not assert the `"lang":"en"` in the emitted manifest**, on an app whose
-  UI is entirely Thai. Recorded in the note as an observation; it is not part of
-  this criterion and guessing at a fix would be scope creep.
-- **Did not write any test asserting that the tests pass or the build succeeds.**
-  Deliberate, and stated in the test file's own header so a future reader does
-  not "fix" the omission.
-- **Did not touch `dist/`, the spec files, `firestore.rules`, or any accounting /
-  menu / comms logic.** Did not add a dependency.
-- Did not start the next criterion (Neon Clarity), though I did sweep the source
-  for glow usage while writing the handoff and left the findings there.
+- **Did not start the next criterion** (responsive / touch-target ≥44px). It is
+  written up in detail in the handoff, including the trap that `scrollWidth >
+  clientWidth` is green-for-free in jsdom.
+- **Did not fix the radius tokens.** §2 specifies `sm 10 · md 14 · lg 16 ·
+  xl 20` and `tailwind.config.js` extends no `borderRadius` at all. The §8
+  criterion's parenthetical names glow and base scale only, so widening this
+  into a token-system rewrite would be a second task. Recorded as a real gap in
+  §7 of the note and repeated in the handoff.
+- **Did not touch the spec files, `firestore.rules`, `firestore.indexes.json`,
+  `.env*`, or any accounting / menu / comms logic.** Added no dependency.
+- Did not re-run `_0041`'s pre-fix measurement of the criterion itself (it
+  recorded 4 of 18 red against the original code). I verified its *conclusion*
+  is consistent with the current tree, but that specific "before" number is
+  inherited, not re-measured. See Risk 4.
 
 ## Risk — read these closely
 
-1. **🚨 V1 is vacuous without the K group, and this was measured, not assumed.**
-   M11 made the scanner report nothing at all, and `V1`
-   (`expect(violations).toStrictEqual([])` — the test that looks like the point
-   of the file) **stayed green**, as did K2. Only K1/K3/K4 caught it. The same
-   hazard one level down: with `iconCount` hard-wired to `0`, **I1 stays green**
-   and K5 is its only killer. If a future round deletes the "redundant-looking"
-   fixture tests, the sweep keeps passing while proving nothing.
-2. **🚨 M11 had to be run twice, and the first run was my error.** I declared
-   "make the scanner blind" but wrote `violations.push = () => 0`, which installs
-   an **own property on the array** — and `toStrictEqual` compares those, so K2
-   and V1 died from the assignment rather than from blindness. Re-run faithfully
-   it produced exactly the predicted K1/K3/K4. Scored 14/14 on the faithful runs;
-   a reviewer who thinks the botched run should count against the prediction rate
-   would score it 13/14. Both numbers are in the note.
-3. **The config is proved; the service worker is not.** No test runs vite. If the
-   config were perfect and the build broke for an unrelated reason, only
-   `npm run build` would say so. `strategies` being *absent* is read as
-   vite-plugin-pwa's documented `generateSW` default — documentation taken on
-   trust, corroborated only by the recorded build output.
-4. **The PWA demonstrably does not fully work.** With no icon it cannot be
-   installed, which is the whole reason this app is a PWA. I ticked the criterion
-   as written; a reviewer who reads "PWA generate" as including installability
-   should untick it and treat I1 as the failing test it would then be.
-5. **S3 is a canary and will go red on any legitimate manifest edit** (M7 —
-   changing `theme_color` to a different valid colour — kills S3 and nothing
-   else). The fix is to update the pinned values in S3, not to relax it.
-6. **Every mutation touching `vite.config.ts` also reddened `frozenZones` C1 and
-   `uiOverhaulDiffScope` S2**, because the path is undeclared in both. Expected
-   and warned about by round `_0037`. I did not add it to either list, since I
-   did not change the file — the next round that does must add it *with a reason*
-   rather than loosen the classifiers.
-7. **Audit test files are inside Tailwind's content glob**
-   (`./src/**/*.{ts,tsx}`), so fixture strings emit dead utility classes into the
-   production CSS. Adding this file moved the bundle 14.64 → 14.67 kB. Harmless
-   now, but the Neon Clarity round will be measuring the stylesheet.
+1. **🚨 No pixel is measured and Tailwind never runs.** This file computes on
+   values *declared* in the source. The step from "the root is 120% and every
+   size is relative" to "the page is 20% bigger" assumes Tailwind emits its
+   documented rem-based scale. Assumed, not proved — same limitation every
+   jsdom round in this project has carried.
+2. **🚨 "สวย" is not tested and is not claimed.** The proven statements are the
+   glow *ration* and the *scale*. A human should open the Display screen and
+   look at it: the production change removed a yellow glow from the "เตรียมตัว"
+   card, and while `displayCentering` C4 still pins that the callout is
+   structurally prominent (border + fill + size), nothing here can tell you it
+   still looks right.
+3. **🚨 `G1` is green when the scanner is blind.** M3 proves it: the test that
+   reads like the heart of the file (`every glow lands on an allowed target`) is
+   `[].filter(pred)`, which passes identically on clean code and on a scanner
+   that sees nothing. Only G0 and G2 separate the two. **If a future round
+   deletes G2 as redundant** — it has five killers, so it will not appear on any
+   single-killer list — the file keeps passing while proving nothing.
+4. **The "4 of 18 red before the fix" figure is inherited from `_0041`, not
+   re-measured by me.** It is consistent with what I see (the census, the
+   production diff, and `frozenZones`' declared reason all line up), but I did
+   not check out the pre-fix tree and re-run it. A reviewer wanting that number
+   independently confirmed should do so.
+5. **The prediction table's "elsewhere" column was systematically incomplete,**
+   and I corrected the record rather than the table. Every production/config
+   mutation also reddens `frozenZones C1` + `uiOverhaulDiffScope S2`; the table
+   named that once (M18). Related and re-confirmed this round: **`P1` tracks
+   *which* file changed, not *what* changed in it** — M1/M2/M16 left it green
+   because their files are already declared. Do not read a green P1 as "this
+   change was safe".
+6. **I deleted my mutation harness (`mutate.mjs`) rather than committing it.**
+   It is reconstructable from §5, but the next round re-running these mutations
+   will rebuild it. If it does, the CRLF anchor guard is the part worth
+   re-copying — without it, four of the eighteen silently do nothing.
+7. **Audit test files are inside Tailwind's content glob** (`./src/**/*.{ts,tsx}`),
+   so fixture strings emit dead utility classes into the production CSS. The
+   stylesheet is now 15.91 kB (was 14.67). Still harmless, but the next
+   criterion touches layout and someone may start measuring this.
