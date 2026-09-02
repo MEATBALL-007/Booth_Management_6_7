@@ -83,7 +83,7 @@ function sourceFiles(dir = 'src'): string[] {
   for (const name of readdirSync(join(REPO, dir)).sort()) {
     const rel = `${dir}/${name}`
     if (statSync(join(REPO, rel)).isDirectory()) {
-      if (rel !== 'src/test' && rel !== 'src/screens') out.push(...sourceFiles(rel))
+      if (rel !== 'src/test') out.push(...sourceFiles(rel))
       continue
     }
     if (!/\.(tsx?|css)$/.test(name)) continue
