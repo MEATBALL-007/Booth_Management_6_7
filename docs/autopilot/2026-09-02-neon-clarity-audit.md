@@ -170,7 +170,118 @@ G0 (M3) · G5 (M1) · G8 (M14) · B0 (M17) · B1 (M7) · B2 (M18) · B4 (M7) · 
 
 ## 5. Results
 
-*(filled in after running — see §6)*
+Run in round `_2026-09-03_0012`, against the prediction table in §4 exactly as
+it was committed in `219eabe` — **before** any mutation ran. The table was not
+edited afterwards, so it cannot have been written backwards.
+
+Baseline: **52 files · 318 tests green**, tree clean before and after every
+mutation (each was reverted with a path-scoped `git checkout --` and
+`git status --short` checked).
+
+| # | predicted (this file) | actual (this file) | ? |
+|---|---|---|---|
+| M1 | G1, G2, G5, T1 | G1, G2, G5, T1 | ✅ |
+| M2 | G1, G2 | G1, G2 | ✅ |
+| M3 | G0, G2, G3 | G0, G2, G3 | ✅ |
+| M4 | G2, G3, G7, T1, T2 | G2, G3, G7, T1, T2 | ✅ |
+| M5 | G1, G4 | G1, G4 | ✅ |
+| M6 | G4 | G4 — **but only because G4 was strengthened first** | ❌ |
+| M7 | B1, B4 | B1, B4 | ✅ |
+| M8 | G6 | G6 | ✅ |
+| M9 | B3 | B3 | ✅ |
+| M10 | B5 | B5 | ✅ |
+| M11 | B3, B5 | B3, B5 | ✅ |
+| M12 | G7 | G7 | ✅ |
+| M13 | G6, T0 | G6, T0 | ✅ |
+| M14 | G8 | G8 | ✅ |
+| M15 | G2, G3, T2 | G2, G3, T2 | ✅ |
+| M16 | T1 | T1 | ✅ |
+| M17 | B0 | B0 | ✅ |
+| M18 | B2 | B2 | ✅ |
+
+**17 of 18 correct.** The one miss is the one that mattered — see below.
+
+### M6 is scored as a MISS, and the miss is the reason G4 is worth having
+
+`_0041` predicted M6 (retarget both `QueueNumber` census entries to
+`glow-definition`) would redden G4, ran it, and found G4 **green**. It then
+added the `perTarget` distribution canary to G4 and recorded the reasoning in a
+code comment. Today M6 does kill G4 — but that is the *fix* working, not the
+original prediction being right.
+
+That account was re-measured this round rather than taken on trust. Applying M6
+together with a removal of the `perTarget` block (`M6orig`) reproduces it:
+
+```
+=== M6orig (file) ===
+  (nothing went red)
+```
+
+All 18 tests green, while two of the three `queue-number` sites have been
+relabelled as "not a placement at all". `for (const t of SPEC_TARGETS)
+expect(used).toContain(t)` only asks whether each bucket is non-empty, and with
+three entries in `queue-number` two can be spent freely. The distribution
+assertion is what closes it.
+
+### The "elsewhere" column was systematically incomplete
+
+It named `displayCentering C4` (M1), `theme.test.ts` (M13) and `frozenZones C1`
+(M18), and all three fired. But **every** mutation touching a production or
+config file also reddened `frozenZones C1` and `uiOverhaulDiffScope S2`, and the
+table only mentions this once:
+
+| mutation touches | also red |
+|---|---|
+| any production / config file | `frozenZones C1`, `uiOverhaulDiffScope S2` |
+| a production file **not** in `PRODUCTION_CHANGES` (M7, M8, M9, M12, M13, M14) | `frozenZones P1` as well |
+
+`P1` stayed green for M1, M2 (`DisplayScreen.tsx`) and M16 (`QueuePanel.tsx`)
+because those paths are already declared — which is exactly the `_0006` lesson
+restated: **P1 tracks *which file* changed, not *what* changed in it.** A
+declared file can be mutated freely without P1 noticing; an undeclared one goes
+red however innocent the edit. Neither is a defect, but a future round must not
+read a green P1 as "the change was safe".
+
+This is the tripwire rounds `_0037` and `_0044` warned about, behaving as
+designed. Nothing was loosened to accommodate it: the Neon Clarity production
+edit is declared in `PRODUCTION_CHANGES['src/screens/DisplayScreen.tsx']` with
+its reason, which is why the suite is green at rest.
+
+### Single-killer tests — predicted vs. measured
+
+Predicted: G0 (M3) · G5 (M1) · G8 (M14) · B0 (M17) · B1 (M7) · B2 (M18) ·
+B4 (M7) · T0 (M13).
+
+Measured by counting killers per test across all 18 red sets:
+
+```
+G0 1 (M3)      G6 2 (M8,M13)    B3 2 (M9,M11)
+G1 3           G7 2 (M4,M12)    B4 1 (M7)
+G2 5           G8 1 (M14)       B5 2 (M10,M11)
+G3 3           B0 1 (M17)       T0 1 (M13)
+G4 2 (M5,M6)   B1 1 (M7)        T1 3
+G5 1 (M1)      B2 1 (M18)       T2 2 (M4,M15)
+
+single-killer: G0 G5 G8 B0 B1 B2 B4 T0
+no killer    : (none)
+```
+
+**The predicted single-killer list was exactly right — all eight, no additions,
+no removals.** B1 and B4 have one killer each; they happen to share it (M7),
+which makes M7 the only mutation in the run that touches the +20% arithmetic at
+all, but each test still has precisely one thing that can catch it.
+
+**Every one of the 18 tests has at least one killer.** No test in this file is
+vacuous — unlike the deliberate `S0`/`R1`-shaped exceptions in earlier rounds,
+there was no test here that had to be argued for without a killer.
+
+⚠️ **ห้ามลบ**: G0 · G5 · G8 · B0 · B1 · B2 · B4 · T0 — one killer each.
+Deleting any of them removes the only thing standing between a mutation and a
+green suite.
+
+⚠️ **G2 is the spine and must not be deleted either.** It has four killers, so
+it does not appear on the single-killer list, but M3 and M15 both show it is the
+test that separates *clean* from *blind* — G1 survives both.
 
 ## 6. ขอบเขตของหลักฐาน / Scope of the evidence
 
