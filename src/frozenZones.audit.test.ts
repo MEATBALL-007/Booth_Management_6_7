@@ -162,6 +162,8 @@ const PRODUCTION_CHANGES: Record<string, string> = {
     'Undo — orderSnapshot returns every undoable field, undefined meaning "this order never had one"; cancel() moved here from the panel. Queue state only.',
   'src/screens/QueuePanel.tsx':
     'Undo (Q.cancel) + Idempotency (a useRef Set so a repeated press cannot write twice before the snapshot lands).',
+  'src/ui/Button.tsx':
+    'Touch target ≥44px — one min-h-[44px] added to the primitive\'s base className, so the floor reaches every call site including the ones that do not repeat it. Presentation only: no variant, no handler and no prop changed, and no button on any screen renders shorter than 44px today either way.',
   'src/screens/DisplayScreen.tsx':
     'Display glanceable — one <En> wrapper so English reads as subordinate, and LIVE says สด · LIVE. Neon Clarity — the yellow shadow-[...] came off the เตรียมตัว <section>, because §2 rations glow to three targets and forbids it on cards. Presentation only, both times.',
 }
