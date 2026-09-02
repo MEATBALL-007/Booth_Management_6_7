@@ -1,149 +1,105 @@
-# Round summary — 2026-09-03, branch `auto/Booth_Management_6_7/2026-09-03_0012`
+# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-03_0038`
 
-Task: close the `ui-overhaul` criterion
-**"ทุกหน้าเป็นสไตล์ Neon Clarity สม่ำเสมอ (glow เฉพาะ 3 จุด, base +20%)"**.
+เกณฑ์ที่ปิดรอบนี้: **"อ่านง่ายบน iPad ตั้ง+นอน, แล็ปท็อป HQ, จอใหญ่, มือถือ — ไม่มี horizontal
+scroll, touch target ≥44px"** — ข้อสุดท้ายของ `2026-08-03-ui-overhaul-design.md`
 
-Round `_2026-09-02_0041` started this criterion and **died mid-mutation-run**.
-It left behind everything except the finish: the test file, the production fix,
-and — crucially — its 18 mutation predictions committed *before* running any of
-them. This round finished it.
+**`ui-overhaul` ครบ 5/5 · `queue-pro-upgrade` ครบ 8/8 · รวม 13 จาก 20** เหลือกลุ่ม
+`hq-comms` อีก 7 ข้อ ซึ่งเป็นทั้งหมดที่เหลือ
 
 ## What I did
 
-- **Carried the twelve criteria forward.** The runner cut this branch from
-  `main` again (`735de75`, 131 tests, 0 ticks) — the ninth round in a row.
-  Proved `_0041` was a strict superset first (`git merge-base HEAD <tip>`
-  returns `HEAD`; `--name-status` has no `D` rows), then checked out by path.
-- **Found and reverted a live mutation that the runner had committed.**
-  `_0041` timed out mid-run and the harness's "rescue uncommitted work" step
-  (`941539e`) froze an un-reverted mutation into history: `sourceFiles()` was
-  still skipping `src/screens`. That is **M15 of its own prediction table**, and
-  it was reddening exactly the predicted G2/G3/T2. The branch was inheriting a
-  3-test failure that looked like a broken audit but was a stranded experiment.
-  The same commit also contained real work (the G4 `perTarget` canary), so this
-  was fixed one line at a time rather than reverted wholesale.
-- **Ran all 18 mutations against the pre-committed predictions. 17 of 18
-  matched.** Each was applied through a harness that *throws* if its anchor
-  does not match, so a mutation cannot be silently scored as "no killer" without
-  ever having been applied — which nearly happened, because the tree is CRLF and
-  four anchors were multi-line.
-- **Re-measured the one miss instead of relaying it.** `_0041` recorded that M6
-  left G4 green and that it strengthened G4 in response. I reproduced that state
-  (`M6orig` — M6 applied with the canary stripped) and confirmed it: **all 18
-  green** while two of three `queue-number` census entries are relabelled.
-- Filled in §5 of `docs/autopilot/2026-09-02-neon-clarity-audit.md` with the
-  results, ticked the criterion (`ui-overhaul` now 4/5, overall **12/20**), and
-  rewrote the handoff.
-
-**No `src/` production file was changed this round.** The one production change
-this criterion required (`DisplayScreen.tsx:98`) was made by `_0041` and is
-already declared in `frozenZones`' `PRODUCTION_CHANGES` with its reason.
+- **ยกงาน 12 เกณฑ์จาก `auto/…/2026-09-03_0012` มาก่อน** — branch นี้ถูก runner ตัดจาก main
+  เปล่าๆ (`735de75`) มี 131 เทสต์ และ 0 ข้อที่ติ๊ก พิสูจน์ superset ด้วย `git diff --name-status`
+  (ไม่มีบรรทัด `D` เลย) แล้ว checkout เป็น path list ทีละไฟล์ → `npm test` ได้ **318 ตรงเป๊ะ**
+- **เขียน `src/responsiveTouchTargets.audit.test.ts` — 17 เทสต์ ไม่เรนเดอร์อะไรเลย**
+  สามกลุ่ม: T = เลขคณิตของ touch target · X = census ของ *สาเหตุ* ของ horizontal scroll ·
+  R = ความครอบคลุมของ breakpoint ที่ 375/768/1024/1280 · บวก C = เทสต์ที่ปักตัว checker เอง
+- **วัดก่อนแก้: รันกับโค้ดเดิม แดง 2 จาก 17 (T3, T4)** commit `7e3b18b` คือสถานะแดงนั้น
+- **แก้ production หนึ่งบรรทัด**: `src/ui/Button.tsx` ได้ `min-h-[44px]` ที่ base className
+  และเพิ่มเข้า `PRODUCTION_CHANGES` ของ `frozenZones` พร้อมเหตุผล
+- **mutation check 19 ตัว ทำนาย red set *ก่อน* รัน (commit `fec3fa1`) — ตรง 16 จาก 19**
+  บันทึกเต็มที่ `docs/autopilot/2026-09-03-responsive-touch-targets-audit.md`
 
 ## Why
 
-- **The stranded mutation is the interesting failure, and it is a new one.**
-  Every previous round's hazard was *losing* uncommitted work. This is the
-  inverse: an unattended round died mid-experiment and the rescue step preserved
-  the experiment as if it were work. The tell was that the three red tests
-  matched a table row exactly. Had I "fixed" the audit to accommodate it, I
-  would have written a permanently blind scanner — one that never reads a single
-  screen — into the guarantees, and it would have looked green forever. The new
-  handoff leads with this as a procedure.
-- **A prediction table committed before the run is worth more than the run.**
-  It survived the round that wrote it. Because `219eabe` predates every
-  mutation, I could execute someone else's experiment and the result still
-  cannot have been written backwards. That is the whole value of the convention.
-- **M6 is scored as a MISS even though M6 kills G4 today.** It kills it only
-  because G4 was strengthened after seeing it survive. Scoring it as a hit would
-  be scoring the fix, not the prediction. 17/18 is the honest number.
-- **I did not take `_0041`'s account of M6 on trust.** A prior agent's report of
-  a result I am about to publish is a claim, not a measurement. Re-running it
-  cost one command.
+**ช่องว่างจริงที่เจอ** — `Button` ประกาศแค่ `px-5 py-3` = พื้นที่รับประกัน
+`0.75rem × 2 × 19.2px = 28.8px` **ไม่ถึง 44** ปุ่มทุกตัวในแอปจึงต้องพก `min-h-[44px]`
+ไปเองที่ call site ทั้ง 20 กว่าจุด และ **มีหนึ่งที่ลืม**: ปุ่มยืนยันของ `SetupScreen.tsx:107`
+แก้โดยย้ายพื้นไปไว้ที่ primitive ที่เดียว — call site ตัวถัดไปที่ใครเขียนจะได้มันฟรี
+
+**ทำไมเป็นเลข 19.2** — `src/index.css:5` คือ `html { font-size: 120% }` (`neonClarity` B1
+ปักไว้แล้ว) ผลที่ตามมาซึ่งเป็นหัวใจของ T4: **utility ที่เป็น rem โตตาม root แต่ `[44px]` ไม่โต**
+`py-3` = 28.8px (โตจาก 24) ส่วน `min-h-[44px]` = 44 เท่าเดิมตลอด ถ้าเขียน `h-11` จะได้ 52.8
+
+**ทำไมขอบเขตการวัดถูกจำกัดขนาดนี้** — jsdom ไม่ทำ layout `scrollWidth > clientWidth` คือ
+`0 > 0` = false **เขียวฟรีทุกโค้ดเบสที่เป็นไปได้** ไฟล์นี้จึงไม่เรนเดอร์อะไรเลยและ
+คำนวณจาก **ค่าที่ประกาศไว้ในซอร์ส** แทน ตามบทเรียนที่รอบ `_0006`/`_0041` วางไว้
+
+**ทำไมมีเทสต์ปัก checker ตัวเองถึงสองตัว (C0, C1)** — M7 พิสูจน์ให้ดูจริง: ตั้งให้สวีป
+มองไม่เห็นปุ่มสักตัว แล้ว **T3 เขียว** ทั้งที่ชื่อมันคือตัวเกณฑ์เป๊ะๆ
 
 ## Verification
 
-Verify command, run with the tree clean (`git status --short` empty) after every
-mutation had been reverted:
+รัน Verify command เต็ม (`npm test && npm run build`) ด้วยตัวเอง หลัง commit สุดท้าย:
 
 ```
-$ npm test
- Test Files  52 passed (52)
-      Tests  318 passed (318)
-   Duration  30.77s
+Test Files  53 passed (53)
+     Tests  335 passed (335)
 
-$ npm run build
-> tsc -b && vite build
-✓ 116 modules transformed.
-✓ built in 938ms
-PWA v1.3.0
-mode      generateSW
-precache  5 entries (848.73 KiB)
-files generated
-  dist/sw.js
-  dist/workbox-9c191d2f.js
+tsc -b && vite build
+✓ 116 modules transformed
+dist/assets/index-*.css   16.15 kB │ gzip: 4.18 kB
+dist/assets/index-*.js   852.15 kB │ gzip: 257.63 kB
+PWA v1.3.0 · mode generateSW · precache 5 entries (848.97 KiB) · dist/sw.js
 ```
 
-**Mutation check — 18 run, 17 predicted correctly.** Full table in
-`docs/autopilot/2026-09-02-neon-clarity-audit.md` §5.
+318 (ที่ยกมา) + 17 (ใหม่) = 335 · **ไม่มีเทสต์ไหนถูกลบหรือ skip**
 
-Killer counts were computed from the 18 recorded red sets rather than
-eyeballed — I had drafted a wrong "corrections" paragraph and the computation
-overturned it. Measured single-killer set is **G0 G5 G8 B0 B1 B2 B4 T0**, which
-is *exactly* what `_0041` predicted, and **no test has zero killers**.
+**mutation check 19 ตัว — ทำนาย 16 ตรง 3 พลาด** (ทั้งสามพลาดไปทางเดียวกัน: มีเทสต์ตาย
+*เพิ่ม* จากที่ทำนาย ไม่มีตัวไหนที่บอกว่าจะตายแล้วไม่ตาย) ทุกตัว revert แล้ว `git status` สะอาด
+**ทั้ง 17 เทสต์ถูกฆ่าได้อย่างน้อยหนึ่งครั้ง — ไม่มีตัวไหนไม่มี killer**
 
 ## What I did NOT do
 
-- **Did not start the next criterion** (responsive / touch-target ≥44px). It is
-  written up in detail in the handoff, including the trap that `scrollWidth >
-  clientWidth` is green-for-free in jsdom.
-- **Did not fix the radius tokens.** §2 specifies `sm 10 · md 14 · lg 16 ·
-  xl 20` and `tailwind.config.js` extends no `borderRadius` at all. The §8
-  criterion's parenthetical names glow and base scale only, so widening this
-  into a token-system rewrite would be a second task. Recorded as a real gap in
-  §7 of the note and repeated in the handoff.
-- **Did not touch the spec files, `firestore.rules`, `firestore.indexes.json`,
-  `.env*`, or any accounting / menu / comms logic.** Added no dependency.
-- Did not re-run `_0041`'s pre-fix measurement of the criterion itself (it
-  recorded 4 of 18 red against the original code). I verified its *conclusion*
-  is consistent with the current tree, but that specific "before" number is
-  inherited, not re-measured. See Risk 4.
+- **ไม่ได้แตะ `tailwind.config.js`** — spec §2 ระบุ radius token (`sm 10 · md 14 · lg 16 · xl 20`)
+  ที่ config ยังไม่ extend เลย รอบ Neon Clarity บันทึกไว้แล้วว่าเป็นช่องว่าง **ยังเป็นอยู่**
+- **ไม่ได้ลบ `min-h-[44px]` ที่ call site ทั้ง 20 กว่าจุดที่ตอนนี้ซ้ำซ้อนกับ primitive** —
+  เป็น churn ที่ไม่มีเกณฑ์ข้อไหนขอ และจะทำให้ diff ของรอบนี้ใหญ่โดยไม่จำเป็น
+- **ไม่ได้เปลี่ยน `grid-cols-2` บนมือถือให้เป็นคอลัมน์เดียว** — §4 เขียนว่า "มือถือ: คอลัมน์เดียว"
+  ซึ่งหมายถึง *คอลัมน์ของหน้า* (menu/cart) ซึ่งถูกต้องอยู่แล้ว (`grid-cols-1 lg:…`)
+  ส่วน `grid-cols-2` เป็น grid ของการ์ดเมนู/StatTile ข้างใน **ไม่ใช่สาเหตุของ overflow**
+  เพราะ Tailwind แปลเป็น `minmax(0,1fr)` — X4 ปักไว้ว่านั่นคือสมมติฐาน ไม่ใช่การวัด
+- **ไม่ได้ทำเกณฑ์ข้อแรกของ `hq-comms`** ("MacBook + Windows พร้อมกัน") — ตั้งใจข้าม
+  **ชั่วคราว** และเขียนเหตุผลไว้ใน Next task แล้ว: มันเป็นทรงเดียวกับ "สองเครื่องพร้อมกัน"
+  ของ Idempotency ที่ปิดไม่ได้ใน jsdom และควรได้รอบของตัวเอง **ห้ามลืมข้อนี้**
 
-## Risk — read these closely
+## Risk
 
-1. **🚨 No pixel is measured and Tailwind never runs.** This file computes on
-   values *declared* in the source. The step from "the root is 120% and every
-   size is relative" to "the page is 20% bigger" assumes Tailwind emits its
-   documented rem-based scale. Assumed, not proved — same limitation every
-   jsdom round in this project has carried.
-2. **🚨 "สวย" is not tested and is not claimed.** The proven statements are the
-   glow *ration* and the *scale*. A human should open the Display screen and
-   look at it: the production change removed a yellow glow from the "เตรียมตัว"
-   card, and while `displayCentering` C4 still pins that the callout is
-   structurally prominent (border + fill + size), nothing here can tell you it
-   still looks right.
-3. **🚨 `G1` is green when the scanner is blind.** M3 proves it: the test that
-   reads like the heart of the file (`every glow lands on an allowed target`) is
-   `[].filter(pred)`, which passes identically on clean code and on a scanner
-   that sees nothing. Only G0 and G2 separate the two. **If a future round
-   deletes G2 as redundant** — it has five killers, so it will not appear on any
-   single-killer list — the file keeps passing while proving nothing.
-4. **The "4 of 18 red before the fix" figure is inherited from `_0041`, not
-   re-measured by me.** It is consistent with what I see (the census, the
-   production diff, and `frozenZones`' declared reason all line up), but I did
-   not check out the pre-fix tree and re-run it. A reviewer wanting that number
-   independently confirmed should do so.
-5. **The prediction table's "elsewhere" column was systematically incomplete,**
-   and I corrected the record rather than the table. Every production/config
-   mutation also reddens `frozenZones C1` + `uiOverhaulDiffScope S2`; the table
-   named that once (M18). Related and re-confirmed this round: **`P1` tracks
-   *which* file changed, not *what* changed in it** — M1/M2/M16 left it green
-   because their files are already declared. Do not read a green P1 as "this
-   change was safe".
-6. **I deleted my mutation harness (`mutate.mjs`) rather than committing it.**
-   It is reconstructable from §5, but the next round re-running these mutations
-   will rebuild it. If it does, the CRLF anchor guard is the part worth
-   re-copying — without it, four of the eighteen silently do nothing.
-7. **Audit test files are inside Tailwind's content glob** (`./src/**/*.{ts,tsx}`),
-   so fixture strings emit dead utility classes into the production CSS. The
-   stylesheet is now 15.91 kB (was 14.67). Still harmless, but the next
-   criterion touches layout and someone may start measuring this.
+**เรื่องที่ reviewer ควรดูให้ละเอียด**
+
+1. 🚨 **การแก้ `Button.tsx` ไม่เปลี่ยนพิกเซลที่เรนเดอร์ออกมาเลยแม้แต่จุดเดียววันนี้**
+   ปุ่มยืนยันตัวที่ "ขาด" นั้นสูง 62.4px อยู่แล้ว (28.8 padding + 33.6 line-height ของ `text-lg`)
+   สิ่งที่เปลี่ยนคือหลักประกันย้ายจาก "บังเอิญ font metrics พอดี" มาเป็น "ประกาศไว้ที่ primitive"
+   **ห้ามอ่าน commit นี้ว่าเป็นการซ่อมของที่พังอยู่** — ผมเลือกใช้คำว่า "แก้ production จริง"
+   เพราะไฟล์ production เปลี่ยนจริง แต่ผลกระทบต่อผู้ใช้วันนี้คือ **ศูนย์**
+2. 🚨 **ไม่มีพิกเซลไหนถูกวัด ไม่มี viewport ไหนถูกตั้ง ไม่เรนเดอร์อะไรเลย** — กลุ่ม X
+   เป็น **census ของ *สาเหตุ*** ของ horizontal scroll ไม่ใช่การวัด overflow
+   **ข้อความยาวเกิน ฟอนต์กว้างกว่าที่คิด หรือรูปที่มีขนาดในตัว ล้นได้โดยไม่มี assertion ไหนแดง**
+   ควรมีคนเปิดจริงทั้งสี่ความกว้าง — "อ่านง่าย" ไม่ได้ถูกทดสอบและไม่ได้อ้าง
+3. 🚨 **ความกว้างของ touch target พิสูจน์แค่บางส่วน** — T5 สวีปเฉพาะปุ่มที่ป้ายเป็นอักขระเดียว
+   (`−`/`+` ของตะกร้า) ตัวอื่นรับความกว้างจาก container (`w-full`/`flex-1`/grid track)
+   จึงถือว่าไม่ใช่เงื่อนไขที่ผูกพัน **นี่คือการตัดสินใจ ไม่ใช่การวัด** และปุ่มที่ป้ายเป็น
+   `{L(...)}` ถูกยกเว้นเพราะอ่านป้ายไม่ได้จากซอร์ส
+4. ⚠️ **การอ่านเกณฑ์แบบ "44 CSS px ตรงตัว" เป็นการอ่านที่อ่อนกว่า** ถ้าเจตนาจริงคือ
+   "44px หลังสเกล 120%" (= 52.8px) ปุ่มทุกตัวยังผ่านเพราะ line-height พาไป
+   แต่ **หลักประกันที่ประกาศไว้ (44) จะไม่พอ** — เป็นคำถามที่ต้องให้คนตัดสิน
+5. ⚠️ **T1 ปัก file:line ของทั้ง 43 จุด** การขยับบรรทัดใน 10 ไฟล์นั้นทำให้มันแดง
+   **นั่นคือเจตนา** (มันคือ spine ที่กัน M7) แต่แปลว่ารอบที่แก้หน้าจอต้องอัปเดตลิสต์นี้
+6. ⚠️ **fixture ในไฟล์เทสต์ปล่อย utility class ตายๆ เข้า CSS จริง** — วัดแล้ว: build
+   ที่ไม่มีไฟล์นี้ได้ CSS **15.91 kB** มีไฟล์นี้ได้ **16.15 kB** = ไฟล์นี้เพิ่ม **0.24 kB**
+   สาเหตุคือ `tailwind.config.js` scan `./src/**/*.{ts,tsx}` **รวมไฟล์ audit test ด้วย**
+   (`_0007` เตือนไว้แล้ว) ทางแก้คือ exclude ใน `content` **แต่ทำรอบนี้ไม่ได้** เพราะจะทำ
+   `frozenZones` C1 แดง (config ตกหมวด `unknown`) ซึ่งต้องแก้ `classify()` ควบคู่กัน =
+   งานคนละชิ้น **บันทึกไว้เป็นช่องว่าง ไม่ได้แกล้งไม่เห็น**
+7. ⚠️ **`git diff main` ของ branch นี้จะดูใหญ่มาก** เพราะรวมงานที่ยกมาจาก 12 เกณฑ์ก่อนหน้า
+   งานของ *รอบนี้จริงๆ* คือ commit `7e3b18b`, `751f47f`, `fec3fa1`, `c93d6cc` และ commit สุดท้าย
