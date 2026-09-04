@@ -617,6 +617,13 @@ describe('S. closing one machine leaves the other whole', () => {
    * S3 — "ทำงานครบ" for the READ side: the survivor keeps every control it had
    * while both were open. Compared against the set captured BEFORE the close, so
    * this is a real before/after and not a re-statement of P1.
+   *
+   * ⚠️ The snapshot after the close is LOAD-BEARING, not scenery. Reading the
+   * survivor's DOM straight after `mac.unmount()` would prove nothing: React has
+   * no reason to re-render `win` at that moment, so the assertion would be
+   * inspecting markup rendered BEFORE the close and could not fail. Forcing a
+   * repaint first is what lets this test see cross-instance damage at all — the
+   * mutation round found it green against every mutation until this was added.
    */
   test('S3: the surviving machine keeps every control it had', () => {
     unlock()
@@ -628,9 +635,11 @@ describe('S. closing one machine leaves the other whole', () => {
     expect(buttonsBefore.length).toBeGreaterThan(0) // spine
 
     mac.unmount()
+    emitOrders(SHIFT_TWO) // force the survivor to re-render AFTER the close
 
     expect(buttonNames(win)).toStrictEqual(buttonsBefore)
     expect(fieldNames(win)).toStrictEqual(fieldsBefore)
+    expect(tiles(win)['total-sales']).toBe('670฿') // and it repainted, not froze
   })
 
   /**
