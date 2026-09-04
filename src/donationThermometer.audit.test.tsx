@@ -441,28 +441,50 @@ test('T1: 🚨 GAP-1 — donationTarget is declared and read by nobody', () => {
   expect(mentioning('donationTarget = ')).toStrictEqual([])
 })
 
+/**
+ * Is this element sized as a FRACTION of something — the one DOM signature a
+ * thermometer's filled bar cannot avoid having?
+ *
+ * T2 pins this against hand-built elements before it is pointed at the real
+ * dashboard, because `[].filter(anything)` is `[]`: a predicate that had
+ * quietly stopped matching would leave T2 green while proving nothing at all.
+ * This repo has been caught by that species four times (neonClarity G1,
+ * pwaGenerate V1, frozenZones F2, responsiveTouchTargets T3).
+ */
+const isProportional = (el: Element) => {
+  const style = el.getAttribute('style') ?? ''
+  const cls = el.getAttribute('class') ?? ''
+  return /\d\s*%/.test(style) || /\bw-\[\d+(\.\d+)?%\]/.test(cls)
+}
+
 test('T2: 🚨 GAP-1 — HQ shows a bare number: no bar, no meter, no percentage', () => {
+  // (a) the predicate, against fixtures — it must SAY YES to a filled bar
+  const yesStyle = document.createElement('div')
+  yesStyle.setAttribute('style', 'width: 45%')
+  const yesClass = document.createElement('div')
+  yesClass.setAttribute('class', 'h-4 w-[45%] bg-phantom-yellow')
+  const no = document.createElement('div')
+  no.setAttribute('class', 'font-mono text-3xl')
+  expect(isProportional(yesStyle)).toBe(true)
+  expect(isProportional(yesClass)).toBe(true)
+  expect(isProportional(no)).toBe(false)
+
   unlock()
   const { container } = render(<DashboardScreen />)
   emitOrders([o({ id: '1', total: 300 })])
   emitExpenses([e({ id: 'e1', amount: 200 })])
 
-  // the positive spine first — this test must not pass on an empty render
+  // (b) the positive spine — this test must not pass on an empty render
   expect(tile()).toBe('100฿')
 
   expect(container.querySelector('progress')).toBeNull()
   expect(container.querySelector('meter')).toBeNull()
   expect(container.querySelector('[role="progressbar"]')).toBeNull()
 
-  // nothing is sized as a fraction of a target, by inline style or by class
+  // (c) and nothing on the dashboard is sized as a fraction of a target
   const els = [...container.querySelectorAll('*')]
   expect(els.length).toBeGreaterThan(20)
-  const proportional = els.filter((el) => {
-    const style = el.getAttribute('style') ?? ''
-    const cls = el.getAttribute('class') ?? ''
-    return /\d\s*%/.test(style) || /\bw-\[\d+(\.\d+)?%\]/.test(cls)
-  })
-  expect(proportional.map((el) => el.getAttribute('class'))).toStrictEqual([])
+  expect(els.filter(isProportional).map((el) => el.getAttribute('class'))).toStrictEqual([])
 })
 
 test('T3: 🚨 GAP-2 — Display carries no donation figure at all', () => {
