@@ -818,7 +818,7 @@ describe('G. gaps recorded, not fixed', () => {
     expect(corpus).toContain('addExpense')            // control ✓
 
     // ...and the fourth is absent
-    const exportHits = files.filter((f, i) =>
+    const exportHits = files.filter((_path, i) =>
       /\.xlsx|\.csv|createObjectURL|new Blob|download=|application\/pdf/i.test(sources[i]),
     )
     expect(exportHits).toStrictEqual([])
