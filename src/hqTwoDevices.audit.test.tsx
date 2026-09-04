@@ -273,12 +273,25 @@ function openHQ(deviceId: string) {
 const unlock = () => localStorage.setItem(PIN_KEY, 'unlocked')
 
 /**
- * Deliver ONE snapshot to every LIVE subscriber. The registry is copied first so
- * a subscriber that unsubscribes mid-delivery cannot shift the iteration.
+ * Deliver ONE snapshot to every LIVE subscriber, and RETURN HOW MANY received it.
+ * The registry is copied first so a subscriber that unsubscribes mid-delivery
+ * cannot shift the iteration.
+ *
+ * 🚨 The return value is not decoration. W0 pins that the registry forgets a
+ * released callback, but nothing would stop THIS helper from keeping its own
+ * shadow list and delivering to ghosts anyway — in which case group S would go
+ * green while feeding a machine that is already closed. S2 asserts the delivery
+ * count, so the emit path itself is pinned and not merely the registry.
  */
-const emitOrders = (orders: Order[]) => act(() => { [...orderSubs].forEach((cb) => cb(orders)) })
-const emitExpenses = (expenses: Expense[]) => act(() => { [...expenseSubs].forEach((cb) => cb(expenses)) })
-const emitPresence = (presence: Presence[]) => act(() => { [...presenceSubs].forEach((cb) => cb(presence)) })
+function deliver<T>(registry: ((v: T[]) => void)[], value: T[]): number {
+  const live = [...registry]
+  act(() => { live.forEach((cb) => cb(value)) })
+  return live.length
+}
+
+const emitOrders = (orders: Order[]) => deliver(orderSubs, orders)
+const emitExpenses = (expenses: Expense[]) => deliver(expenseSubs, expenses)
+const emitPresence = (presence: Presence[]) => deliver(presenceSubs, presence)
 
 beforeEach(() => {
   vi.useFakeTimers()
@@ -587,10 +600,13 @@ describe('S. closing one machine leaves the other whole', () => {
 
     const macOrderCb = orderSubs[0]
     mac.unmount()
-    expect(orderSubs).not.toContain(macOrderCb) // the ghost cannot be fed
+    expect(orderSubs).not.toContain(macOrderCb) // the ghost is out of the registry
 
-    emitOrders(SHIFT_TWO)
-    emitExpenses([e({ id: 'e1', amount: 200 })])
+    // ...and the delivery really went to ONE machine. Without this count, an emit
+    // helper that kept its own shadow list could feed the ghost and still leave
+    // every assertion below green.
+    expect(emitOrders(SHIFT_TWO)).toBe(1)
+    expect(emitExpenses([e({ id: 'e1', amount: 200 })])).toBe(1)
 
     expect(tiles(win)['total-sales']).toBe('670฿')
     expect(tiles(win)['net-donation']).toBe('470฿')
