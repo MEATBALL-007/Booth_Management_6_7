@@ -165,12 +165,25 @@ function productionFiles(): string[] {
 // write returns a promise that never settles. Anything in the UI that waits on
 // one is, at a booth with dead wifi, a screen that never moves again.
 // ════════════════════════════════════════════════════════════════════════════
-const PENDING = Symbol('still-pending')
 function neverSettles<T>(): Promise<T> {
   return new Promise<T>(() => {})
 }
+/**
+ * True if `p` has not settled after the microtask queue has been drained many
+ * times over.
+ *
+ * 🚨 NOT `Promise.race([p, Promise.resolve(MARKER)])`. That version was here
+ * first and M14 killed it: an already-resolved marker wins the race against
+ * anything needing even ONE more microtask, and `createOrder` is `async`, so it
+ * always needs one. The race version therefore called a promise that settles on
+ * the next tick "pending" — and W0, the test whose whole job is to keep the
+ * offline harness honest, went green with the harness switched back online.
+ */
 async function stillPending(p: unknown): Promise<boolean> {
-  return (await Promise.race([p, Promise.resolve(PENDING)])) === PENDING
+  let settled = false
+  void Promise.resolve(p).then(() => { settled = true }, () => { settled = true })
+  for (let i = 0; i < 20 && !settled; i++) await Promise.resolve()
+  return !settled
 }
 
 /** Snapshot callbacks the real repos registered, keyed by collection path. */
