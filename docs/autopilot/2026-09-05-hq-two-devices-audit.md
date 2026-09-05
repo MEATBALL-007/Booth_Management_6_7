@@ -274,3 +274,95 @@ Reasoning, per test, read off the accessors rather than guessed:
   device id, never `'hq-windows'` → green.
 
 If D1/D2/D4 were tautologies, they would survive this. §8 records what happened.
+
+---
+
+## 8. M21 measured — and why it does **not** count
+
+    M21 [ok] hq=[D1 D2 D4 S2 S3] other=[frozenZones.audit.test.ts::P1]
+
+**D3 survived, and D3 was the whole point** — it is the one test whose only
+route to failure is the cross-machine clause. But the row must be thrown out
+before anything is concluded from it, because **M21 did not do what §7 declared
+it does.**
+
+`getDeviceId()` reads `localStorage` **live, on every call**:
+
+```ts
+export function getDeviceId(): string {
+  const existing = localStorage.getItem(KEY)
+  if (existing) return existing
+  ...
+}
+```
+
+`openHQ(id)` writes that key and then mounts. So after both machines are open,
+the key holds `'hq-windows'` — and **any later re-render of *either* instance
+reads `'hq-windows'`**, because the branch sits in the render body. The first
+shared `emitOrders` therefore re-rendered both machines into the *same* arm of
+the conditional. M21 did not make one machine differ; it made **both** machines
+report `0฿` **in agreement**.
+
+That explains every cell of the measured row. D1, D2 and D4 died on their
+**hand-computed absolute values** (`'420฿'` seen as `'0฿'`), not on any
+cross-machine comparison, and S2/S3 died the same way. D3 never asserts an
+absolute `total-sales`, and its `toStrictEqual(tiles(win))` compared two machines
+that genuinely matched — so it passed, correctly.
+
+This is rule (ช) from the handoff, caught in the act: *a mutation you did not
+actually perform, recorded as evidence, is worse than no evidence.* The
+prediction in §7 was wrong about D3, but the run was wrong too, so **the row
+scores neither hit nor miss.** It is re-run below.
+
+### 🚨 The failed row taught more than a clean one would have
+
+**Device-dependent divergence cannot be produced by a branch in the render
+body at all** — not by this mutation, and not by any of M1–M20 either. Two
+mounted instances sharing one jsdom share one `localStorage`, so a
+render-time `getDeviceId()` collapses to a single value for both. This is a
+property of the *harness*, and it is worth stating plainly because it bounds
+what the whole file can claim:
+
+- it explains **M18** too. M18 gated the Save button on `'hq-macbook'` and killed
+  P1/P3/S4 — but after the shared re-render *neither* machine had the button, so
+  P1 died on its **non-empty spine and its absolute expected set**, not on
+  mac-vs-win inequality. The §98 claim "both machines carry the same controls"
+  therefore rests on the spine, not on the comparison.
+- ➡️ **the cross-machine `toStrictEqual` clauses in D2/D3/D4 are weaker than they
+  read.** They catch divergence that is *not* driven by device identity — and
+  device identity is exactly what the criterion is about.
+
+📌 This is why the absolute hand-computed values in D1 are load-bearing and the
+comment above D1 is right: *"two machines showing 0฿ everywhere would satisfy
+'equal to each other' perfectly."* M21 built precisely that screen, and D1 caught
+it. **Do not weaken D1 to a mac-vs-win comparison.**
+
+---
+
+## 9. M21b — the corrected run, predicted before running
+
+| # | file | mutation |
+|---|---|---|
+| M21b | `DashboardScreen.tsx` | device identity **captured at mount** in a `useRef`, then the machine that mounted as `'hq-windows'` reports `totalSales: 0` |
+
+Three same-line edits (`useRef` import · the ref beside `hqBooth` · the `m`
+binding). **No line-count change**, deliberately — so no `file:line` canary in a
+sibling audit moves, and the collateral stays readable. The ref is placed above
+the `if (!unlocked) return <PinGate/>` early return, so the hook count is stable
+whether the screen is locked or not.
+
+**Predicted red — `hq`:** D1 · D2 · **D3** · D4 · S2 · S3
+**Predicted red — collateral:** `fz P1` only.
+
+D3 is the row that matters. Under M21b the two machines hold *different*
+captured ids for their whole lifetime, so:
+
+- **D3** — `total-cost` and `net-donation` are untouched and equal on both, so its
+  first four assertions pass. It can only die on
+  `expect(tiles(mac)).toStrictEqual(tiles(win))`. **If D3 goes red here, the
+  cross-machine clause is real. If it stays green a second time, the D group's
+  agreement claim is decoration and must be rewritten.**
+- **D1/D2/S2/S3** die on absolute values again (that is already established).
+- **D4** — its `'0฿'` line still passes; it dies on the later convergence check.
+- **D0** reads names on `mac` only → green. **P/W/H/G** → green.
+- No other test file ever mounts as `'hq-windows'` → no collateral beyond `fz P1`.
