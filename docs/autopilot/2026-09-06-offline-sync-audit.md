@@ -158,3 +158,124 @@ baseline = **57 ไฟล์ · 417 เทสต์**
 - **M13/M14 คู่กัน**: M14 (harness ไม่ offline) ต้องฆ่า W0–W3 ทั้งสี่ ถ้ามีตัวไหนรอด
   แปลว่าเทสต์ตัวนั้น **ไม่ได้ทดสอบ offline จริง** แค่ทดสอบ happy path ที่ใส่ชื่อว่า offline
 
+---
+
+## 7. ผลรันจริง — **19 แถว · ทำนายตรง 10 จาก 19**
+
+harness: `C:/PHANTOM-AUTOPILOT/mutate-0050.mjs` (**อยู่นอก repo** ตามกฎ (ฎ))
+`--reporter=json --outputFile` เขียนออกนอก repo · baseline ตรวจซ้ำทุกชุด = **417 เขียว**
+ทุกแถว tally = 417 (ไม่มี mutation ไหนทำไฟล์พังตอน import)
+
+| # | ฆ่าได้ | ตรงตามทำนาย? |
+|---|---|---|
+| M1 | C1 · C2 · `fz P1` · `ds S2` · **`App.test`** | ❌ ทำนาย `fz C1` แต่ได้ `fz P1` และไม่ได้ทำนาย `App.test` |
+| M2 | C1 · D2 · `fz P1` · `ds S2` · **`App.test`** | ❌ เหตุผลเดียวกัน |
+| M3 | **D1** | ✅ |
+| M4 | W1 · W4c · G6 · `fz P1` · **`OrderStation.test` (error alert)** | ❌ ตกตัวสุดท้าย |
+| M5 | **W2 · `fz P1`** | ✅ |
+| M6 | W3 + undo 8 + idempotency D2/D3 + `QueuePanel.test` (รวม 12) | ❌ ทำนายไว้กว้างเกินไป ไม่ใช่เซ็ต |
+| M7 | G4 · **`fz F2`** · `fz P1` · `ds S2` · `hq H1` · `useHeartbeat.test` | ❌ ตก 3 ตัว |
+| M8 | X1 · **`fz F2`** · `fz P1` · `ds S2` · `hq H0` | ❌ ตก `fz F2` |
+| M9 | **C0 เท่านั้น** | ✅ |
+| M10 | **G0 เท่านั้น** | ✅ |
+| M11 | **D1 · W4b · G6** | ✅ |
+| M12 | **W4a · W4b · G6** | ✅ |
+| M13 | **W0 เท่านั้น** | ✅ |
+| M14 | W1 · W2 · W3 — **W0 รอด** | ❌ **และนี่คือแถวที่มีค่าที่สุดของรอบ** |
+| M15 | **G6 · `fz P1`** | ✅ |
+| M16 | D1 · D2 · `expensesRepo.test` · **`fz F2`** · `fz P1` · `ds S2` | ❌ ตก `fz F2` |
+| M17 | **D0 · D1** | ✅ |
+| M18 | G1 · **`fz F2`** · `fz P1` · `ds S2` | ❌ ตก `fz F2` |
+| M19 | X0 · **`fz F2`** · `fz P1` · `ds S2` | ❌ ตก `fz F2` |
+
+### 🚨 M14 — ตัวที่ทำนายพลาด และเป็นผลลัพธ์หลักของรอบนี้
+
+M14 เปลี่ยน harness กลับเป็น **online** (`mockResolvedValue` ทั้งสาม) ทำนายว่า W0–W3 แดงหมด
+ผลจริง: **W1/W2/W3 แดง แต่ W0 เขียว** — และ W0 คือเทสต์ที่มี**หน้าที่เดียว**
+คือยืนยันว่า harness เป็น offline จริง
+
+ต้นเหตุ: `stillPending` เดิมเขียนว่า `Promise.race([p, Promise.resolve(MARKER)])`
+🚨 **marker ที่ resolve แล้ว ชนะ promise ที่ต้องการ microtask เพิ่มอีกแค่ *หนึ่ง* tick เสมอ**
+และ `createOrder` เป็น `async` จึงต้องการหนึ่ง tick เสมอ → เวอร์ชันนั้นเรียก promise
+ที่ settle ในอีกแป๊บเดียวว่า "pending" ส่วน **clause ที่เป็น control** ของมัน
+(`stillPending(Promise.resolve('acked')) === false`) ผ่านได้เพราะ
+**`Promise.race` ตัดสินเสมอด้วยลำดับใน array** — promise ของ mock บังเอิญอยู่ก่อน
+
+แก้เป็น: ผูก `.then` ลง flag แล้ว **ไล่ microtask queue 20 รอบ** ค่อยถาม
+รันซ้ำเป็น **M14b → W0 · W1 · W2 · W3 แดงครบตามทำนาย** และ M13b ยังได้ W0 ตัวเดียวเหมือนเดิม
+
+➡️ **บทเรียน: control ที่ *ผ่าน* ไม่ได้แปลว่ามันแยกสองกรณีออกจากกันจริง**
+`Promise.race` กับสอง promise ที่พร้อมทั้งคู่ ตัดสินด้วยลำดับ ไม่ใช่ด้วยเวลา
+ถ้าไม่มี M14 บรรทัดนั้นจะอยู่ในหลักประกันถาวรโดยไม่มีใครรู้ว่ามันวัดผิด
+
+### 🚨 รากของ mutation ที่ทำนายพลาด **ห้าใน เก้า ตัว คือเรื่องเดียวกัน: `frozenZones F2`**
+
+ทำนายไว้ว่า F2 แช่แข็งแค่ `commsLogic.ts` / `commsRepo.ts` / `metrics.ts`
+**ผิด** — `FROZEN` มี **12 ไฟล์ ใน 6 โซน** และในนั้นมี `useHeartbeat.ts` ·
+`expensesRepo.ts` · `domain/types.ts` ซึ่งเป็นเป้าของ M7/M8/M16/M18/M19 พอดี
+
+➡️ **นี่คือกฎ (ด) ซ้ำอีกครั้ง: อย่าทำนายจาก *ชื่อ* หรือจากบันทึกเก่า — เปิดไฟล์อ่านลิสต์**
+รอบหน้าที่แตะไฟล์ใดๆ ใน 12 ไฟล์นี้ ให้บวก **`fz F2` + `fz P1` + `ds S2`** เข้าไปในคำทำนายทันที:
+
+```
+metrics.ts · pinStore.ts · expensesRepo.ts · buildOrder.ts · cart.ts · promptpay.ts
+catalog.ts · options.ts · commsLogic.ts · commsRepo.ts · useHeartbeat.ts · comms/types.ts
+domain/types.ts
+```
+
+📌 และ **`src/lib/firebase.ts` จัดเป็น `production`** (M1/M2 วัดแล้ว) ไม่ใช่ `other`
+อย่างที่บันทึกของ `_0037` เดาไว้ → แตะเมื่อไรได้ **`fz P1`** ไม่ใช่ `fz C1`
+📌 **การแตะ `lib/firebase.ts` ทำ `App.test` แดงด้วย** — เป็นไฟล์เดียวในสวีปที่ boot Firestore จริง
+
+### เทสต์ที่มี killer ตัวเดียว — **ห้ามลบ** (วัดจริง ไม่ใช่เดา)
+
+| เทสต์ | killer เดียว |
+|---|---|
+| **C0** | M9 |
+| **C2** | M1 |
+| **W4a** | M12 |
+| **W4c** | M4 |
+| **G0** | M10 |
+| **G4** | M7 |
+| **X1** | M8 |
+
+### เทสต์ที่ **ไม่มี killer เลย — และตั้งใจ**
+
+**G1 · G2 · G3 · G5 · X0** ปัก *ความไม่มี* ไว้ ไม่มี mutation ใดใน production วันนี้ฆ่าได้
+เพราะจะฆ่ามันต้อง **สร้างฟีเจอร์ขึ้นมา** ทรงเดียวกับ `idempotency E1` · `pwa I1` ·
+`alert C5` · `donation T1–T3` · `hq G0`
+
+🚨 **แต่ "ไม่มี killer" ไม่ได้แปลว่า vacuous — และรอบนี้พิสูจน์แทนที่จะอ้าง**
+- **M18** = อนาคตที่มีคนสร้าง Happy-Hour (เพิ่ม `pricingOverrides` ลง `domain/types.ts`)
+  → **G1 แดงจริง** ตามที่หัวไฟล์สัญญาไว้
+- **M19** = อนาคตที่มีคนใช้ `runTransaction` → **X0 แดงจริง**
+➡️ **ถ้าวันหนึ่ง G1/G2/G3/G5/X0 แดง ให้มาอ่านบันทึกนี้ก่อน มันคือการแก้ ไม่ใช่การถดถอย**
+
+### 🚨 M9 · M10 · M12 · M13 — เดิมพันหลักของรอบนี้ **ถูกทั้งสี่**
+
+| mutation | ตัวตรวจที่ถูกทำให้ตาบอด | เทสต์ที่ *ชื่อ* มันคือตัวเกณฑ์ | ใครจับได้ |
+|---|---|---|---|
+| M9 | `cacheViolations` | **C1 เขียว** | **C0 เท่านั้น** |
+| M10 | `filesMentioning` | **G1 · G2 · G3 · G4 · G5 · X0 · X1 เขียวหมด** | **G0 เท่านั้น** |
+| M12 | `sitesInSource` | **W4c เขียว** | W4a · W4b · G6 |
+| M13 | `stillPending` | **W1 · W2 · W3 เขียว** | **W0 เท่านั้น** |
+
+🚨 **M10 คือภาพที่ชัดที่สุดที่โปรเจคนี้เคยมี**: ทำ `filesMentioning` คืนลิสต์ว่างเสมอ
+แล้ว **เทสต์ช่องว่างเจ็ดตัวเขียวพร้อมกัน** ทั้งที่ตัวตรวจไม่ได้ตรวจอะไรเลย
+มีแต่ **G0** — เทสต์ที่ป้อน fixture ที่ *ต้องเจอ* ให้ predicate ตัวเดียวกัน — ที่จับได้
+**เป็นสปีชีส์เดียวกับ `neon G1` · `pwa V1` · `fz F2` · `rtt T3` · `donation T2` — ครั้งที่หก**
+
+📌 **M11 บอกขอบเขตของ control**: ทำ `productionFiles()` เดินเฉพาะ `src/comms`
+→ D1 · W4b · G6 แดง แต่ **G0 เขียว** (ไฟล์ที่ G0 คาดหวังอยู่ใน `comms` ทั้งสามตัวพอดี)
+➡️ **control กัน "predicate ตาบอด" ได้ แต่กัน "เซ็ตอินพุตหด" ไม่ได้ — ต้องมี census คู่เสมอ**
+
+### ตารางคอลลาเทอรัลที่ใช้ทำนายรอบหน้าได้
+
+| ชนิดของ mutation | คอลลาเทอรัล |
+|---|---|
+| ไฟล์ใน `PRODUCTION_CHANGES` (`ordersRepo` · `QueuePanel` · …) | **ไม่มีเลย** (M3 · M6) |
+| `.tsx` production นอกลิสต์ (`AlertButtons` · `CommsToast` · `OrderStation`) | `fz P1` |
+| `.ts` production นอกลิสต์ และ **ไม่** อยู่ใน `FROZEN` (`lib/firebase.ts`) | `fz P1` + `ds S2` |
+| `.ts` ที่อยู่ใน `FROZEN` (`useHeartbeat` · `expensesRepo` · `domain/types`) | `fz F2` + `fz P1` + `ds S2` |
+| mutation ในไฟล์เทสต์เอง | **ไม่มีเลย** (M9–M14 · M17) |
+
