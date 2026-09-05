@@ -366,3 +366,81 @@ captured ids for their whole lifetime, so:
 - **D4** — its `'0฿'` line still passes; it dies on the later convergence check.
 - **D0** reads names on `mac` only → green. **P/W/H/G** → green.
 - No other test file ever mounts as `'hq-windows'` → no collateral beyond `fz P1`.
+
+---
+
+## 10. M21b measured — predicted exactly
+
+    M21b [ok] hq=[D1 D2 D3 D4 S2 S3] other=[frozenZones.audit.test.ts::P1]
+
+**D3 went red**, and under M21b its only route to failure is
+`expect(tiles(mac)).toStrictEqual(tiles(win))` — its four preceding assertions
+all pass, because `total-cost` and `net-donation` are equal on both machines.
+
+➡️ **The D group's cross-machine agreement clause is real.** Two HQ machines
+holding different identities for their whole lifetime, fed one snapshot, are
+caught disagreeing by D3. That was the open question §6 raised, and it is now
+answered by measurement rather than by construction.
+
+The `hq` and collateral columns both matched the prediction, including the
+absence of the line-insertion species — the three edits were deliberately
+same-line, and no `file:line` canary in `alert` / `neon` / `rtt` moved.
+
+### Final tally
+
+**21 counted rows · 17 predicted exactly.** M21 is *not* counted in either
+column: it was discarded for not performing its declared mutation, per rule (ช).
+
+### Killer census, revised with M21b
+
+| killers | tests |
+|---|---|
+| 0 | **none** |
+| 1 | **W0**(M15) · **P0**(M17) · **P2**(M19) · **D0**(M14) · **H0**(M2) · **G0**(M20) · **G1**(M10) |
+| 2 | W1 P1 P3 S4 S5 H1 H3 D1 D2 D4 S3 |
+| 3 | H2 |
+| 4 | S1 D3 |
+| 8 | S2 |
+
+⚠️ **Every one of the 22 tests has at least one killer, and the seven
+single-killer tests must not be deleted.** M21b lifted D1/D2/D4/S3 off the
+single-killer list and, more importantly, gave them a killer that works through
+the property they claim rather than through a throwing helper.
+
+---
+
+## 11. What this criterion does and does not now claim
+
+**Proved, by measurement:**
+
+- §98 — both machines expose the *same* set of buttons and fields, with a
+  non-empty spine (P0–P3; M18/M19 kill the group).
+- Both machines fed one snapshot show identical figures across all eight tiles,
+  and **disagreement is detected** (D0–D4; M14 and M21b).
+- Closing one machine releases exactly its own two subscriptions, and the
+  survivor still repaints, keeps every control, still writes and still broadcasts
+  (S1–S5; M5/M6/M7/M11/M12/M15/M16/M18/M19).
+- §157 — the heartbeat beats only when unlocked, stops on close, and `isOnline`
+  is evaluated at real clock values (H0–H3; M1/M2/M3/M4/M8/M9/M17).
+
+🚨 **NOT proved, and not claimed:**
+
+- **"realtime" is not measured.** There is no network and no Firestore. What is
+  proved is the *shape* that makes realtime possible: push delivery with no poll
+  between the write and the paint. Real latency needs two machines in the hall.
+- **D4 does not prove Firestore replays state to a late listener** — the test
+  supplies that snapshot. It proves HQ holds no start-up ordering dependence.
+- **The write side is out of scope here.** Two machines writing at once is what
+  `idempotency` **E1** already pins as still open; this criterion is the *read*
+  side. E1 stands.
+- **No pixel was measured** — jsdom does no layout.
+- **GAP-1 (G0): there is no export path anywhere in `src/`**, though §98 lists
+  "export" as one of the four things both machines must do. G0 pins the absence.
+  Same shape as `idempotency E1` · `pwa I1` · `alert C5` · `donation T1–T3`:
+  **if G0 ever goes red, someone built export — that is the fix, not a
+  regression.** Do not delete it.
+- **GAP-2 (G1): two HQ machines on one booth render indistinguishable presence
+  rows.** Nobody at HQ can tell which laptop just died. §102 asks the grid to
+  identify machines by ซุ้ม/โหมด/station, and two HQ boxes share all three.
+  Recorded, not fixed — fixing it means changing `PresenceBoard`, and the
+  criterion does not ask for it.

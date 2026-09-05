@@ -1,96 +1,115 @@
-# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-05_0008`
+# Round `auto/Booth_Management_6_7/2026-09-06_0007`
 
-เกณฑ์ที่ทำ: **"Donation thermometer ตรงกับ (ยอด paid − expenses) และอัปเดตเมื่อมีออเดอร์ใหม่"**
-(ข้อที่สี่ของ `2026-07-24-hq-comms-crosssell-design.md`) — **ปิดแล้ว รวม 15/20**
+Criterion closed: **"HQ เปิดบน MacBook + Windows พร้อมกัน เห็นข้อมูลตรงกัน realtime;
+ปิดเครื่องนึง อีกเครื่องทำงานครบ"** — `hq-comms` **3/7**, overall **16 of 20**.
 
 ## What I did
 
-- **ยกงาน 14 เกณฑ์เดิมขึ้น branch นี้** — runner ตัด branch จาก bare `main` (`735de75`) อีกครั้ง
-  เป็นรอบที่สิบห้า ยกด้วย path-scoped checkout จาก `febf99f` หลังพิสูจน์ด้วย
-  `git diff --name-status` ว่า tree เป็น superset (ไม่มีบรรทัด `D`) → `npm test` **356 ตรงเป๊ะ**
-  และ `git diff febf99f --stat` **ว่างเปล่า** (byte-identical ไม่ใช่แค่ "เขียวที่เลขหนึ่ง")
-- **เขียน `src/donationThermometer.audit.test.tsx` — 17 เทสต์ 3 กลุ่ม** ครอบเกณฑ์ทั้งสามท่อน:
-  **F** สูตร (เลขคณิตที่ค่าคำนวณมือ) · **U** อัปเดต (snapshot ที่สองผ่าน subscription จริง) ·
-  **T** คำว่า *thermometer* เอง — ซึ่ง**ยังไม่มีอยู่จริง**
-- **mutation check 15 ตัว (+ M12b)** ทำนายทุกแถวและ **commit ตารางทำนายก่อนรันตัวแรก**
-  → **ตรง 15 จาก 16** · บันทึกเต็มที่ `docs/autopilot/2026-09-05-donation-thermometer-audit.md`
-- **ติ๊ก checkbox + เขียน handoff ใหม่** ใน `AUTOPILOT.md` พร้อมบทเรียนใหม่สี่ข้อ (ฐ/ฑ/ฒ/ณ)
+- **Carried the previous round's work onto this branch.** The runner cut this
+  branch fresh from `main` (`735de75`, 131 tests, 0 ticked), as it has for
+  fifteen rounds. Path-scoped checkout from `e1af3f3`, with both preconditions
+  proven first (`merge-base` == HEAD; no `D` lines in `--name-status`), then
+  `git diff e1af3f3 --stat` **empty** — byte-identity, not just a green count.
+- **Established that the "rescued work" commit was genuine work, not a stranded
+  mutation.** `e1af3f3` renames an unused param `f` → `_path`; `tsconfig` sets
+  `noUnusedParameters: true`, so that is a TS6133 fix that `npm run build`
+  requires. It matches no row of the committed 20-mutation table. Kept.
+- **Ran the 20-mutation table `_0047` predicted but died before executing.**
+  Baseline 395 green before every row, tally checked per row. **16 of 20 exact.**
+- **Found and closed a real hole the table could not see, with M21b.** Five of
+  the eleven single-killer tests were killed only by M14, which works by making a
+  helper *throw* — so nothing proved the D group detects two machines
+  *disagreeing*. M21b (device identity captured at mount) killed **D3**, whose
+  only route to failure is the cross-machine clause. Predicted exactly.
+- **Wrote up §5–§11** of `docs/autopilot/2026-09-05-hq-two-devices-audit.md`,
+  ticked the criterion, and rewrote `## Next task` for the offline/sync criterion.
+
+**No `src/` production code changed this round.** `git diff main -- src/` shows
+only the carried files; the four production files that differ from `main`
+(`ordersRepo`, `queueActions`, `DisplayScreen`, `QueuePanel`, `ui/Button`) are
+prior rounds' work, unchanged by me.
 
 ## Why
 
-**ไม่ได้แก้ `src/` production เลยสักบรรทัด** และนั่นเป็นการตัดสินใจ ไม่ใช่ความบังเอิญ:
-`netDonation` เป็น logic บัญชี ซึ่ง Out of scope ห้ามเปลี่ยน และ `frozenZones` F2 แช่แข็ง
-`src/dashboard/metrics.ts` แบบ byte-identical อยู่แล้ว **สูตรกับ realtime ถูกต้องอยู่ก่อนแล้ว
-(17 เทสต์เขียวตั้งแต่รันแรก)** สิ่งที่ขาดคือหลักฐาน — และ *ตัว thermometer เอง*
-
-**ท่อนที่สามคือท่อนที่ต้องซื่อสัตย์ที่สุด และผมเลือกบันทึกเป็นช่องว่าง ไม่ใช่ตีความให้ผ่าน**
-สเปก §4.4 สั่ง "**แถบ % + ตัวเลข**" วันนี้มีแต่ตัวเลข การเรียก `StatTile` ว่า thermometer
-เพื่อให้ติ๊กผ่านจะเป็นการโกหกเกณฑ์ และการ *ไปวาดเกจเอง* คือการออกแบบ UI ไม่ใช่งาน audit
-(ทั้งยังต้องแตะ logic บัญชีเพื่อหาตัวหาร) จึงใช้ทรงเดิมของ E1/I1/C5: **assert ความ *ไม่มี* ไว้**
-
-**T2 ได้ control ของตัวเองก่อนเริ่ม mutation** เพราะ `[].filter(อะไรก็ได้)` = `[]` เสมอ —
-เทสต์ที่ยืนยันความไม่มีจะเขียวเท่ากันทั้งตอนที่หน้าจอสะอาดและตอนที่ตัวตรวจตาบอด
-M12b พิสูจน์ให้ดูจริงว่าถ้าไม่มี control ตัวนี้ **ทั้ง 17 เทสต์เขียวหมดโดยไม่ได้ตรวจอะไรเลย**
+- **M21 is recorded as discarded, not as a finding.** It was declared as "the two
+  machines disagree" and it did not do that: `getDeviceId()` reads `localStorage`
+  live on every call, and both mounted instances share one jsdom, so a branch in
+  the render body collapses to a single value for both after the first shared
+  re-render. M21 made both machines report `0฿` **in agreement**, so D3 passed
+  correctly. Recording "D3 survived" as evidence would have been recording a
+  mutation that never happened — the standing rule (ช). Re-run as M21b.
+- **That failure is the round's most useful output.** It also reinterprets M18:
+  the §98 "both machines carry the same controls" result rests on P1's non-empty
+  spine and pinned expected set, **not** on the mac-vs-win comparison it looks
+  like it rests on. Written into the audit doc and the handoff.
+- **The four prediction misses have one root cause, and it is not carelessness
+  about which test sits near which line.** S2's *name* advertises "the survivor
+  repaints"; its *body* also asserts a delivery count of exactly 1 and three tile
+  values, which makes it a canary for all subscription bookkeeping and all tile
+  arithmetic. Recorded as lesson (ด): read every assertion, never the name.
+- **Harness kept outside the repo** (`C:/PHANTOM-AUTOPILOT/mutate-0007.mjs`).
+  `frozenZones.changedPaths()` includes untracked files, so a script at the repo
+  root would have reddened `fz C1` + `ds S2` on all 20 rows.
 
 ## Verification
 
-รันเองครบ **หลัง** revert mutation ทุกตัว และ `git status` สะอาด:
+Verify command run in full, unmodified:
 
 ```
-npm test      → Test Files 55 passed (55) · Tests 373 passed (373)
-npm run build → tsc -b ผ่าน · vite 116 modules · PWA v1.3.0 generateSW precache 5 entries · exit 0
+$ npm test
+ Test Files  56 passed (56)
+      Tests  395 passed (395)
+
+$ npm run build
+ dist/assets/index-CROlE19B.js   852.15 kB │ gzip: 257.63 kB
+ ✓ built in 1.27s
+ PWA v1.3.0 · mode generateSW · precache 5 entries (849.10 KiB)
+ files generated: dist/sw.js, dist/workbox-9c191d2f.js
 ```
 
-(373 = 356 ที่ยกมา + 17 ของรอบนี้ · ไม่มีเทสต์เดิมตัวไหนแดงจากงานรอบนี้)
+Mutation runs: 21 counted rows, each `git checkout -- .` → anchor replace
+(**throw unless exactly one match**) → `vitest --reporter=json` → parse →
+`git checkout -- .`. Every row reported tally 395, so no row silently broke a
+test file at import. Working tree verified clean after the last row.
 
-**ตาราง mutation — ทำนายก่อนรัน ตรง 15 จาก 16 แถว** (§5 ของบันทึกมีครบทุกแถว)
-
-- **M12/M12b คือผลลัพธ์หลัก** — predicate ตาบอด `/(?!)/` + ถอด control → **17 เขียวหมด**
-- **ตัวที่ทำนายพลาดคือ M5** (clamp ที่ 0): ทำนาย F5 ตัวเดียว **ได้ F5 + T4** เพราะ T4 ปัก
-  *ข้อความในซอร์ส* ไม่ใช่พฤติกรรม → บันทึกไว้ว่า **T4 ปักตัวอักษร · F ปักพฤติกรรม**
-- **เทสต์ที่มี killer ตัวเดียว (วัดจริง): F0 · U5 · T0 · T3** — ทำนายไว้สาม `F0` เป็นตัวที่สี่
-- **ไม่มีเทสต์ไหนใน 17 ตัวที่ไม่มี killer เลย**
-- **M8 (subscription รั่วตอนปิด HQ) และ M13 (Display มียอดบริจาค) มี killer ตัวเดียว
-  ในทั้ง 373 เทสต์** — ก่อนรอบนี้ไม่มีอะไรในระบบมองเห็นสองอย่างนี้
+Killer census, measured: **every one of the 22 tests has at least one killer.**
+Seven have exactly one (W0 P0 P2 D0 H0 G0 G1) and are marked do-not-delete.
 
 ## What I did NOT do
 
-- **ไม่ได้สร้าง thermometer** — GAP-1 บันทึกไว้พร้อมพิกัด (`domain/types.ts:91`)
-  การวาดเกจ = ออกแบบ UI + ต้องแตะ logic บัญชี ทั้งคู่อยู่นอกขอบเขตของรอบ audit
-- **ไม่ได้เพิ่มยอดบริจาคลง Display** — GAP-2 บันทึกไว้ (สเปก §4.4 สั่งไว้จริง แต่ไม่มีโค้ดเลย)
-- **ไม่ได้ตัดสิน GAP-3** (production ตัด `cancelled` ออกจากสูตร ต่างจากตัวอักษรของสเปก 80฿
-  บน fixture ของ F3) — **ปักตัวเลขทั้งสองฝั่งไว้ให้คนตัดสิน** ไม่ได้เลือกข้างเงียบๆ
-- **ไม่ได้แก้ `MONEY_OR_MENU` ของ `frozenZones`** ที่มองไม่เห็นคำไทย (เจอจาก M13)
-  — เป็นการแก้ audit ของเกณฑ์อื่น ซึ่งเป็นงานคนละรอบ บันทึกไว้แล้ว
-- **ไม่ได้เขียนเทสต์ทับของเดิม** — `metrics.test.ts` และ `DashboardScreen.test.tsx` มีอยู่ก่อนแล้ว
-  ไฟล์ใหม่แยกต่างหาก ไม่ชนกัน (บทเรียนเดิมของโปรเจค)
+- **Did not change any `src/` production code.** The screen already satisfied
+  every clause; what was missing was evidence.
+- **Did not fix either recorded gap.** **G0** — there is no export path anywhere
+  in `src/`, though §98 lists export as one of four things both machines must do.
+  **G1** — two HQ machines on one booth render indistinguishable presence rows,
+  so nobody at HQ can tell which laptop died. Both are pinned as *absences*, the
+  same shape as `idempotency E1` / `pwa I1` / `alert C5`: if they ever go red,
+  someone built the thing — that is a fix, not a regression.
+- **Did not touch the write side.** Two machines writing at once is `idempotency
+  E1`'s open gap; this criterion is the read side.
+- **Did not start the next criterion.** One task per round.
 
 ## Risk
 
-**อ่านสามข้อนี้ก่อนเชื่อว่าเกณฑ์นี้ "ผ่าน":**
-
-1. 🚨 **เกณฑ์นี้ปิดในความหมายว่า "รู้แล้วว่าอะไรมีอะไรไม่มี" ไม่ใช่ "ฟีเจอร์ครบตามสเปก"**
-   สูตรกับ realtime พิสูจน์แล้วจริง แต่ **"thermometer" ตามถ้อยคำของ §4.4 (แถบ % + ตัวเลข
-   บนทุกจอ) ยังไม่มี** ซึ่งตรงกับนิยาม "เสร็จ" ที่ Goal เขียนไว้ ("ถูกบันทึกไว้อย่างชัดเจน
-   ว่าเป็นช่องว่าง พร้อมระบุว่าขาดตรงไหน") — **แต่ถ้าผู้อ่านคาดหวังเกจจริง จะผิดหวัง**
-2. 🚨 **"realtime" ไม่ได้ถูกวัด และไม่ได้อ้างว่าวัด** ไม่มีเน็ต ไม่มี Firestore จริง
-   U4 พิสูจน์ *รูปทรง* (push ไม่มี poll คั่น + เดินนาฬิกาสิบนาทีแล้วตัวเลขไม่ขยับ)
-   **ความหน่วงจริงต้องมีคนถือสองเครื่องยืนวัดในงาน** · **ไม่มีพิกเซลไหนถูกวัดเช่นกัน**
-3. ⚠️ **T1/T2/T3 จะแดงในวันที่มีคนสร้าง thermometer — นั่นคือการแก้ ไม่ใช่การถดถอย**
-   ให้ไปอ่าน header ของไฟล์เทสต์กับ §2 ของบันทึกก่อน **ห้ามลบทิ้งเพื่อให้เขียว**
-   (ทรงเดียวกับ E1 ของ Idempotency · I1 ของ PWA · C5 ของ alert toast)
-
-📌 จุดที่ควรตรวจซ้ำเป็นพิเศษ: **T4 ปักข้อความในซอร์สไว้** (`netDonation: totalSales - totalCost`)
-รอบไหนแก้บรรทัดนั้นโดยตั้งใจ T4 จะแดงทั้งที่สูตรใหม่อาจถูก — อัปเดตข้อความใน T4
-แล้วปล่อยให้ F1–F5 (ซึ่งปักพฤติกรรม) เป็นตัวพิสูจน์ว่าสูตรใหม่ยังถูก
-
-## Next task
-
-**"HQ เปิดบน MacBook + Windows พร้อมกัน เห็นข้อมูลตรงกัน realtime; ปิดเครื่องนึง อีกเครื่องทำงานครบ"**
-
-🚨 **สำรวจแล้วรอบนี้: สามในห้าข้อที่เหลือคือ "ฟีเจอร์ขาด" ไม่ใช่ "เทสต์ขาด"** — grep ทั้ง `src/`
-ได้ **ศูนย์ไฟล์** สำหรับ Happy-Hour (`happyHour`/`pricingOverride`), ปิดซุ้ม/cash reconciliation
-(`cashSession`/`countedCash`/`ปิดซุ้ม`) และ Passport (`passport`/`stampedBooths`)
-**รอบที่หยิบข้อพวกนั้นต้องเริ่มด้วยการตัดสินใจเรื่องขอบเขต ห้ามเผลอเริ่มเขียนฟีเจอร์**
-ข้อ "HQ สองเครื่อง" ถูกเลือกเพราะเป็นข้อเดียวที่เหลือที่ **มีโค้ดอยู่จริง** (presence · heartbeat ·
-`PresenceBoard` · onSnapshot ทุกหน้าจอ) รายละเอียดอยู่ใน `AUTOPILOT.md` §ตัวงานจริง
+- 🚨 **"realtime" is not measured, and the audit does not claim it is.** There is
+  no network and no Firestore. What is proved is the *shape* that makes realtime
+  possible: push delivery with no poll between the write and the paint. Real
+  latency needs two machines in the hall.
+- 🚨 **D4 does not prove Firestore replays state to a late listener** — the test
+  supplies that snapshot. It proves HQ holds no start-up ordering dependence.
+  This is stated in the test's own comment and in §11.
+- ⚠️ **The cross-machine `toStrictEqual` clauses are weaker than they read.**
+  Established by M21: they cannot catch divergence driven by device identity read
+  during render, and device identity is what the criterion is about. D1's
+  hand-computed absolute values are what carry that weight. **A reviewer should
+  not "simplify" D1 into a mac-vs-win comparison** — M21 built exactly the screen
+  (both machines showing `0฿`) that such a comparison calls equal.
+- ⚠️ **No pixel was measured** — jsdom does no layout.
+- ⚠️ `AUTOPILOT.md` in the working copy arrived **stale** (the round-1 version
+  from `main`, 0/20 ticked) and was re-synced from the previous branch before
+  editing. Anyone diffing `AUTOPILOT.md` against `main` will see a large change;
+  most of it is the carry, not this round's edits.
+- ⚠️ The mutation harness is at `C:/PHANTOM-AUTOPILOT/mutate-0007.mjs`, outside
+  the repo and therefore **not committed**. §5 of the audit doc records the
+  method precisely enough to rebuild it, which is the same trade the last four
+  rounds made.
