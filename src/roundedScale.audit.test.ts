@@ -80,8 +80,11 @@ const SPEC_STEPS = ['sm', 'md', 'lg', 'xl'] as const
 function parseRadiusBlock(configText: string): Record<string, string> {
   const block = configText.match(/borderRadius:\s*\{([^}]*)\}/)
   if (!block) return {}
+  // The key may be quoted, and for the steps that matter it MUST be: `2xl` and
+  // `3xl` are not valid bare identifiers. An unquoted-only pattern here is
+  // silently blind to exactly the keys G1 exists to notice — M12 proved it.
   return Object.fromEntries(
-    [...block[1].matchAll(/([A-Za-z0-9]+)\s*:\s*'([^']+)'/g)].map((m) => [m[1], m[2]]),
+    [...block[1].matchAll(/'?([A-Za-z0-9]+)'?\s*:\s*'([^']+)'/g)].map((m) => [m[1], m[2]]),
   )
 }
 
@@ -148,6 +151,14 @@ describe('S. ตัวอ่านค่า', () => {
       } }
     `
     expect(parseRadiusBlock(fixture)).toStrictEqual({ sm: '1px', xl: '2rem' })
+
+    // quoted keys, which `2xl`/`3xl` are forced to use. Before M12 the parser
+    // dropped these silently, so G1's "nobody extended the scale" assertion was
+    // green no matter what anyone added.
+    expect(parseRadiusBlock(`borderRadius: { '2xl': '24px', md: '3px' }`)).toStrictEqual({
+      '2xl': '24px',
+      md: '3px',
+    })
 
     // a config with no borderRadius at all is exactly the state this round
     // found — the parser must report it as empty, not throw and not invent
@@ -298,8 +309,11 @@ describe('G. ช่องว่างที่ยังไม่มีใคร�
     const declared = parseRadiusBlock(read(CONFIG))
     const defaults = tailwindDefaultRadii()
 
+    // the EFFECTIVE 2xl, not Tailwind's default one: an `extend` that declares
+    // 2xl overrides it, and reading the default there would keep reporting an
+    // inversion that somebody had already resolved. M12 proved that too.
     const xl = lengthToPx(declared['xl'], rootPx)
-    const xl2 = lengthToPx(defaults['2xl'], rootPx)
+    const xl2 = lengthToPx(declared['2xl'] ?? defaults['2xl'], rootPx)
 
     expect(xl).toBe(20)
     expect(xl2).toBeCloseTo(19.2, 5)
@@ -322,8 +336,11 @@ describe('G. ช่องว่างที่ยังไม่มีใคร�
       expect(defaults[step]).toBeTruthy()
     }
 
-    // the four the spec DOES name are the four that differ from Tailwind
+    // the four the spec DOES name are the four that differ from Tailwind.
+    // `toBeTruthy` first, or this loop reads the same when NOTHING is declared:
+    // `undefined !== '0.125rem'` is true, and M1 showed G1 surviving on it.
     for (const step of SPEC_STEPS) {
+      expect(declared[step], `${step} is not declared at all`).toBeTruthy()
       expect(declared[step]).not.toBe(defaults[step])
     }
   })
