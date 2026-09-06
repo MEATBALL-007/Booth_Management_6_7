@@ -1,115 +1,125 @@
-# Round `auto/Booth_Management_6_7/2026-09-06_0050`
+# รอบ `auto/Booth_Management_6_7/2026-09-07_0005`
 
-Criterion closed: **"ทุกฟีเจอร์ใหม่ทำงานตอน offline แล้ว sync กลับได้โดยไม่ข้อมูลชน"**
-— the last `hq-comms` criterion that still had production code behind it.
-
-**17 of 20 criteria are now ticked.** The three left are all "feature missing", not
-"test missing".
+**ปิดเกณฑ์ครบ 20/20 — แต่นั่นไม่ได้แปลว่า "ผ่านหมด" อ่าน Risk ก่อน**
 
 ## What I did
 
-- **Carried the sixteen already-proven criteria onto this branch.** The runner cut it
-  from `main` (`735de75`) with 131 tests and 0 ticked boxes, for the seventeenth round
-  running. Path-scoped checkout from `_2026-09-06_0007` after proving that tip is a
-  strict descendant with no deletions; `git diff <tip> --stat` afterwards is empty
-  except `SUMMARY.md`, which this round overwrites anyway.
-- **Wrote `src/offlineSync.audit.test.tsx` — 22 tests, no `src/` production change.**
-  Four groups, because the criterion is four things and only two of them are provable:
-  **C/D** the persistence config (`persistentLocalCache` + the *multiple*-tab manager)
-  and a census that every Firestore handle in the app comes from that one `getDb()`;
-  **W** the booth still works with every write left permanently unresolved;
-  **G** six recorded gaps; **X** the last-write-wins conflict model, stated and cited.
-- **Ran 19 mutations, predictions committed before the first run** — the table is
-  `docs/autopilot/2026-09-06-offline-sync-audit.md` §6, results §7. **10 of 19 correct.**
-- **Fixed a genuinely weak assertion that a mutation exposed** (details under Risk).
-- Updated `AUTOPILOT.md`: ticked the box with the findings, and pointed "Next task" at
-  a single round that closes the remaining three as *documented gaps*, with the rules
-  this round measured about how to write such a file without it being vacuous.
+- **ยกงานของ 17 เกณฑ์ที่พิสูจน์แล้วขึ้น branch นี้ก่อน** — branch ถูกตัดจาก `main` เปล่าๆ
+  (`735de75`, 131 เทสต์, 0 ข้อติ๊ก) ตามที่แผนเตือนไว้ว่าเป็นพฤติกรรมปกติของ runner
+  ยกจาก `auto/…/2026-09-06_0050` แบบ path-scoped (merge/cherry-pick โดน sandbox ปฏิเสธ)
+  หลังยก `git diff <tip> --stat` **ว่างเปล่า** = byte-identity และ `npm test` ได้ **417 ตรงเป๊ะ**
+- **ปิดสามเกณฑ์สุดท้ายในฐานะ *ช่องว่างที่บันทึกไว้* ไม่ใช่ฟีเจอร์ที่ผ่าน**
+  (Happy-Hour §4.3 · ปิดซุ้ม §4.5 · Passport §4.6) — **ไม่ได้แก้ `src/` production เลยสักบรรทัด**
+  22 เทสต์ใน `src/missingFeatures.audit.test.ts` แตกเกณฑ์เป็น **13 clause** แล้วปักทีละอัน
+- **รัน mutation 17 แถว ทำนายทุกแถวก่อนรัน** แล้ว commit ตารางทำนายไว้ก่อนรันตัวแรก
+  **ตรง 8 จาก 17** — ต่ำที่สุดในบรรดารอบทั้งหมด และรากของการพลาดถูกบันทึกไว้ครบ
+- **รวมช่องว่างที่รู้ทั้งหมดของโปรเจค 18 รายการไว้ที่เดียว**
+  (`docs/autopilot/2026-09-07-missing-features-audit.md` §7) เป็นรายการให้คนตัดสินว่าจะสร้างอะไรต่อ
+- **เขียน `## Next task` ใหม่ให้ชี้ว่าขั้นต่อไปเป็นการตัดสินใจของคน** และติดป้ายหัวข้องานเก่า
+  ว่า "ทำเสร็จแล้ว อย่าทำซ้ำ" เพื่อไม่ให้รอบหน้าอ่านเป็นคำสั่ง
 
 ## Why
 
-**"Offline" here means every write returns a promise that never settles.** That is not
-a contrivance — it is what the Firestore SDK does with no network: the local cache
-takes the write, and the returned promise waits for a server ack that is not coming.
-There is no `mockResolvedValue` anywhere in the file. Under that harness the booth
-still issues queue number `A1` to the customer standing in front of it, 🆘 still fires
-without reporting an error, and the queue panel still records its undo.
+**ทำไมปิดเกณฑ์โดยไม่สร้างฟีเจอร์** — Goal ของโปรเจคเขียนไว้ตรงตัวว่าเกณฑ์ปิดได้สองทาง:
+พิสูจน์ด้วยเทสต์ **หรือ** "บันทึกไว้อย่างชัดเจนว่าเป็นช่องว่างที่ยังขาด พร้อมระบุว่าขาดตรงไหน"
+สามข้อนี้คือกรณีหลัง และการสร้างมันขึ้นมาคือการเขียน logic ราคา/บัญชีใหม่ ซึ่ง
+**Out of scope ห้ามตรงตัว** การขยายขอบเขตเป็นสิทธิ์ของคน ไม่ใช่ของ agent ที่รันไร้คนดู
 
-**Sync itself is not tested, and the file says so in its header.** Queueing and
-flushing is SDK plus server behaviour; there is no network, no emulator, and jsdom
-cannot even hold the cache (the suite prints `Falling back to memory cache` on every
-run for exactly this reason). Mocking the SDK and then claiming "sync works" would be
-testing the mock. Same call as `alert D3` (arrayUnion dedupe) and `donation U4`.
+**ทำไมต้องแตก clause แทนที่จะ grep คำเดียว** — เพราะ **สองในสามข้อมีของอยู่ครึ่งหนึ่งแล้ว**
+`unitPrice` ถูกบันทึกลงทุกบรรทัดออเดอร์อยู่แล้ว (`cart.ts:39`) และ `expectedCash` ทั้งคำนวณ
+และขึ้นจอ HQ อยู่แล้ว (`metrics.ts:44` + `DashboardScreen.tsx:72`)
+**คนที่อ่านรายงานว่า "ทั้งสามข้อไม่มีอะไรเลย" จะไปสร้างของที่ทำงานอยู่แล้วทับของเดิม**
+นั่นคือความเสียหายจริงที่ไฟล์นี้กันไว้ ไม่ใช่ความละเอียดเพื่อความละเอียด
 
-**The wording trap.** Read literally, "ทุกฟีเจอร์ **ใหม่**" points at Happy-Hour, cash
-reconciliation and Passport — three features with zero production code. If that is the
-only reading, the criterion is unanswerable. So the file proves what exists and pins
-what does not, with grep as the evidence, rather than picking one and pretending.
+**ทำไมมี control + census ทั้งที่ดูเหมือนซ้ำซ้อน** — เทสต์ที่ยืนยันความ *ไม่มี* ด้วย
+`toStrictEqual([])` ให้ผลเหมือนกันเป๊ะกับตัวตรวจที่ตาบอดสนิท M1 วัดให้ดูอีกครั้ง:
+ทำ `filesMentioning` คืน `[]` เสมอ → **เทสต์ช่องว่างแปดตัวเขียวพร้อมกัน** มีแต่ control ที่จับได้
+และ M2 พิสูจน์ว่า control อย่างเดียวไม่พอ — มันกัน "predicate ตาบอด" ได้ แต่กัน
+"เซ็ตไฟล์ที่สแกนหดลง" ไม่ได้ ต้องมี census คู่เสมอ
+
+**ทำไมไม่แตะ `firestore.rules` แม้แต่ชั่วคราว** — R1 ไม่มี mutation โดยตั้งใจ
+จะฆ่ามันต้องแก้ไฟล์ security ที่ Out of scope ห้ามแตะ และรอบแบบนี้ **ตายกลางทางได้**
+(เกิดมาแล้วสามครั้งในโปรเจคนี้ แล้ว runner จะ commit ของค้างทิ้งไว้)
+ความเสี่ยงที่จะทิ้งไฟล์ security ที่ถูกดัดแปลงไว้ ไม่คุ้มกับหนึ่งแถวในตาราง
 
 ## Verification
 
+รันเองครบ **ทั้ง Verify command** (`npm test && npm run build`) หลังยืนยันว่าไม่มี mutation ค้าง
+(`git status` ว่าง + `git diff --stat HEAD` ว่าง):
+
 ```
-npm test    → 57 files, 417 tests, 0 failed     (395 → 417; +22, nothing else moved)
-npm run build → tsc -b clean · vite 116 modules · PWA generateSW, 5 precache entries
+Test Files  58 passed (58)
+     Tests  439 passed (439)        ← 417 ที่ยกมา + 22 ของรอบนี้
+tsc -b      ผ่าน
+vite build  ✓ built in 1.08s
+PWA v1.3.0  generateSW · precache 5 entries (849.10 KiB) · dist/sw.js
 ```
 
-Mutation harness lived **outside the repo** (`C:/PHANTOM-AUTOPILOT/mutate-0050.mjs`) —
-an untracked file at the repo root reddens `fz C1` + `ds S2` on every row and poisons
-its own collateral column. Every row re-ran the baseline (417 green) and every row's
-tally came back 417, so no mutation broke a file at import time.
+ตาราง mutation ฉบับเต็มพร้อมผลรันจริงอยู่ที่ `docs/autopilot/2026-09-07-missing-features-audit.md` §5
 
-Headline results:
+**ผลที่สำคัญที่สุดสามอย่าง:**
+- **M1** — `filesMentioning` ตาบอดสนิท → **เทสต์ช่องว่าง 8 ตัวเขียวพร้อมกัน**
+  มีแต่ S1 · P3 · R2 ที่จับได้ (สปีชีส์นี้ครั้งที่เจ็ดของโปรเจค)
+- **M17 → M17b** — ตั้งใจสร้าง mutation มาฆ่า C2 โดยเฉพาะ **แล้วฆ่าไม่ได้**
+  `toContain` เป็น substring check `expectedCash += order.total * 1` ยังมีสตริงเดิมครบ
+  ต้องถึง M17b (ถอดการบวกทิ้งจริง) ถึงแดง
+- **M16 → M16b** — M16 ประกาศว่าถอด `unitPrice` แต่ที่ทำจริงคือขยาย shorthand
+  ซึ่งไม่เปลี่ยนพฤติกรรมเลย **ไม่นับตามกฎ** รันใหม่ให้ตรงประกาศแล้วได้ 5 ตัวตามทำนาย
 
-- **M10** blinded `filesMentioning` → **seven gap tests went green at once**
-  (G1·G2·G3·G4·G5·X0·X1). Only **G0**, which feeds the same predicate a fixture it
-  must find, noticed. Sixth time this project has measured that species.
-- **M9 / M13** the same shape: blind the checker, the test whose *name* is the
-  criterion stays green, only its control dies.
-- **M18/M19** are the future rather than a regression: adding `pricingOverrides` to
-  `domain/types.ts` (what the tree looks like once somebody builds Happy-Hour) turns
-  **G1 red**, and `runTransaction` turns **X0 red**. That is how "no killer" was
-  separated from "vacuous" by measurement instead of by assertion.
-- Single-killer tests, measured: **C0 · C2 · W4a · W4c · G0 · G4 · X1** — do not delete.
+**เทสต์ที่มี killer ตัวเดียว (วัดจริง) ห้ามลบ:**
+H2 · H3 · H4 · C1 · C2 · C3 · P1 · P2 · P3 · P4 · P5
+**ไม่มีเทสต์ไหนไม่มี killer เลย ยกเว้น R1 ซึ่งประกาศไว้ว่าตั้งใจ**
 
 ## What I did NOT do
 
-- **Changed no production code.** Six gaps were found and all six were recorded with
-  coordinates instead of patched: three are missing features whose construction touches
-  accounting/menu logic (out of scope), and three are judgement calls a human should
-  make (should a heartbeat stop when offline, should the app show a pending-write
-  indicator, should `QueuePanel`'s writes have an error path).
-- **Did not test sync, reconnect, IndexedDB, quota, or real conflict resolution.**
-- **Did not reopen `idempotency E1` or the Undo merge-vs-snapshot bug.** X0 states the
-  model in the code and cites both; the plan explicitly said not to start that fight.
-- Did not start the remaining three criteria.
+- **ไม่ได้สร้างฟีเจอร์ทั้งสาม** — เป็นการตัดสินใจตามขอบเขต ไม่ใช่การยอมแพ้ (ดู Why)
+- **ไม่ได้แก้ `src/` production เลยสักบรรทัด** และไม่ได้แตะ `firestore.rules` /
+  `firestore.indexes.json` / ไฟล์สเปก / `.env*` / `tailwind.config.js`
+- **ไม่ได้แก้ช่องว่างอีก 15 ข้อที่บันทึกไว้** (PWA icon · เสียง toast · thermometer · export ·
+  สถานะ offline ฯลฯ) — ทุกข้อคือการสร้างของใหม่ ซึ่งเป็นการตัดสินใจของคน
+- **ไม่ได้เขียนเทสต์ยืนยันว่า "เทสต์เขียวและ build ผ่าน"** — วนเป็นวงกลม บันทึกผลรันจริงแทน
+- **ไม่ได้รัน mutation กับ R1** — จงใจ ตามเหตุผลใน Why
 
 ## Risk
 
-- 🚨 **A mutation caught a weak assertion, and I changed the test file after the first
-  run.** M14 (harness switched back online) killed W1/W2/W3 but left **W0** green — and
-  W0's only job is to prove the harness is offline. Cause: `stillPending` was
-  `Promise.race([p, Promise.resolve(MARKER)])`, and an already-resolved marker beats
-  anything needing one more microtask; `createOrder` is `async`, so it always needs
-  one. Its own control clause passed only because `Promise.race` breaks a tie by array
-  order. Rewritten to drain the microtask queue 20 times; re-run as **M14b → W0·W1·W2·W3
-  all red, as predicted**, and M13b unchanged. **A reviewer should look hardest here** —
-  it is the one place this round's evidence was wrong before it was right.
-- 🚨 **Prediction accuracy was 10/19, the lowest this project has recorded.** Five of
-  the nine misses share one root: I assumed `frozenZones`'s `FROZEN` list held three
-  files when it holds **twelve**, so `fz F2` was missing from every prediction that
-  touched `useHeartbeat.ts`, `expensesRepo.ts` or `domain/types.ts`. The corrected list
-  is written into both the audit doc and `AUTOPILOT.md`. The misses are all in the
-  *collateral* column; no predicted killer failed to kill.
-- 🚨 **The strongest claims in this file are about declared configuration, not runtime
-  behaviour.** No IndexedDB was opened. `C1`/`C2` read `src/lib/firebase.ts` as text.
-  That the SDK honours `persistentLocalCache` as documented is an assumption.
-- ⚠️ **`W3` is narrower than it looks.** Offline the queue cards repaint from the local
-  cache, which is not modelled here; W3 asserts the affordance the panel owns outright
-  (the undo bar), not that the card visibly changes.
-- ⚠️ **G4 needs its whole note read before anyone "fixes" it.** §5.5 wants HQ to show a
-  dead device as offline, and today it does — but because the queued beats never reach
-  HQ, not because the code stops beating. On the offline device's own screen it still
-  shows itself online.
-- ⚠️ **G1/G2/G3/G5/X0 have no killer, by design.** They pin absences. If one goes red,
-  somebody built the feature — that is the fix, not a regression. Read the audit doc
-  before touching them.
+🚨 **"20/20" อ่านผิดได้ง่ายมาก และนี่คือความเสี่ยงอันดับหนึ่งของรอบนี้**
+**13 ข้อพิสูจน์ด้วยเทสต์ · 7 ข้อปิดโดยบันทึกช่องว่าง** ระบบนี้ **ยังไม่มี** Happy-Hour,
+ปิดซุ้ม/cash reconciliation, Passport, thermometer, PWA icon, เสียง toast และ export
+ถ้ามีใครอ่าน "ครบ 20/20" แล้วสรุปว่าระบบพร้อมตามสเปกทุกข้อ **นั่นคือการอ่านที่ผิด**
+รายการช่องว่างทั้ง 18 ข้ออยู่ที่ `docs/autopilot/2026-09-07-missing-features-audit.md` §7
+
+🚨 **ทำนาย mutation ตรงแค่ 8 จาก 17 — ต่ำที่สุดเท่าที่โปรเจคนี้เคยทำ**
+ไม่มีแถวไหนพลาดเพราะเข้าใจเทสต์ของตัวเองผิด ทั้งหมดพลาดที่ **collateral ของ audit อื่น**:
+(1) แตะไฟล์ใน `src/screens/` ทำ census `file:line` ของ audit อื่นแดง 3–7 ตัว
+(2) `ds S2` ตัดสินจาก path — `screens/` กับ `order/` เป็น presentation ที่อนุญาต (ผิดซ้ำ 3 ครั้ง)
+(3) `offlineSync G1/G2/G3` ทับกับ H1/P2/C4 **โดยตั้งใจ** แล้วลืมนับ (ผิด 4 ครั้ง)
+ทั้งสามข้อเขียนเป็นกฎลง `AUTOPILOT.md` แล้ว **แต่ตัวเลข 8/17 ก็ยังควรถูกอ่านว่า
+ความเข้าใจเรื่องผลข้างเคียงข้ามไฟล์ของรอบนี้อ่อนกว่ารอบก่อนๆ**
+
+🚨 **C2 เกือบถูกรายงานว่า "พิสูจน์แล้ว" ทั้งที่ไม่มีอะไรพิสูจน์**
+16 แถวแรกไม่มีแถวไหนแตะมันเลย และแถวที่เพิ่มมาเล่นงานมันโดยเฉพาะ (M17) **ก็ยังฆ่าไม่ได้**
+เจอเพราะไล่นับ killer รายตัวหลังรันจบเท่านั้น — **ถ้าใครรีวิวรอบนี้ ให้ดูจุดนี้ก่อน**
+และ **C2 ยังมีจุดบอดที่รู้อยู่**: `toContain` จับ "การลบ" ได้ แต่จับ "การเติมท้ายบรรทัด" ไม่ได้
+
+🚨 **ไฟล์นี้เป็น source sweep ล้วน — ไม่เรนเดอร์อะไร ไม่รันโค้ดสักบรรทัด**
+พิสูจน์ได้ว่า collection ไม่เคยถูกเรียกชื่อและ field ไม่เคยถูกเขียน
+**พิสูจน์ไม่ได้ว่าโค้ดที่มีอยู่ไม่ได้ทำสิ่งเดียวกันภายใต้ชื่ออื่น**
+ตรงที่คำศัพท์ของเกณฑ์เองคือสิ่งที่ค้นหา (`cashSessions`, `stampedBooths`) ช่องว่างนั้นแคบ
+แต่ **มันไม่เป็นศูนย์**
+
+⚠️ **C3 เป็นการตีความสเปก ไม่ใช่การวัด** — §4.5 เขียนว่า `expectedCash` เป็น "ของ scope นั้น"
+ผมอ่านว่าหมายถึงต่อซุ้ม/ต่อ station (ตาม document shape ใน §3 ที่มี `boothId`+`station`)
+แล้วรายงานว่า scalar เดียวคือช่องว่าง **ถ้าเจตนาจริงคือ "ทั้งงาน" C3 ก็ผิด — เป็นคำถามของคน**
+
+⚠️ **C5 ไม่ได้ตัดสินเรื่อง `cancelled` ใหม่ และไม่ควรมีใครตัดสินมันสองที่**
+`donation F3` ปักตัวเลขทั้งสองฝั่งไว้ให้คนเลือกอยู่แล้ว C5 แค่ผูกเกณฑ์ §4.5 เข้ากับบรรทัดเดียวกัน
+**ห้ามลบข้างใดข้างหนึ่งทิ้งเพื่อให้ดูสะอาด**
+
+⚠️ **H4 กับ C2 ปัก *ตัวอักษร* ของซอร์ส ไม่ใช่ *พฤติกรรม*** (ทรงเดียวกับ `donation T4`)
+รอบไหนจัดรูปแบบบรรทัดพวกนั้นใหม่โดยตั้งใจ ให้อัปเดตสตริงในเทสต์
+แล้วปล่อยให้ `cart.test` / `metrics.test` เฝ้าพฤติกรรมต่อ **อย่าลบเทสต์ทิ้ง**
+
+⚠️ **เทสต์เกือบทุกตัวในไฟล์ใหม่ปักความ *ไม่มี*** — **ถ้าวันหนึ่งมันแดง
+แปลว่ามีคนสร้างฟีเจอร์แล้ว = นั่นคือการแก้ ไม่ใช่การถดถอย ห้ามคลาย ห้ามลบ**
+ให้ไปอ่าน `docs/autopilot/2026-09-07-missing-features-audit.md` แล้วเลื่อนขั้นเทสต์
+เป็น assertion ของพฤติกรรมใหม่ (ทรงเดียวกับ `idempotency E1` · `pwa I1` · `alert C5`)
