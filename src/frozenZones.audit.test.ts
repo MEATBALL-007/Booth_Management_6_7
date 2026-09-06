@@ -133,7 +133,7 @@ function frozenZoneOf(path: string): string | null {
 }
 
 // ── the census ──────────────────────────────────────────────────────────────
-type Category = 'audit-test' | 'src-test' | 'production' | 'doc' | 'unknown'
+type Category = 'audit-test' | 'src-test' | 'production' | 'doc' | 'config' | 'unknown'
 
 /**
  * Structural, NOT a list of the paths that happen to have changed — otherwise P1
@@ -145,6 +145,11 @@ function classify(path: string): Category {
   if (/^src\/.*\.(ts|tsx|css)$/.test(path)) return 'production'
   if (/^(AUTOPILOT|SUMMARY|CONTINUE_HERE)\.md$/.test(path)) return 'doc'
   if (/^docs\/.*\.md$/.test(path)) return 'doc'
+  // The style-token configs the ui-overhaul criterion names as an allowed part
+  // of the diff. Deliberately narrow: it matches those two filenames and
+  // nothing else, so `package.json` / `vite.config.ts` stay 'unknown' and keep
+  // tripping C1. Being a category is NOT permission — C2 still demands a reason.
+  if (/^(tailwind|postcss)\.config\.(js|cjs|mjs|ts)$/.test(path)) return 'config'
   return 'unknown'
 }
 
@@ -166,6 +171,16 @@ const PRODUCTION_CHANGES: Record<string, string> = {
     'Touch target ≥44px — one min-h-[44px] added to the primitive\'s base className, so the floor reaches every call site including the ones that do not repeat it. Presentation only: no variant, no handler and no prop changed, and no button on any screen renders shorter than 44px today either way.',
   'src/screens/DisplayScreen.tsx':
     'Display glanceable — one <En> wrapper so English reads as subordinate, and LIVE says สด · LIVE. Neon Clarity — the yellow shadow-[...] came off the เตรียมตัว <section>, because §2 rations glow to three targets and forbids it on cards. Presentation only, both times.',
+}
+
+/**
+ * Every style-token config this branch is allowed to have changed, with the
+ * reason. Same contract as PRODUCTION_CHANGES: a category exists so C1 can say
+ * "I know what this is", not so the file stops being watched.
+ */
+const CONFIG_CHANGES: Record<string, string> = {
+  'tailwind.config.js':
+    'ui-overhaul §2/§3 — the borderRadius scale the spec names (sm 10 · md 14 · lg 16 · xl 20), declared in px because index.css sets html{font-size:120%} and §2 scopes the +20% base scale to type/buttons/spacing/numbers, not corner radius. Tokens only: no colour, font, screens or content glob changed.',
 }
 
 /** Money and menu identifiers, for the M sweep over changed diff lines. */
@@ -281,14 +296,33 @@ test('C0: the classifier, pinned to fixtures', () => {
   expect(classify('docs/autopilot/2026-08-31-frozen-zones-audit.md')).toBe('doc')
   expect(classify('AUTOPILOT.md')).toBe('doc')
 
-  // 'unknown' has to be reachable, or C1 is an assertion about nothing
+  expect(classify('tailwind.config.js')).toBe('config')
+  expect(classify('postcss.config.js')).toBe('config')
+
+  // 'unknown' has to be reachable, or C1 is an assertion about nothing — and it
+  // has to stay reachable for the neighbours of the new 'config' rule in
+  // particular, or that rule quietly became "any config file is fine".
   expect(classify('firestore.rules')).toBe('unknown')
   expect(classify('package.json')).toBe('unknown')
+  expect(classify('vite.config.ts')).toBe('unknown')
+  expect(classify('tsconfig.json')).toBe('unknown')
 })
 
 test('C1: no changed path is left in an "ไม่รู้ว่าเปลี่ยนอะไร" state', () => {
   const uncategorised = changedPaths().filter((p) => classify(p) === 'unknown')
   expect(uncategorised).toStrictEqual([])
+})
+
+test('C2: the style-token configs that changed are exactly the declared ones, each with a reason', () => {
+  // Without this, adding the 'config' category to classify() would have been a
+  // way to make C1 green by making a changed file invisible, which is the one
+  // repair this file's header forbids.
+  const changedConfig = changedPaths().filter((p) => classify(p) === 'config')
+  expect(changedConfig).toStrictEqual(Object.keys(CONFIG_CHANGES).sort())
+
+  for (const reason of Object.values(CONFIG_CHANGES)) {
+    expect(reason.length).toBeGreaterThan(40)
+  }
 })
 
 test('P1: the production files that changed are exactly the four declared, each with a reason', () => {

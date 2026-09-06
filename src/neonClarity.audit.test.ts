@@ -399,8 +399,14 @@ describe('B. base +20%', () => {
 
     // canary: this is the whole of what the config extends today. When a round
     // adds a scale here, this fires and forces the check below to be re-read.
-    expect(extendKeys).toStrictEqual(['colors', 'fontFamily', 'boxShadow'])
+    expect(extendKeys).toStrictEqual(['colors', 'fontFamily', 'borderRadius', 'boxShadow'])
 
+    // Re-read as the canary demanded, when borderRadius arrived: it is px on
+    // purpose and it is NOT added to the list below. The +20% exists so text
+    // and touch targets grow together; §2 scopes it to ตัวหนังสือ/ปุ่ม/สเปซ/ตัวเลข
+    // and names radius separately in literal px. A corner that grew 20% with the
+    // root would not be the 10/14/16/20 the spec asks for. The ban below is
+    // about scales that MUST ride the root — radius is not one of them.
     for (const key of ['fontSize', 'spacing', 'lineHeight']) {
       const block = cfg.match(new RegExp(`${key}: \\{([^}]*)\\}`))
       if (!block) continue
