@@ -1,106 +1,105 @@
-# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-09_0037`
+# Round `auto/Booth_Management_6_7/2026-09-10_0008`
 
 ## What I did
 
-- **ยกงานทั้งหมดขึ้น branch นี้** จาก `auto/Booth_Management_6_7/2026-09-09_0026`
-  (`763a0c1`) ด้วย `git checkout <tip> -- .` — 49 path (เทสต์ audit 20+ ไฟล์,
-  บันทึก `docs/autopilot/` 20 ไฟล์, `AUTOPILOT.md`, และการแก้ `src/` ที่รอบก่อนๆ ทำไว้)
-  branch นี้ถูกตัดจาก **`main` เปล่าๆ (`735de75`)** ถ้าไม่ยก PR ของรอบนี้จะเสนอ tree
-  ที่ไม่มีงานสะสมทั้งหมดอยู่เลย
-- **รัน Verify command เต็ม** (`npm test && npm run build`) แล้วเทียบผลกับ baseline
-  ที่ `_0026` บันทึกไว้ — **ตรงทุกตัวเลข รวมทั้ง content hash ของ bundle ทั้งสามตัว**
-- **ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่ได้เริ่มงานใหม่ — เพราะ `## Next task`
-  ที่ยกมาสั่งไว้ตรงตัวว่าไม่มีงานที่ agent ทำต่อเองได้แล้ว
-- **แก้ `## Next task` ใน `AUTOPILOT.md`** ให้บันทึกรอบนี้ (ครั้งที่ยี่สิบสี่ ·
-  รอบที่แปดติดที่ยืนยันคำสั่งนี้ · หกรอบที่ bundle hash นิ่ง)
+- **Carried the twenty proven criteria onto this branch.** The branch was cut from
+  bare `main` (`735de75`) and started with none of the audit work — 49 files,
+  ~14.3k lines, including all 24 `*.audit.test.*` files.
+- **Proved the carry was safe *before* running it.** `git merge-base HEAD <_0037 tip>`
+  returned HEAD exactly, so the sibling strictly descends from this commit and its
+  tree is a superset — a one-command whole-tree carry cannot drop a file. Confirmed
+  byte-complete afterwards: `git diff <tip>` printed **zero lines**.
+- **Ran the Verify command and matched the recorded baseline on both witnesses.**
+- **Updated `## Next task`** to record this as the 25th empty-plan round, counted
+  from real branches rather than from the file's own prose.
+- **Touched no `src/` line.** No production code, no test, no spec was authored,
+  edited, or deleted this round.
 
 ## Why
 
-- **ยกก่อนเสมอ ถึงจะไม่มีงานทำ** — คำสั่งใน `AUTOPILOT.md` เขียนไว้ชัด และเหตุผลคือ
-  branch ที่ไม่ได้ยก **เท่ากับ `main` เปล่าๆ** ถ้ามีคนเผลอ merge สลับลำดับ งานสะสม
-  ทั้งหมดจะหายเงียบๆ
-- **ใช้ `checkout <tip> -- .` ทั้ง tree รวด แทนการไล่ path ทีละไฟล์** เพราะ
-  `git merge-base HEAD <tip>` **คืนค่าเท่ากับ `HEAD` เอง** = `<tip>` เป็น strict
-  descendant ของที่ยืนอยู่ = ไม่มีงานบน branch นี้ที่ `<tip>` ขาด ซึ่งเป็น**เงื่อนไขเดียว**
-  ที่ทำให้ blanket checkout ปลอดภัย ยืนยันหลังกดด้วย
-  `git diff --cached --name-only <tip>` → **ว่างเปล่า = byte-identical**
-  (คำเตือน "blanket checkout ลบงาน" ยังจริงอยู่ในกรณีที่ `merge-base` ≠ `HEAD`)
-- **ไม่หางานใหม่ทำ** — เกณฑ์ครบ 20/20 แล้ว และคำสั่งห้ามไว้ตรงตัว การเริ่มงานที่ไม่มี
-  คนสั่งในรอบ unattended คือ scope creep ที่ย้อนกลับไม่ได้
-- `merge` / `cherry-pick` ไม่ใช่ตัวเลือก — ต้องการ approval ที่รอบ unattended ให้ไม่ได้
+The carried plan's `## Next task` is a standing order, not a to-do: all 20
+acceptance criteria are ticked (17 proven by tests, 3 closed as *documented gaps*),
+and it states plainly that no agent-doable work remains — if a round opens without
+a human choosing, **carry → verify → correct the line → stop, don't invent work**.
+The prompt's `## Next task` arrived empty, so that order applied. Hard rule 5 says a
+round that only corrects the plan is a successful round; hard rule 1 forbids
+substituting a task I picked myself.
+
+Carrying is not optional busywork. An uncarried branch *is* bare `main`, so the PR
+the runner opens from it would propose **deleting every audit file** — the carry is
+the one thing that must happen even in a round with no feature work.
+
+I used the blanket `checkout <tip> -- .` rather than the usual path-by-path carry
+only because the `merge-base` check licensed it. That check is what makes it safe,
+not the command: against a *diverged* sibling the same command silently removes
+files that branch never had, and the suite then goes green at a lower test count —
+which looks exactly like success.
 
 ## Verification
 
-รัน Verify command เองครบทั้งสองครึ่ง:
+Ran the Verify command in full: `npm test && npm run build`.
 
 ```
-$ npm test
- Test Files  59 passed (59)
-      Tests  453 passed (453)
-   Duration  38.59s
+Test Files  59 passed (59)
+     Tests  453 passed (453)
 
-$ npm run build          # tsc -b && vite build
-✓ 116 modules transformed.
+tsc -b            passed (no output)
+vite              116 modules transformed
 dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
 dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
-✓ built in 1.02s
-PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
-  dist/sw.js · dist/workbox-9c191d2f.js
+PWA v1.3.0  mode generateSW  precache 5 entries (849.13 KiB)
+            dist/sw.js, dist/workbox-9c191d2f.js
 ```
 
-**ทั้งสองพยานตรงกับ baseline ที่ `_0026` บันทึกไว้:**
+All five numbers and all three content hashes match the baseline recorded by
+`_0037` / `_0026` / `_0016` / `_0006` / `_0031` / `_0021` / `_0011` / `_0046`.
+Seventh consecutive round with the hashes unmoved; ninth with the test tally unmoved.
 
-| หลักฐาน | ค่า | ตรงกับ baseline |
-|---|---|---|
-| ไฟล์เทสต์ · เทสต์ | 59 · 453 เขียวหมด | ✅ |
-| `tsc -b` | ผ่าน | ✅ |
-| vite modules | 116 | ✅ |
-| css hash + ขนาด | `index-bTUIGpdg.css` 16.31 kB | ✅ |
-| js hash | `index-CyVIMiFT.js` | ✅ |
-| workbox hash | `workbox-9c191d2f.js` | ✅ |
-| PWA precache | 5 entries | ✅ |
+The two witnesses cover different holes, and I checked both deliberately:
+- **Content hashes** catch a mutation stranded in `src/` — vite names bundles by
+  content digest, so a surviving edit moves a hash even while all 453 tests pass.
+- **The 453-test tally** catches one stranded in an `*.audit.test.*` file — test
+  files never enter the bundle, so they move no hash at all.
 
-**ทำไมต้องดูสองพยานคู่กัน:** content hash พิสูจน์ว่า *ซอร์สที่คอมไพล์เข้า bundle*
-เหมือนเดิมทุกไบต์ — mutation ที่ค้างใน `src/` ขยับแฮชเสมอ ถึงเทสต์จะเขียวครบก็ตาม
-แต่ **ไฟล์เทสต์ไม่เข้า bundle** ➡️ mutation ที่ค้างในไฟล์ `*.audit.test.*` ไม่ขยับแฮชเลย
-ตัวที่เฝ้าฝั่งนั้นคือ **จำนวนเทสต์ 453 + เขียวครบ** ตัวเดียวไม่พอทั้งคู่
-
-การนับรอบ **นับจาก branch จริง ไม่ได้นับจากข้อความในไฟล์**:
-`git for-each-ref --sort=-committerdate refs/heads/auto` → **66 branch** และแปดตัวบนสุด
-(ไม่นับตัวเอง) คือ `_0026 · _0016 · _0006 · _0041 · _0031 · _0021 · _0011 · _0046`
-เรียงต่อกันไม่ขาดช่วง
+Branch count taken from git, not from the plan's prose: **67** `auto/*` branches; the
+nine below this one (`_0037 _0026 _0016 _0006 _0041 _0031 _0021 _0011 _0046`) are
+contiguous by commit date.
 
 ## What I did NOT do
 
-- **ไม่ได้เริ่มเกณฑ์ใหม่ ไม่ได้เขียนเทสต์ใหม่ ไม่ได้แก้ `src/` เลยสักบรรทัด** —
-  `## Next task` สั่งไว้ตรงตัวว่าไม่มีงานที่ agent ทำต่อเองได้ และให้ **ยก → verify →
-  แก้บรรทัดนั้น → หยุด**
-- **ไม่ได้ทำ mutation check รอบนี้** — ไม่มีเทสต์ใหม่ให้ตรวจความแข็ง และการรัน mutation
-  ซ้ำกับเทสต์ที่ยกมาโดยไม่มีการเปลี่ยนแปลง ไม่ให้ข้อมูลใหม่ แต่เสี่ยงทิ้ง mutation ค้างไว้
-  ถ้ารอบตายกลางทาง (เกิดมาแล้วสามครั้งในโปรเจคนี้)
-- **ไม่ได้ปิดช่องว่างที่บันทึกไว้ 7 ข้อ** (export path · passport · Happy-Hour pricing ·
-  ปิดซุ้ม/`countedCash` · PWA icons · toast เสียง · thermometer bar) — ทุกข้อคือ
-  **การสร้างฟีเจอร์** ซึ่งแตะ logic บัญชี/เมนู/comms = **Out of scope ห้ามตรงตัว**
-  และหลายข้อเป็นการตัดสินใจเชิงดีไซน์ที่ต้องมีคนเลือก
-- ไม่ได้แตะ `firestore.rules`, `firestore.indexes.json`, `docs/superpowers/specs/`,
-  `.env*`, `.firebaserc` และไม่ได้เพิ่ม dependency
+- **Did not start any of the three open feature gaps** (Happy-Hour pricing §4.3,
+  cash reconciliation §4.5, Passport stamps §4.6). All three are ticked as
+  *documented gaps*, and building them means writing new pricing/accounting logic,
+  which "Out of scope" forbids in as many words. They need a human to choose them.
+- **Did not invent a substitute task.** Nothing in `src/` was touched — deliberately,
+  since the plan notes the 🆘 and comms zones are frozen byte-identical by
+  `frozenZones F2`, and any `src/screens/` edit reddens 3–7 `file:line` census
+  assertions in other audits.
+- **Did not re-run the mutation checks** for the carried audits. They were measured
+  on the branches that authored them and are recorded in `docs/autopilot/`; the
+  hash+tally match is the evidence that what I carried is that same tree.
 
 ## Risk
 
-- 🟢 **Verify ผ่านครบ** ไม่มีอะไรค้างให้ runner กั้น PR
-- 🚨 **สถานะ "20/20" หมายถึง 13 ข้อพิสูจน์ด้วยเทสต์ · 7 ข้อเป็นช่องว่างที่บันทึกไว้**
-  **ไม่ได้แปลว่าระบบทำได้ครบทุกอย่างที่สเปกเขียน** ผู้อ่านที่เห็นแต่ checkbox
-  จะเข้าใจผิดได้ง่าย — รายการช่องว่างอยู่ครบใน `AUTOPILOT.md` และ `docs/autopilot/`
-- ⚠️ **เทสต์จำนวนมากพิสูจน์ *ค่าที่ประกาศไว้ในซอร์ส* ไม่ใช่พิกเซลที่เรนเดอร์จริง** —
-  jsdom ไม่ทำ layout, Tailwind ไม่เคยรัน, ไม่มีเน็ต ไม่มี Firestore จริง
-  ข้ออ้างเรื่อง "กึ่งกลาง" · "glanceable" · "realtime" · "sync" เป็น **รูปทรงที่ทำให้
-  สิ่งนั้นเป็นไปได้** ไม่ใช่การวัด — **ยังควรมีคนเปิดจอจริงดูก่อนวันงาน**
-- ⚠️ **มีเทสต์หลายตัวที่ปัก *ความไม่มี* ของฟีเจอร์ไว้** (`idempotency E1` · `pwa I1` ·
-  `alert C5` · `donation T1–T3` · `hq G0/G1` · `offlineSync G1–G5` · `missingFeatures`
-  ทั้งไฟล์) **ถ้าวันหนึ่งมันแดง แปลว่ามีคนสร้างฟีเจอร์นั้นแล้ว = นั่นคือการแก้
-  ไม่ใช่การถดถอย** ให้ไปอ่านบันทึกก่อน อย่าลบเทสต์
-- ⚠️ **`AUTOPILOT.md` ระบุรายชื่อเทสต์ที่ "มี killer ตัวเดียว ห้ามลบ" ไว้เยอะมาก**
-  รอบไหนที่จะแก้เทสต์ ต้องอ่านรายการนั้นก่อน
-- 📌 **ถ้ารอบหน้ารับ branch มาแล้วเจอเทสต์แดง** ให้เทียบกับตาราง mutation ใน
-  `docs/autopilot/` ก่อนสรุปว่าโค้ดพัง — runner เคย commit mutation ที่ค้างจากรอบที่ตาย
-  กลางทางไว้ในชื่อ "rescued work" มาแล้ว **สามครั้ง**
+**Verify passed cleanly — there is no failure being papered over here.** The
+substantive things a reviewer should weigh:
+
+- **This round produced no new proof.** Its entire value is that the audit work is
+  now on a branch the runner can open a PR from, and that the tree still builds
+  green. If you want progress, the next round needs a human to pick a task.
+- **The three remaining gaps are real product holes, not bookkeeping.** The system
+  ships today with no Happy-Hour pricing, no cash-drawer reconciliation, and no
+  Passport feature. They are *ticked* because they were investigated and pinned with
+  tests asserting their absence — not because they work. Anyone reading "20/20" as
+  "20 features done" is misreading the board.
+- **Several ticked criteria rest on stated assumptions, not measurement.** No pixel
+  is measured anywhere (jsdom does no layout), Tailwind never runs in any test, and
+  "realtime"/"within a few seconds" is never timed — there is no network and no
+  Firestore in the suite. The audits say this in their own notes; it is worth a
+  human opening the Display screen on real hardware before the event.
+- **`idempotency E1` remains open:** two devices pressing simultaneously can still
+  produce two writes. The guard is per-panel and cannot see another machine. Closing
+  it needs `runTransaction`, which touches the repo layer and `firestore.rules` —
+  out of scope.
+- **Bundle size warning is pre-existing** (852 kB JS, over vite's 500 kB advice).
+  Unchanged by this round; noted so it isn't mistaken for new.
