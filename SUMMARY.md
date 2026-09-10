@@ -1,110 +1,114 @@
-# Round `auto/Booth_Management_6_7/2026-09-10_0029`
+# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-11_0010`
 
 ## What I did
 
-- **Carried the twenty proven criteria onto this branch.** It was cut from bare
-  `main` (`735de75`) and held none of the audit work — 49 files, ~14.4k lines,
-  **41 added / 8 modified / 0 deleted**, including all 24 `*.audit.test.*` files
-  and the 20 `docs/autopilot/` records.
-- **Proved the carry was safe *before* running it.** `git merge-base HEAD ffc8971`
-  returned HEAD exactly, so the newest sibling (`_0018`) strictly descends from this
-  commit and its tree is a superset — a one-command whole-tree carry cannot drop a
-  file. Confirmed byte-complete afterwards: `git diff ffc8971` printed **0 lines**,
-  checked *before* the commit.
-- **Ran the Verify command and matched the recorded baseline on both witnesses** —
-  the 453-test tally and all three vite content hashes.
-- **Counted the round with grep first, branch order second**, the order `_0018`
-  prescribed. Both return 11 prior carries and agree with no gaps.
-- **Touched no `src/` line.** No production code, no test, and no spec was authored,
-  edited, or deleted this round.
+- **ยกงานทั้งยี่สิบเกณฑ์ขึ้น branch นี้** (`a969352`) — branch ถูกตัดจาก `main` เปล่าๆ
+  (`735de75`) เหมือนทุกรอบ ยก 49 ไฟล์: 20 audit docs · 20 audit test files ·
+  5 production changes · `AUTOPILOT.md` · `SUMMARY.md`
+- **พิสูจน์ก่อนยกว่าการยกทั้ง tree ปลอดภัย** — `git merge-base HEAD <_0040 tip>` คืน
+  **`735de75` = HEAD เป๊ะ** ➡️ `_0040` เป็น strict descendant ➡️ `checkout <tip> -- .`
+  ทำไฟล์หายไม่ได้ ยืนยันซ้ำหลังยกด้วย tree hash: **`d5295ac0…` ตรงกันทั้งสองฝั่ง**
+- **รัน Verify แล้วเทียบกับ baseline ที่บันทึกไว้ ครบทุกพยาน** — ผ่านทั้ง `npm test`
+  และ `npm run build`
+- **แก้ `## Next task` ให้บันทึกรอบนี้** และ **จับได้ว่า `_0040` (รอบที่ยี่สิบแปด) ยกงาน
+  ถูกต้องแต่ไม่ได้บันทึกตัวเอง** — ซ้ำรอย `_0041` เป๊ะ
+- **ไม่ได้แตะ `src/` เลยสักบรรทัด** ไม่ได้เพิ่ม/ลบ/แก้เทสต์ ไม่ได้แตะ Out of scope ใดๆ
 
 ## Why
 
-The prompt's `## Next task` arrived **empty**. The carried plan's `## Next task` is a
-standing order for exactly that case: all 20 acceptance criteria are ticked (17 proven
-by tests, 3 closed as *documented gaps*), it states plainly that no agent-doable work
-remains, and it instructs — carry → verify → correct the line → stop, don't invent
-work. Hard rule 5 makes a round that only corrects the plan a successful round; hard
-rule 1 forbids substituting a task I picked myself.
+`## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ `AUTOPILOT.md` ที่ยกมาระบุตรงตัวว่า
+🛑 *ไม่มีงานที่ agent ทำต่อได้เองแล้ว — ให้ยก → verify → แก้บรรทัดนี้ → หยุด อย่าหาเรื่องทำ*
+เกณฑ์ทั้ง **20/20 ติ๊กครบแล้ว** รอบนี้จึงไม่สร้างงานใหม่ตามกฎข้อ 1 และข้อ 5 ของ contract
 
-**The working copy's `AUTOPILOT.md` lied on arrival.** Bare `main` carries an old
-revision of the plan whose `## Next task` said *"do the Undo criterion, use the
-2026-08-13 findings doc as the spec"* — work finished on 2026-08-28 and ticked in the
-carried plan. Following the working copy would have rebuilt a solved criterion from
-scratch. The plan has to be read off the newest `auto/*` branch before it is obeyed.
+**ทำไมต้องยกทั้งที่ "ไม่มีงาน"** — branch พวกนี้ไม่เคย merge กัน ทุกรอบเริ่มจาก `main` เปล่า
+ถ้าจบรอบโดยไม่ยก **PR ของ branch นี้จะเสนอลบงานทั้งหมดทิ้ง** การยกจึงไม่ใช่งานเสริม
+แต่เป็นสิ่งเดียวที่ทำให้รอบนี้ไม่เป็นการถดถอย
 
-Carrying is not optional busywork. An uncarried branch **is** bare `main`, so the PR
-the runner opens from it would propose **deleting every audit file**. It is the one
-thing that must happen even in a round with no feature work.
-
-I used the blanket `checkout <tip> -- .` rather than a path-by-path carry only because
-the `merge-base` check licensed it. **That check is what makes it safe, not the
-command:** against a *diverged* sibling the identical command silently removes files
-that branch never had, and the suite then goes green at a lower test count — which
-looks exactly like success.
-
-I verified against the bundle hashes and not just the test count, because the two
-witnesses answer different questions. 453 green proves no behavioural regression, but
-a mutation stranded in `src/` can stay green — this repo has been bitten by that twice
-(`_0041` leaked M15, `_0006` leaked M5, both committed by the runner as "rescued
-work"). Vite names chunks by content hash, so three matching hashes prove the
-compiled source is identical byte for byte, which no test tally can.
+**ทำไมเชื่อ `merge-base` ไม่ใช่เชื่อคำสั่ง** — `checkout <commit> -- .` แบบเหมารวด
+จะ **ลบไฟล์ที่ branch ต้นทางไม่เคยมี** ถ้าต้นทางแตกสายไปแล้ว แล้วเทสต์จะเขียวที่จำนวน
+น้อยลง ซึ่งหน้าตาเหมือนสำเร็จ เงื่อนไข `merge-base == HEAD` คือสิ่งเดียวที่กันเคสนั้น
+รอบนี้เช็คก่อนกด และเช็ค `--name-status` ว่าไม่มีบรรทัด `D` เลยด้วย
 
 ## Verification
 
-Ran the Verify command in full: `npm test && npm run build`. Both passed.
+รัน Verify command ตรงตัว: `npm test && npm run build` — **ผ่านทั้งคู่ (exit 0)**
 
 ```
 Test Files  59 passed (59)
      Tests  453 passed (453)
+  Duration  46.85s
 
-tsc -b                          passed (no output)
-vite v8.1.5                     116 modules transformed
-dist/assets/index-bTUIGpdg.css  16.31 kB │ gzip:   4.22 kB
-dist/assets/index-CyVIMiFT.js  852.15 kB │ gzip: 257.63 kB
-PWA v1.3.0  generateSW  precache 5 entries (849.13 KiB)
-dist/sw.js · dist/workbox-9c191d2f.js
+✓ 116 modules transformed.
+dist/manifest.webmanifest         0.20 kB
+dist/index.html                   0.90 kB │ gzip:   0.50 kB
+dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
+dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
+✓ built in 1.23s
+
+PWA v1.3.0
+mode      generateSW
+precache  5 entries (849.13 KiB)
+files generated
+  dist/sw.js
+  dist/workbox-9c191d2f.js
+[exited with code 0]
 ```
 
-Every number matches the baseline recorded by `_0018` / `_0008` / `_0037` / `_0026` /
-`_0016` / `_0006` / `_0031` / `_0021` / `_0011` / `_0046`, and **all three content
-hashes** (`index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`) are
-unchanged — the carry is complete and nothing is stranded in `src/`.
+**เทียบกับ baseline ที่รอบก่อนๆ บันทึกไว้ — ตรงทุกตัว:**
 
-The 852 kB chunk-size warning and the jsdom `Falling back to memory cache` notice are
-both pre-existing and present in every recorded round.
+| พยาน | คาดไว้ | รอบนี้ | ผล |
+|---|---|---|---|
+| test files | 59 | 59 | ✅ |
+| tests | 453 | 453 | ✅ |
+| `tsc -b` | ผ่าน | ผ่าน | ✅ |
+| vite modules | 116 | 116 | ✅ |
+| css bundle | `index-bTUIGpdg.css` 16.31 kB | เท่ากัน | ✅ |
+| js bundle | `index-CyVIMiFT.js` 852.15 kB | เท่ากัน | ✅ |
+| workbox | `workbox-9c191d2f.js` | เท่ากัน | ✅ |
+| PWA precache | 5 entries 849.13 KiB | เท่ากัน | ✅ |
+| tree hash vs `_0040` | — | `d5295ac0…` ตรงกัน | ✅ |
+
+**ทำไมต้องดูสองพยานคู่กัน** — content hash ของ bundle จับ mutation ที่ค้างใน `src/` ได้
+(แฮชขยับเสมอถึงเทสต์จะเขียว) **แต่ไฟล์เทสต์ไม่เข้า bundle** ➡️ mutation ที่ค้างใน
+`*.audit.test.*` ไม่ขยับแฮชเลย ตัวที่เฝ้าฝั่งนั้นคือ **453 เทสต์เขียวครบ** ต้องดูคู่กันเสมอ
+รอบนี้ตรงทั้งสองฝั่ง ➡️ **ยกครบ ไม่มี mutation ค้าง ไม่มีการถดถอย**
+
+**ตัวนับรอบ** — `git log --all --oneline --grep='carry the twenty proven criteria'` ให้
+**14 รวม commit ของรอบนี้ = 13 รอบก่อนหน้า** ไล่ได้ไม่ขาดช่วง: `_0046`(16) `_0011`(17)
+`_0021`(18) `_0031`(19) `_0041`(20) `_0006`(21) `_0016`(22) `_0026`(23) `_0037`(24)
+`_0008`(25) `_0018`(26) `_0029`(27) `_0040`(28) ➡️ **รอบนี้คือที่ยี่สิบเก้า**
 
 ## What I did NOT do
 
-- **Did not start any of the recorded gaps** — Happy-Hour pricing, passports, cash
-  reconciliation, HQ export, PWA icons, the donation thermometer, the `rounded-xl`
-  vs `2xl` inversion. Each is pinned by a test that asserts the *absence* and is
-  documented; each also needs a human decision (design values, order schema, or
-  writing logic that Out of scope forbids). Hard rule 1 allows one task, and the
-  standing order says stop rather than pick one.
-- **Did not re-run any mutation check.** The tables are committed in
-  `docs/autopilot/`; re-running them changes nothing and risks leaving a live
-  mutation behind if the round dies mid-run — which is how `_0041` and `_0006`
-  ended up with mutations committed as rescued work.
-- **Did not touch `src/`, the specs, `firestore.rules`, or `.env*`.**
+- **ไม่ได้แตะ `src/` เลยสักบรรทัด** — ไม่มีเกณฑ์ข้อไหนเหลือให้ทำ และการหางานใหม่มาทำเอง
+  คือสิ่งที่ contract ข้อ 1/ข้อ 5 กับ `## Next task` ห้ามตรงตัว
+- **ไม่ได้เขียนเทสต์ใหม่ ไม่ได้รัน mutation check** — ทั้ง 20 เกณฑ์มีตาราง mutation
+  ที่วัดแล้วอยู่ใน `docs/autopilot/` การรันซ้ำไม่เพิ่มข้อมูลและมีความเสี่ยงทิ้ง mutation ค้าง
+- **ไม่ได้ไปปิดช่องว่างที่บันทึกไว้ 11 ข้อ** (export path · passport · Happy-Hour pricing ·
+  presence device-id · PWA icons · cash reconciliation · thermometer bar · toast sound ·
+  Display alert bar · two-device write race · offline pending-write indicator)
+  ทุกข้อเป็น **การตัดสินใจเชิงดีไซน์หรือแตะ logic บัญชี/เมนู/comms ซึ่ง Out of scope ห้าม**
+  เทสต์ที่ปักช่องว่างพวกนี้ไว้ (`E1` `I1` `C5` `T1–T3` `G0–G5` …) **ยังเขียวอยู่ตามเจตนา**
+- **ไม่ได้แก้ `AUTOPILOT.md` ให้มีงานใหม่** — บรรทัด `## Next task` ยังเป็น 🛑 เหมือนเดิม
+  เพราะสถานะยังไม่เปลี่ยน: ต้องรอคนเลือกก่อน
 
 ## Risk
 
-**Low — but the reviewer should check one thing specifically.**
-
-- **The one claim worth auditing is the carry's completeness.** It rests on
-  `merge-base HEAD ffc8971 == HEAD` plus a zero-line `git diff` against the sibling.
-  Re-run `git diff ffc8971` on this branch; anything other than empty means I am
-  wrong. The 0-deletion count in the staged diff is the corroborating witness.
-- **`git status` was clean on arrival**, so unlike `_0041` / `_0006` / `_0047` this
-  branch inherited no stranded mutation. The three matching bundle hashes are the
-  positive evidence for that, not merely the absence of a red test.
-- **Nothing here was proven this round that was not already proven.** This round adds
-  no test and no coverage; it only makes the branch equal to the newest sibling and
-  re-confirms the baseline. Its value is entirely that the PR does not delete 14.4k
-  lines of audit work.
-- **The plan is now 27 empty-plan rounds deep.** The verifiable chain reaches back to
-  `_0046` (round 16); rounds 1–15 are inherited from prose in `AUTOPILOT.md` and were
-  not re-checked. **The project needs a human to choose the next criterion or to stop
-  the runner** — the agent has no remaining in-scope work, and each round costs a full
-  test-and-build cycle to restate the same result.
+- 🟢 **Verify ผ่านจริง ไม่มีอะไรถูกปิดบัง** รันคำสั่งตรงตัวตามที่ contract ระบุ ไม่ได้แก้
+  Verify command ไม่ได้ลบ/skip เทสต์ ผลรันเต็มอยู่ข้างบน
+- ⚠️ **รอบนี้ *ไม่ได้* พิสูจน์อะไรใหม่เกี่ยวกับตัวระบบ** — พิสูจน์แค่ว่า tree ที่ยกมา
+  เหมือนต้นทางทุกไบต์ และยังเขียว/build ผ่าน คำกล่าวอ้างเรื่องความถูกต้องของทั้ง 20 เกณฑ์
+  **รับมรดกมาจากรอบก่อนๆ ทั้งหมด** ผู้ตรวจที่อยากเช็คเกณฑ์ข้อใดข้อหนึ่งต้องไปอ่าน
+  `docs/autopilot/<วันที่>-*.md` ของข้อนั้น ไม่ใช่ไฟล์นี้
+- 🚨 **`_0040` (รอบที่ยี่สิบแปด) ยกงานถูกต้องแต่ไม่ได้บันทึกตัวเอง — เป็นครั้งที่สอง**
+  (ครั้งแรกคือ `_0041`) หลักฐาน: `git log 735de75..<_0040>` มี commit เดียว และ
+  `git diff <_0029> <_0040>` ว่างเปล่า **ถ้ารอบนี้นับจากข้อความใน `AUTOPILOT.md`
+  อย่างเดียวจะเขียนผิดเป็น "ครั้งที่ยี่สิบแปด"** ➡️ ยืนยันแล้วว่า **grep คือตัวตั้งที่ถูก**
+  รอบหน้าให้ใช้ grep ก่อนเสมอ อย่าเชื่อตัวนับที่เป็นร้อยแก้ว
+- ⚠️ **สิ่งที่ไม่มีเทสต์ไหนในโปรเจคนี้พิสูจน์ได้ และไม่เคยอ้างว่าพิสูจน์** — ไม่มีพิกเซล
+  ไหนถูกวัด (jsdom ไม่ทำ layout) · Tailwind ไม่เคยรัน · ไม่มีเน็ต ไม่มี Firestore จริง
+  ➡️ **"realtime" · "ภายในไม่กี่วิ" · "sync กลับได้" · "อ่านง่าย" · "สวย" ยังต้องมีคน
+  ถือเครื่องจริงยืนทดสอบในงาน** ทุกไฟล์ audit เขียนข้อจำกัดนี้ไว้ในตัวมันเองแล้ว
+- 🟡 **มีคนต้องตัดสินใจก่อนรอบหน้าจะมีงานทำ** — `## Next task` เป็น 🛑 มาสิบสามรอบติด
+  ถ้า runner ยังเปิดรอบใหม่เรื่อยๆ โดยไม่มีคนสั่ง จะได้รอบยก+verify แบบนี้ไปเรื่อยๆ
+  ซึ่งปลอดภัยแต่ไม่คืบหน้า **ช่องว่าง 11 ข้อข้างบนคือรายการที่รอการตัดสินใจอยู่**
