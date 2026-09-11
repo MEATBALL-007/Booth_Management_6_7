@@ -1,104 +1,130 @@
-# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-11_0031`
+# SUMMARY — round `auto/Booth_Management_6_7/2026-09-12_0006`
 
 ## What I did
 
-- **ยกงานทั้ง 20 เกณฑ์ขึ้น branch นี้** — branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
-  ไม่มี audit ไฟล์ไหนอยู่บนมันเลย (`git ls-files 'src/*audit*'` → **0**)
-  ยกทั้ง tree จาก sibling ที่ใหม่ที่สุด `auto/Booth_Management_6_7/2026-09-11_0021` (`aa6cbcd`)
-- **รัน Verify command เต็ม** (`npm test && npm run build`) แล้วเทียบ **ทั้งจำนวนเทสต์
-  และ content hash ของ bundle** กับที่รอบก่อนบันทึกไว้ — ตรงทุกตัว
-- 🚨 **เจอว่าตัวนับรอบแบบ grep ที่ `AUTOPILOT.md` สั่งไว้ พังแล้ว — และแก้สูตรให้**
-  (รายละเอียดใต้หัวข้อ Why) นี่คือ *เนื้องาน* เดียวของรอบนี้ที่ไม่ใช่การยก
-- **ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่ได้เริ่มงานใหม่ใดๆ
-- อัปเดต `## Next task` ใน `AUTOPILOT.md`: บันทึกรอบนี้เป็น **ครั้งที่สามสิบเอ็ด** ที่พรอมต์
-  มาถึงโดย `## Next task` ว่างเปล่า และคงคำสั่ง 🛑 เดิมไว้ (รอคนเลือกงาน)
+- **Carried the twenty proven criteria onto this branch.** The branch was checked out at
+  bare `main` (`735de75`), so its PR would otherwise have proposed **deleting all 14,422
+  lines** of audit work the previous rounds proved. Whole-tree carry from `19a2be0`
+  (`auto/.../2026-09-11_0041`) — 21 audit docs, 25 audit test files, 5 production files,
+  `tailwind.config.js`, `AUTOPILOT.md`.
+- **Ran the Verify command and matched every recorded invariant** — test count, file count,
+  and all three vite content hashes.
+- **Found and recorded a gap in the plan's own narrative:** round `_2026-09-11_0041`
+  carried successfully but **died before writing its docs**, so `AUTOPILOT.md` jumps from
+  `_0031` straight to this round. I verified `_0041` left **no stranded mutation** and
+  wrote that finding into the plan so the next round doesn't mistake the jump for a lost round.
+- **Did not touch `src/` — not one line.** The plan's `## Next task` says explicitly that no
+  agent-doable work remains and instructs: carry → verify → update the line → stop.
+- Updated `## Next task` in `AUTOPILOT.md` and wrote this file.
 
 ## Why
 
-**`## Next task` ในพรอมต์มาถึงว่างเปล่า** และ `AUTOPILOT.md` *ในไฟล์ที่เช็คเอาต์มา* เป็นฉบับเก่า
-(ติ๊ก 0/20, Next task = ข้อ Undo ซึ่งทำเสร็จไปตั้งแต่ปลายเดือนสิงหา) — **ทั้งพรอมต์และ working copy
-ไม่ตรงกับความจริง** ฉบับจริงอยู่บน branch `auto/*` ที่ใหม่ที่สุด ระบุว่า **ครบ 20/20 แล้ว**
-พร้อมคำสั่งว่า *"ไม่มีงานที่ agent ทำต่อได้เองแล้ว — ให้ยก → verify → แก้บรรทัดนี้ → หยุด"*
+The prompt's `## Next task` arrived **empty** — for the 33rd time. Hard rule 5 says an empty
+or wrong task means correct the plan and stop, not invent a substitute. But stopping
+*immediately* would be wrong too: the branch was bare `main`, and a bare-main branch's PR
+reads as a mass deletion. So the carry happens first, then the stop. That ordering is the
+whole content of the round.
 
-**ทำไมต้องยกทั้งที่ไม่มีงาน:** branch นี้คือ `main` เปล่าๆ ถ้าหยุดเฉยๆ PR ที่ runner เปิด
-จะ diff bare-main กับโลก แล้ว **เสนอลบ audit ทั้ง 41 ไฟล์ทิ้ง** การยกจึงเป็นงานจริงของรอบนี้
+**Why the one-command whole-tree carry was safe here.** `git checkout <tip> -- .` overwrites
+paths present in `<tip>` but never removes paths that only exist locally — normally that
+strands files and the suite goes green at a lower count. It is only safe when the source is a
+descendant. I checked three layers before trusting it:
 
-**ทำไมยกทั้ง tree ด้วยคำสั่งเดียวได้ ทั้งที่กฎเดิมห้าม:** กฎ "blanket checkout ลบงาน" ยังจริง
-แต่มันจริง *เมื่อ branch ที่ยืนอยู่มีงานที่ต้นทางไม่มี* รอบนี้พิสูจน์ก่อนกดว่าไม่ใช่กรณีนั้น —
-`git merge-base --is-ancestor HEAD <tip>` เป็นจริง และ `git diff --diff-filter=D HEAD <tip>`
-**ว่างเปล่า** จึงลบอะไรไม่ได้ตามนิยาม **เงื่อนไข ancestor คือสิ่งที่ทำให้ปลอดภัย ไม่ใช่ตัวคำสั่ง**
-`merge`/`cherry-pick` ใช้ไม่ได้เพราะต้องขออนุมัติที่รอบ unattended ให้ไม่ได้
+1. `git merge-base HEAD 19a2be0` returned **HEAD** — `19a2be0`'s parent *is* this branch's tip.
+2. `git diff --name-status --diff-filter=D HEAD 19a2be0` was **empty** — no deletions to miss.
+3. After the carry, `git diff --stat 19a2be0` was **empty** — tree byte-identical to source.
 
-**เรื่องตัวนับรอบ (สิ่งเดียวที่เปลี่ยนไปจากรอบก่อน):**
-สูตรที่ไฟล์สั่งไว้คือ `git log --all --grep='carry the twenty proven criteria' | wc -l`
-รอบนี้มันให้ **16** ก่อน commit ของรอบนี้ ทั้งที่ `_0021` วัดได้ **15 รวมตัวเอง** —
-ส่วนต่างหนึ่งตัว *ดูเหมือน* มีรอบที่ยกแล้วหายเงียบเพิ่มอีก (ซึ่งเคยเกิดจริงสองครั้ง)
-แต่ไล่ดูแล้ว **ไม่ใช่**: ตัวที่เกินมาคือ commit `docs:` ของ `_0021` เอง (`aa6cbcd`) ซึ่ง
-**เขียนสูตร grep นั้นไว้ใน body ของตัวเอง** และ `--grep` อ่าน**ทั้งข้อความ ไม่ใช่แค่หัวข้อ**
-➡️ ตัวนับกำลังนับเอกสารที่พูดถึงตัวนับ และจะเฟ้อขึ้นเรื่อยๆ ทุกรอบที่บันทึกอย่างละเอียด
-แก้เป็นการปักที่หัวข้อตรงๆ: `git log --all --format='%s' | grep -c '^test: carry the …'`
-→ ได้ **15** ตรงกับที่ `_0021` วัดไว้เป๊ะ **ยืนยันว่าไม่มีรอบไหนหาย** และรอบนี้คือที่ **31**
+**Why I re-derived `_0041`'s status instead of trusting the file.** The plan's last recorded
+round is `_0031`, which would suggest `_0041` never ran. It did. Its branch holds exactly one
+commit above main — a clean `test: carry...`, **not** an `autopilot: rescued work` commit — and
+`git diff --stat 2ee5aa4 19a2be0` shows only `AUTOPILOT.md`/`SUMMARY.md` differing (because
+`_0041` carried from `_0031`'s *docs tip*, not its carry commit). `src/` is byte-identical.
+This matters because this project has been bitten three times by the runner committing a dead
+round's live mutation as "rescued work"; the distinguishing check is the commit subject plus a
+`src/` diff, and I ran it rather than assuming.
 
 ## Verification
 
-รัน Verify command เองเต็มๆ ทั้งสองท่อน:
+Ran the Verify command in full: `npm test && npm run build`.
 
 ```
-npm test   → Test Files 59 passed (59) · Tests 453 passed (453) · 35.30s
-npm run build → tsc -b ผ่าน · vite 116 modules transformed · ✓ built in 1.02s
-                dist/assets/index-bTUIGpdg.css  16.31 kB │ gzip 4.22 kB
-                dist/assets/index-CyVIMiFT.js  852.15 kB │ gzip 257.63 kB
-                PWA v1.3.0 · generateSW · precache 5 entries (849.13 KiB)
-                dist/sw.js · dist/workbox-9c191d2f.js
+Test Files  59 passed (59)
+     Tests  453 passed (453)
+  Duration  33.93s
+
+> tsc -b && vite build
+✓ 116 modules transformed.
+dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
+dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
+✓ built in 1.07s
+
+PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
+  dist/sw.js
+  dist/workbox-9c191d2f.js
 ```
 
-**พยานสองตัว ดูคู่กันตามกฎที่รอบก่อนตั้งไว้:**
-- **content hash ตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` ·
-  `workbox-9c191d2f.js`) = ซอร์สที่คอมไพล์เข้า bundle **เหมือนเดิมทุกไบต์** → ไม่มี mutation
-  ค้างใน `src/` production **เป็นรอบที่สิบเอ็ดที่แฮชนิ่งตั้งแต่ `_0021`**
-- **453 เทสต์ / 59 ไฟล์** = เฝ้าฝั่งที่แฮชมองไม่เห็น (ไฟล์ `*.audit.test.*` ไม่เข้า bundle
-  → mutation ที่ค้างในไฟล์เทสต์ไม่ขยับแฮชเลย) **นิ่งมาสิบสี่รอบ**
+**All three content hashes match the recorded baseline** — `index-bTUIGpdg.css`,
+`index-CyVIMiFT.js`, `workbox-9c191d2f.js`. This is the check that a green test count alone
+cannot do: a stranded mutation inside a carried file keeps the test tally at 453 but *always*
+moves vite's content hash. Tests, file count, module count, css size, and precache size all
+match too. **13 consecutive rounds with stable hashes; 453 tests / 59 files stable for 16.**
 
-**ยืนยันการยกอีกชั้น:** `git diff --stat <tip>` หลัง checkout = **ศูนย์บรรทัด** (byte-identical)
-และ `git diff --stat <tip> -- src tailwind.config.js vite.config.ts` = **ว่าง** เช่นกัน
+Round counter, using the subject-anchored formula `_0031` corrected (a body-matching `--grep`
+over-counts, because a docs commit quoting the recipe matches itself):
 
-**ตัวนับรอบ:** สูตรใหม่ (ปักหัวข้อ) ให้ **15 ก่อน commit ของรอบนี้** ➡️ **รอบนี้คือที่สามสิบเอ็ด**
+```
+git log --all --format='%s' | grep -c '^test: carry the twenty proven criteria'
+→ 18
+```
+
+Timestamps run unbroken back to `09-07 00:48`. Carry **#16 = `_0031`**, matching `_0031`'s own
+measurement of 15-before-itself exactly — so **#17 = `_0041`, #18 = this round**, and by the
+offset `carry #16 ↔ round 31`, this is **round 33**.
 
 ## What I did NOT do
 
-- **ไม่ได้เริ่มเกณฑ์ข้อใหม่ ไม่ได้เขียนเทสต์ใหม่ ไม่ได้แตะ `src/`** — แผนสั่งตรงตัวว่าไม่มีงาน
-  ที่ agent ตัดสินใจเองได้แล้ว ช่องว่างเจ็ดข้อที่เหลือ (export path · PWA icons · thermometer ·
-  Happy-Hour pricing · ปิดซุ้ม/`countedCash` · Passport · presence ต่อ device) **ล้วนเป็น
-  การสร้างฟีเจอร์ = แตะ logic บัญชี/เมนู/comms ซึ่ง Out of scope ห้ามตรงตัว** และหลายข้อ
-  เป็นการตัดสินใจเชิงดีไซน์ (ไอคอนของโรงเรียน, ค่า `2xl`/`3xl` ที่สเปกไม่ได้ให้)
-- **ไม่ได้ย้อนกลับไปแก้ตัวเลข "ครั้งที่ N" ของรอบก่อนๆ ในไฟล์** — ตัวเลขที่บันทึกไว้ยังถูก
-  (ตัวนับเฟ้อเพิ่งเริ่มเฟ้อที่ `aa6cbcd` ซึ่งเขียนหลังรอบนั้นวัดไปแล้ว) แก้แค่ *สูตรที่จะใช้ต่อไป*
-- **ไม่ได้รัน mutation check รอบนี้** — ไม่ได้เขียน assertion ใหม่ จึงไม่มีอะไรให้พิสูจน์ความแข็ง
-- **ไม่ได้แก้ตัวเลขหรือข้อความของเกณฑ์ข้อไหน** และไม่ได้แตะ `docs/superpowers/specs/`
+- **No `src/` change, no new test, no new audit.** All 20 criteria are already ticked; the plan
+  states no agent-doable work remains. Inventing a 21st audit would be scope creep of exactly
+  the kind hard rule 1 forbids.
+- **Did not write a retroactive SUMMARY for `_0041`.** That branch is not mine to commit to,
+  and its outcome is now recorded in `AUTOPILOT.md` where the next round will read it.
+- **Did not renumber the plan's older round entries** to close the `_0031`→`_0012` gap in the
+  narrative. The counter is the source of truth; rewriting history in prose would just create
+  a second thing to keep in sync.
 
 ## Risk
 
-- 🚨 **20/20 ไม่ได้แปลว่า "ผ่านหมด"** — ที่ถูกคือ **13 ข้อพิสูจน์ด้วยเทสต์ที่รันได้จริง ·
-  7 ข้อปิดในฐานะช่องว่างที่บันทึกไว้** เทสต์ของเจ็ดข้อนั้น **assert สภาพที่ยังพังอยู่**
-  (`idempotency E1` · `pwa I1` · `alert C5` · `donation T1–T3` · `hq G0/G1` ·
-  `missingFeatures H*/C*/P*` · `offlineSync G1–G6` · `roundedScale G0`)
-  ➡️ **ถ้าวันหนึ่งเทสต์พวกนี้แดง แปลว่ามีคนสร้างของนั้นแล้ว = นั่นคือการแก้ ไม่ใช่การถดถอย**
-  ให้ไปอ่านบันทึกใน `docs/autopilot/` ก่อนจะ "ซ่อม" อะไร **ห้ามลบทิ้ง**
-- 🚨 **ไม่มีพิกเซลไหนถูกวัดในทั้งโปรเจกต์** — เกณฑ์เรื่อง Display (กึ่งกลาง · glanceable ·
-  clamp · Neon Clarity · touch target ≥44px) พิสูจน์แค่ **ค่าที่ประกาศไว้ในซอร์ส** jsdom
-  ไม่ทำ layout และ Tailwind ไม่เคยรันในเทสต์ **ควรมีคนเปิดจอจริงดูทั้งสี่ความกว้างก่อนวันงาน**
-- 🚨 **"realtime" / "ภายในไม่กี่วิ" / "sync กลับได้" ไม่เคยถูกวัด** ไม่มีเน็ต ไม่มี Firestore จริง
-  ไม่มี emulator — สิ่งที่พิสูจน์คือ **รูปทรง** (push ไม่มี poll คั่น) ความหน่วงจริงและการ flush
-  ของ offline queue **ต้องมีคนถือสองเครื่องยืนวัดในงาน**
-- ⚠️ **ยังมีบั๊กที่รู้ตัวแต่ยังไม่ปิด สองข้อที่กระทบของจริง**: (1) `icons: []` ใน manifest
-  → **ติดตั้งลงหน้าจอโฮมไม่ได้** ซึ่งคือเหตุผลทั้งหมดที่ทำ PWA · (2) การชนกันของ **สองเครื่อง**
-  ยังปิดไม่ได้จริง (guard เป็นของ panel ต่อ instance) ต้องใช้ `runTransaction` ซึ่งแตะ repo +
-  `firestore.rules` (out of scope) — `E1` ปักไว้ว่ายังได้ 2 writes
-- ⚠️ **ตัวนับรอบเคยพร้อมจะโกหกมาแล้วสองแบบ ตอนนี้รู้ทั้งสองแบบ**: นับจาก *ข้อความในไฟล์*
-  → **ต่ำไป** (รอบที่ยกแล้วไม่บันทึกตัวเองหายเงียบ, เกิดกับ `_0041`/`_0040`) · นับด้วย
-  `--grep` แบบเดิม → **สูงไป** (นับ commit ที่แค่ *พูดถึง* สูตร, เพิ่งเจอรอบนี้)
-  **ใช้สูตรที่ปักหัวข้อเท่านั้น และห้ามเปลี่ยนถ้อยคำหัวข้อ commit ยก**
-- ⚠️ **รอบต่อไปที่เปิดมาโดยไม่มีคนสั่ง จะเจอสภาพเดียวกันเป๊ะ** — พรอมต์ว่าง + branch เปล่า
-  **ให้ยก → verify → บันทึก → หยุด อย่าหาเรื่องทำ**
-- ⚠️ **`AUTOPILOT.md` ที่ runner เช็คเอาต์มาให้เป็นฉบับเก่าเสมอ** (0/20) เพราะ branch ตัดจาก
-  `main` ซึ่งไม่เคยรับ merge จาก `auto/*` เลย **ห้ามเชื่อ working copy — อ่านจาก sibling ที่ใหม่ที่สุด**
+**Nothing here is verified beyond "the tree is identical and the build is reproducible."**
+Reviewers should be aware of the following, in descending order of how much they'd matter:
+
+- **This round proves no new behaviour.** It is a carry plus a verification. Its entire value is
+  that the PR now shows +14,422 lines of proven tests rather than a mass deletion. If you are
+  looking for new coverage, there is none, deliberately.
+- **The 20 ticked criteria include several ticked *as documented gaps*, not as passing
+  features** — Happy-Hour pricing, cash reconciliation, and Passport are ticked because the gap
+  is pinned by a test, not because the feature exists. Likewise `idempotency E1` (two-device
+  race), `pwa I1` (no icons — the app is **not installable**), `alert C5` (no toast sound),
+  `donation T1–T3` (no thermometer bar), `hqTwoDevices G0` (no export path). **A reader
+  skimming "20/20" will badly overestimate what ships.** Each of those tests asserts a
+  *currently-broken* state — if one turns red, someone built the feature; that is a fix, not a
+  regression, and the tests must be promoted rather than deleted.
+- **`_0041`'s clean-death finding rests on my reading of one diff.** I checked that its single
+  commit is a carry and that `src/` matches `_0031`. I did not re-run `_0041`'s own verification
+  — I ran mine, on the resulting tree, and it passed.
+- **The round counter is load-bearing and fragile.** It keys on the exact commit subject
+  `test: carry the twenty proven criteria onto this branch`. Any reword silently resets the
+  chain. I kept the subject verbatim and kept the recipe *out* of my commit body for the same
+  reason.
+- **A large share of the carried suite measures declared source text, not rendered output.**
+  jsdom runs no layout and Tailwind never executes, so the centering, clamp, neon-clarity,
+  radius and touch-target audits prove *what the source declares*, not what a screen shows.
+  **Someone should still open the Display screen on real hardware.** The audit docs say this
+  too; it is not a new concern, but it should not vanish behind a green tick.
+- **Known unresolved design decision, unchanged this round:** `rounded-xl` (20px) now exceeds
+  `rounded-2xl` (19.2px), so 8 cards asking for rounder corners render squarer. `roundedScale G0`
+  pins it; resolving it needs a human design call, not an audit.
+
+**Recommended next step: a human picks the next goal.** Candidates, in the order I'd rank them
+by real-world impact on a school booth that actually runs: PWA icons (today the app cannot be
+installed to a home screen, which is the entire point of the PWA work), then the two-device
+write race, then the donation thermometer bar.
