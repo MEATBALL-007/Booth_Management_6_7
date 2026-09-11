@@ -1,24 +1,24 @@
-# SUMMARY — round `auto/Booth_Management_6_7/2026-09-12_0016`
+# SUMMARY — round `auto/Booth_Management_6_7/2026-09-12_0026`
 
 ## What I did
 
 - **Carried the twenty proven criteria onto this branch.** The branch was checked out at bare
   `main` (`735de75`), so its PR would otherwise have proposed **deleting every audit test and
-  document** the previous rounds proved. Whole-tree carry from `e1686e6`
-  (`auto/.../2026-09-12_0006`) — 21 audit docs, 25 audit test files, 5 production files,
+  document** the previous rounds proved. Whole-tree carry from `ce1f5d3`
+  (`auto/.../2026-09-12_0016`) — 21 audit docs, 25 audit test files, 5 production files,
   `tailwind.config.js`, `AUTOPILOT.md`.
 - **Ran the Verify command and matched every recorded invariant** — test count, file count,
   module count, css size, precache size, and all three vite content hashes.
 - **Confirmed this round inherited no stranded mutation.** The working tree was clean at bare
-  `main`, and the carry source `_0006` ended with a complete two-commit history (carry +
-  `docs:`), not a runner `autopilot: rescued work` commit.
+  `main` with no untracked files, and the carry source `_0016` ended with a complete two-commit
+  history (carry + `docs:`), not a runner `autopilot: rescued work` commit.
 - **Did not touch `src/` — not one line.** The plan's `## Next task` states explicitly that no
   agent-doable work remains and instructs: carry → verify → update the line → stop.
 - Updated `## Next task` in `AUTOPILOT.md` and wrote this file.
 
 ## Why
 
-The prompt's `## Next task` arrived **empty** — for the 34th time. Hard rule 5 says an empty or
+The prompt's `## Next task` arrived **empty** — for the 35th time. Hard rule 5 says an empty or
 wrong task means correct the plan and stop, not invent a substitute. But stopping *immediately*
 would be wrong: the branch was bare `main`, and a bare-main branch's PR reads as a mass
 deletion of 14,000+ lines of proven work. So the carry happens first, then the stop. That
@@ -29,20 +29,25 @@ paths present in `<tip>` but never removes paths that exist only locally — nor
 files and the suite goes green at a *lower* count, which is exactly the failure that looks like
 success. It is only safe when the source is a strict descendant. I checked three layers:
 
-1. `git merge-base HEAD e1686e6` returned **HEAD** — this branch's tip is an ancestor of the source.
-2. `git diff --name-status --diff-filter=D HEAD e1686e6` was **empty** — no deletions to miss.
-3. After the carry, `git diff --stat e1686e6` was **empty** — tree byte-identical to source.
+1. `git merge-base HEAD ce1f5d3` returned **HEAD** — this branch's tip is an ancestor of the source.
+2. `git diff --name-status --diff-filter=D HEAD ce1f5d3` was **empty** — no deletions to miss.
+3. After the carry, `git diff --stat ce1f5d3` was **empty** — tree byte-identical to source.
 
 **Why the hash comparison is the load-bearing check, not the test count.** A stranded mutation
 inside an already-covered file keeps the tally at 453 but *always* moves vite's content hash,
 because vite names bundles by a hash of their contents. Test count and hash are two independent
 witnesses and I checked both.
 
-**One thing worth noting about this particular carry.** `_0006` did not carry from a branch that
-had recorded its own hashes — it carried from `_0041`, which died before writing its docs. So the
-hashes matching here confirms, across two hops, that what `_0006` *recorded* is what it actually
-*passed on*, rather than a number copied forward down a chain. That is a slightly stronger claim
-than the previous rounds could make, and I have noted it in the plan.
+**One way this carry is cleaner than the last one.** `_0016` carried from `_0041`, which had
+died before writing its docs, so its hash match was a two-hop inference. `_0016` recorded all
+three hashes in its own `SUMMARY.md` before dying, so this round's match is a **single-hop**
+check against what the source itself claimed. Both hops produce the same three hashes, so the
+chain back to `_2026-09-07_0046` is unbroken either way.
+
+**Why I checked for untracked files before running anything.** The `frozenZones` and
+`uiOverhaulDiffScope` sweeps enumerate `git ls-files --others`, so any scratch file left at the
+repo root reddens them and contaminates the result. `git ls-files --others --exclude-standard`
+was empty.
 
 ## Verification
 
@@ -51,13 +56,13 @@ Ran the Verify command in full: `npm test && npm run build`.
 ```
 Test Files  59 passed (59)
      Tests  453 passed (453)
-  Duration  41.06s
+  Duration  35.17s
 
 > tsc -b && vite build
 ✓ 116 modules transformed.
 dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
 dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
-✓ built in 1.02s
+✓ built in 1.03s
 
 PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
   dist/sw.js
@@ -66,20 +71,20 @@ PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
 
 **All three content hashes match the recorded baseline** — `index-bTUIGpdg.css`,
 `index-CyVIMiFT.js`, `workbox-9c191d2f.js`. Module count, css size and precache size match too.
-**14 consecutive rounds with stable hashes; 453 tests / 59 files stable for 17.**
+**15 consecutive rounds with stable hashes; 453 tests / 59 files stable for 18.**
 
 Round counter, using the subject-anchored formula (a body-matching `--grep` over-counts, because
 a docs commit quoting the recipe matches itself):
 
 ```
 git log --all --format='%s' | grep -c '^test: carry the twenty proven criteria'
-→ 19   (18 before this round's commit)
+→ 20   (19 before this round's commit)
 ```
 
-By the offset `carry #16 ↔ round 31` that `_0031` established and `_0006` confirmed, **#19 is
-round 34**. No round went missing this time: `_0006` is #18 exactly as it recorded, and its
-branch carries both a carry commit and a trailing `docs:` commit, so it died *after* writing its
-own record rather than before.
+By the offset `carry #16 ↔ round 31` that `_0031` established and `_0006`/`_0016` confirmed,
+**#20 is round 35**. No round went missing this time: `_0016` is #19 exactly as it recorded, and
+its branch carries both a carry commit and a trailing `docs:` commit, so it died *after* writing
+its own record rather than before.
 
 ## What I did NOT do
 
@@ -119,9 +124,10 @@ In descending order of how much a reviewer should care:
 - **Known unresolved design decision, unchanged this round:** `rounded-xl` (20px) now exceeds
   `rounded-2xl` (19.2px), so 8 cards asking for rounder corners render squarer. `roundedScale G0`
   pins it; resolving it needs a human design call, not an audit.
-- **This branch will not merge itself.** Like the 18 rounds before it, it sits alongside its
+- **This branch will not merge itself.** Like the 19 rounds before it, it sits alongside its
   siblings rather than on top of them. The carry is what keeps that survivable, but the real fix
-  is a human merging one of these PRs.
+  is a human merging one of these PRs. **Nineteen consecutive rounds have now produced nothing
+  but a re-carry** — the loop is stable, not productive, and only a human can change that.
 
 **Recommended next step: a human picks the next goal.** Ranked by real-world impact on a school
 booth that actually runs: **PWA icons** (today the app cannot be installed to a home screen,
