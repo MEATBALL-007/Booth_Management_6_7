@@ -1,145 +1,87 @@
-# SUMMARY — round `auto/Booth_Management_6_7/2026-09-13_0022`
+# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-13_0032`
 
 ## What I did
 
-- **Carried the twenty proven criteria onto this branch.** The branch was checked out at bare
-  `main` (`735de75`), so its PR would otherwise have proposed **deleting every audit test and
-  document** the previous rounds proved. Whole-tree carry from `2e6bb12`
-  (`auto/.../2026-09-13_0011`) — 49 paths: 21 audit docs, 20 audit test files, 5 production
-  files, `tailwind.config.js`, `AUTOPILOT.md`, `SUMMARY.md`.
-- **Ran the Verify command and matched every recorded invariant** — test count, file count,
-  module count, css size, precache size, and all three vite content hashes.
-- **Confirmed this round inherited no stranded mutation.** The carry source has exactly **two**
-  commits past `main`, both genuine (`test: carry…`, `docs: record…`), neither an
-  `autopilot: rescued work` commit; and `git diff --stat 39a2cf3 2e6bb12 -- src
-  tailwind.config.js` is **empty**, so the shipped source is byte-identical to the tree the
-  mutation tables were measured against.
-- **Caught the round counter's wrong formula reporting a wrong number, live.** The
-  subject-anchored count gives **23**; the body-inclusive `--grep` count gives **24**. Until now
-  this was a written-down warning; this round it is a measured two-number discrepancy.
-- **Did not touch `src/` — not one line.** The plan's `## Next task` states explicitly that no
-  agent-doable work remains and instructs: carry → verify → update the line → stop.
+- **ยกงานทั้ง tree ขึ้น branch นี้** — branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) อีกครั้ง
+  แปลว่าก่อนยก มันคือ **main ล้วน ไม่มี audit สักไฟล์** ยกจาก `_0022` (`7ec3a7a`)
+  ด้วยคำสั่งเดียว `git checkout <tip> -- .` → **49 ไฟล์ · +14,577 บรรทัด** (commit `2fdb12c`)
+- **เช็คสามชั้นก่อน/หลังยก** — `merge-base HEAD <tip>` คืน **HEAD** (ใบอนุญาตให้ยกทั้ง tree
+  ด้วยคำสั่งเดียว) · `diff --cached --diff-filter=D` **ว่าง** (ไม่ได้ลบอะไรเลย) ·
+  `diff --cached --stat <tip>` **ว่าง** (tree ตรงกับต้นทางเป๊ะทุกไบต์)
+- **รัน Verify เต็ม** `npm test && npm run build` และ **เทียบแฮช bundle ทั้งสามตัวกับ baseline**
+  ที่ `_0022` บันทึกไว้เอง — **ตรงทั้งสามตัว**
+- **ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่ได้เริ่มงานใหม่ — ตามที่ `## Next task` สั่งไว้ตรงตัว
+- **อัปเดต `## Next task`** บันทึกรอบนี้ + ข้อสังเกตใหม่เรื่องตัวนับ (ด้านล่าง)
 
 ## Why
 
-The prompt's `## Next task` arrived **empty** — for the 38th time. Hard rule 5 says an empty or
-wrong task means correct the plan and stop, not invent a substitute. But stopping *immediately*
-would be wrong: the branch was bare `main`, and a bare-main branch's PR reads as a mass deletion
-of 14,000+ lines of proven work. So the carry happens first, then the stop. That ordering is the
-entire content of the round.
+`## Next task` ในพรอมต์มาถึง **ว่างเปล่า** เป็น **ครั้งที่ 39** และแผนบน branch ล่าสุดเขียนสั่งไว้
+ชัดเจนว่า *"ไม่มีงานที่ agent ทำต่อได้เองแล้ว — ให้ยก → verify → แก้บรรทัดนี้ → หยุด
+อย่าหาเรื่องทำ"* เกณฑ์ทั้ง **20/20 ติ๊กครบแล้ว** การไปเริ่มงานที่ไม่มีคนสั่งคือ scope creep
 
-**Why the one-command whole-tree carry was safe here.** `git checkout <tip> -- .` overwrites
-paths present in `<tip>` but never removes paths that exist only locally — normally that strands
-files and the suite goes green at a *lower* count, which is the failure that looks like success.
-It is only safe when the source is a strict descendant. I checked three layers:
+**ทำไมการยกงานถึงไม่ใช่งานว่าง:** branch ในโปรเจคนี้ **ไม่เคย merge กัน** งานทุกอย่างจึงค้าง
+อยู่บน branch ของตัวเอง ถ้ารอบนี้ไม่ยก PR ที่ runner เปิดจะเป็น **PR ที่เสนอลบงานทั้งหมดทิ้ง**
 
-1. `git merge-base HEAD 2e6bb12` returned **HEAD** — this branch's tip is an ancestor of the source.
-2. `git diff --name-status --diff-filter=D 735de75 2e6bb12` was **empty** — no deletions to miss.
-3. After the carry, `git diff --cached --stat 2e6bb12` was **empty** — tree byte-identical to source.
+**ทำไมใช้คำสั่งเดียวได้:** `merge-base HEAD <tip>` คืน HEAD ⇒ tip เป็น superset แท้ของ branch นี้
+`checkout <tip> -- .` จึง **ลบไฟล์ที่ branch นี้มีแต่ tip ไม่มี ไม่ได้** (เพราะไม่มีไฟล์แบบนั้น)
+ถ้าเช็คนี้ไม่ผ่าน ต้องยกแบบระบุ path ทีละไฟล์ — `merge`/`cherry-pick` ถูก deny ในสภาพแวดล้อมนี้
 
-**Why the hash comparison is the load-bearing check, not the test count.** A stranded mutation
-inside an already-covered file keeps the tally at 453 but *always* moves vite's content hash,
-because vite names bundles by a hash of their contents. Test count and hash are two independent
-witnesses and I checked both.
-
-**Why this round's verification is stronger than the last one's.** `_0011` had to bridge two hops
-because its own source (`_0036`) died before recording anything. `_0011` *did* record all three
-of its hashes, so this round compares against numbers the immediate source wrote down itself —
-**single-hop, chain repaired**. The chain back to `_2026-09-07_0046` remains unbroken.
-
-**Why I checked for untracked files before running anything.** The `frozenZones` and
-`uiOverhaulDiffScope` sweeps enumerate `git ls-files --others`, so any scratch file left at the
-repo root reddens them and contaminates the result. `git status --untracked-files=all` was empty,
-and I deliberately kept every scratch path out of the repo.
+**ทำไมต้องเทียบแฮช ไม่ใช่แค่นับเทสต์:** จำนวนเทสต์ **มองไม่เห็น mutation ที่ค้างอยู่**
+(รอบที่ตายกลางทางแล้ว runner commit การทดลองทิ้งไว้ — เคยเกิดมาแล้ว 3 ครั้ง) แต่ content hash
+ของ vite ขยับทุกครั้งที่ซอร์สต่างไปแม้ไบต์เดียว
 
 ## Verification
 
-Ran the Verify command in full: `npm test && npm run build`.
+รันเองครบทั้งสองท่อน ผลจริงที่พิมพ์ออกมา:
 
 ```
-Test Files  59 passed (59)
-     Tests  453 passed (453)
-  Duration  39.51s
+npm test   →  Test Files  59 passed (59)
+              Tests      453 passed (453)
 
-> tsc -b && vite build
-✓ 116 modules transformed.
-dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
-dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
-✓ built in 1.03s
-
-PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
-  dist/sw.js
-  dist/workbox-9c191d2f.js
+npm run build → tsc -b ผ่าน (ไม่มี error)
+                116 modules transformed
+                dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:  4.22 kB
+                dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
+                PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
+                dist/sw.js · dist/workbox-9c191d2f.js
+                ✓ built in 1.02s
 ```
 
-**All three content hashes match the recorded baseline** — `index-bTUIGpdg.css`,
-`index-CyVIMiFT.js`, `workbox-9c191d2f.js`. Module count, css size and precache size match too.
-**17 consecutive rounds with stable hashes; 453 tests / 59 files stable for 20.**
+✅ **แฮชตรงกับ baseline ที่ `_0022` บันทึกไว้ทั้งสามตัว** — `index-bTUIGpdg.css` ·
+`index-CyVIMiFT.js` · `workbox-9c191d2f.js` ⇒ **สิบแปดรอบติดที่แฮชนิ่ง** และ
+**453 เทสต์ / 59 ไฟล์ นิ่งมายี่สิบเอ็ดรอบ** ⇒ การยกงานรอบนี้ **ไม่มี mutation ค้างติดมาด้วย**
 
-Round counter, using the subject-anchored formula — and this round the wrong formula was run
-alongside it deliberately, because the gap is the point:
+`git status` หลัง build **สะอาด** (`dist/` ถูก ignore) — สำคัญ เพราะไฟล์ untracked ที่ราก repo
+จะทำให้ census audit (`frozenZones C1` · `uiOverhaulDiffScope S2`) แดง ด้วยเหตุผลปลอม
 
-```
-git log --all --format='%s' | grep -c '^test: carry the twenty proven criteria'
-→ 23   (22 before this round's commit)          ← correct
-
-git log --all --grep='carry the twenty proven criteria' --oneline | wc -l
-→ 24                                             ← wrong, over-counts by one
-```
-
-By the offset `carry #16 ↔ round 31` that `_0031` established and `_0006`/`_0016`/`_0026`/`_0011`
-confirmed, **#23 is round 38**, and **#22 is `_0011`** exactly as it recorded. The `--grep` form
-counts a docs commit that merely *quotes* the recipe in its body, so it reports one extra round —
-which, compared against the offset, would look like a round had gone missing somewhere. My own
-carry commit keeps the recipe out of its body for this reason.
+**ข้อสังเกตใหม่เรื่องตัวนับรอบ (วัดจริง ไม่ใช่คำเตือน):**
+- `--format=%s` แบบปักหัวทั้งบรรทัด ให้ **24** · `--grep` แบบนับเนื้อความด้วย ให้ **25**
+  ตัวปลอมคือ `aa6cbcd` ซึ่งเป็น docs commit ที่ *อ้างถึง* สูตรในเนื้อความ ⇒ ยืนยันกฎ `_0018`
+  เป็นรอบที่สองที่วัดได้จริง
+- 🆕 **`git log` ที่ไม่ใส่ `--all` ให้ 1** เพราะ carry commit ของรอบอื่นไม่อยู่ในสายบรรพบุรุษ
+  ของ HEAD (branch ไม่เคย merge) — **เดิมไม่มีใครบันทึกข้อนี้ไว้** ถ้าใครนับโดยไม่ใส่ `--all`
+  จะสรุปว่า "นี่เป็นรอบแรก" ทั้งที่เป็นรอบที่ 39
+- ออฟเซ็ต `carry #16 ↔ รอบที่ 31` ⇒ **#24 ↔ รอบที่ 39** และ **#23 = `_0022`** ตรงกับที่
+  `_0022` บันทึกไว้เอง ⇒ โซ่ยังเป็นทอดเดียว ไม่ต้องสะพานข้าม
 
 ## What I did NOT do
 
-- **No `src/` change, no new test, no new audit.** All 20 criteria are already ticked and the
-  plan states no agent-doable work remains. Inventing a 21st audit would be exactly the scope
-  creep hard rule 1 forbids.
-- **Did not tick or untick any checkbox.** All 20 were already ticked by the rounds that earned
-  them; this round earned nothing new.
-- **Did not re-run the mutation tables.** They are recorded per-criterion in `docs/autopilot/`
-  and nothing in `src/` moved, so re-running them would consume the round to reproduce a known
-  result — and the hash match already proves `src/` is the tree those tables were measured against.
-- **Did not act on any of the open items in the Risk section below.** Each needs a human
-  decision (PWA icons, the two-device write race, the thermometer bar, the radius inversion),
-  and several sit squarely inside the "no accounting/menu/comms logic" out-of-scope rule.
+- **ไม่ได้เริ่มเกณฑ์ใหม่ / ไม่ได้แก้ `src/` เลยสักบรรทัด** — 20/20 ติ๊กครบ และแผนสั่งให้หยุด
+- **ไม่ได้แตะช่องว่าง 6 ข้อที่บันทึกไว้** (export ของ HQ · PWA icons · เสียง toast ·
+  thermometer · Happy-Hour override · ปิดซุ้ม/passport) — ทุกข้อเป็น **การตัดสินใจเชิงดีไซน์
+  หรือการเขียนฟีเจอร์ใหม่** ซึ่งต้องมีคนสั่ง และบางข้อชน Out of scope ตรงๆ
+- **ไม่ได้ push / ไม่ได้เปิด PR** — เป็นหน้าที่ runner
+- **ไม่ได้รัน mutation check ใหม่** — ไม่มีโค้ดใหม่ให้ตรวจ ตารางเดิมยังใช้ได้
 
 ## Risk
 
-**Nothing here is verified beyond "the tree is identical and the build is reproducible."**
-In descending order of how much a reviewer should care:
-
-- **This round proves no new behaviour.** It is a carry plus a verification. Its entire value is
-  that the PR shows +14,000 lines of proven tests instead of a mass deletion. If you are looking
-  for new coverage, there is none, deliberately.
-- **The 20 ticked criteria include several ticked *as documented gaps*, not as working
-  features.** Happy-Hour pricing, cash reconciliation and Passport are ticked because the gap is
-  *pinned by a test*, not because the feature exists. Likewise `idempotency E1` (two-device
-  race), `pwa I1` (**no icons — the app cannot be installed to a home screen**), `alert C5` (no
-  toast sound), `donation T1–T3` (no thermometer bar), `hqTwoDevices G0` (no export path).
-  **A reader skimming "20/20" will badly overestimate what ships.** Each of those tests asserts a
-  *currently-broken* state — if one turns red, someone built the feature; that is a fix, not a
-  regression, and the test must be promoted rather than deleted.
-- **A large share of the carried suite measures declared source text, not rendered output.**
-  jsdom runs no layout and Tailwind never executes, so the centering, clamp, neon-clarity, radius
-  and touch-target audits prove *what the source declares*, not what a screen shows. **Someone
-  should still open the Display screen on real hardware before the event.**
-- **The round counter is load-bearing and fragile, and this round measured that.** It keys on the
-  exact commit subject `test: carry the twenty proven criteria onto this branch`; any reword
-  silently resets the chain. The `--grep` variant is now demonstrably off by one (24 vs 23), so
-  a future round that reaches for the convenient formula will mis-number itself.
-- **Known unresolved design decision, unchanged this round:** `rounded-xl` (20px) now exceeds
-  `rounded-2xl` (19.2px), so 8 cards asking for rounder corners render squarer. `roundedScale G0`
-  pins it; resolving it needs a human design call, not an audit.
-- **This branch will not merge itself.** Like the 21 rounds before it, it sits alongside its
-  siblings rather than on top of them. The carry is what keeps that survivable, but the real fix
-  is a human merging one of these PRs. **Twenty-two consecutive rounds have now produced nothing
-  but a re-carry** — the loop is stable, not productive, and only a human can change that.
-
-**Recommended next step: a human picks the next goal.** Ranked by real-world impact on a school
-booth that actually runs: **PWA icons** (today the app cannot be installed to a home screen,
-which is the entire point of the PWA work), then the **two-device write race**, then the
-**donation thermometer bar**.
+- 🟢 **Verify ผ่านครบ** ไม่มีอะไรถูกกดให้เขียว ไม่ได้ลบ/skip เทสต์ ไม่ได้แก้ Verify command
+- ⚠️ **รอบนี้ไม่ได้เพิ่มหลักประกันใหม่ให้ระบบเลย** — เป็นรอบ "ยก + ยืนยัน" ล้วน
+  คุณค่าทั้งหมดคือ *งานของ 20 รอบก่อนไม่หายไปกับ PR ที่ว่างเปล่า*
+- ⚠️ **ระบบติดลูปเชิงโครงสร้าง: 23 รอบติดที่ทำแค่ยกงาน** ต้นเหตุคือ branch ไม่เคย merge
+  กลับ `main` + `## Next task` ในพรอมต์มาว่างเปล่า **ตราบใดที่ไม่มีคนสั่งงานใหม่หรือ merge
+  branch กลับ ทุกรอบต่อจากนี้จะทำแบบเดียวกันไปเรื่อยๆ** — นี่คือสิ่งที่ reviewer ควรแก้
+  ที่ระดับ process ไม่ใช่ที่โค้ด
+- ⚠️ **หลักประกันที่ *ประกาศไว้* ยังไม่ใช่หลักประกันที่ *วัดด้วยพิกเซล*** — audit หลายไฟล์
+  พิสูจน์ค่าที่ประกาศในซอร์ส (Tailwind ไม่เคยรันจริงในเทสต์) เขียนเตือนไว้ในแต่ละบันทึกแล้ว
+  **ควรมีคนเปิดจอ Display + สี่ความกว้างจริงดูด้วยตาก่อนใช้งานจริง**
