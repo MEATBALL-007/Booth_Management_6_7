@@ -1,4 +1,4 @@
-import { collection, addDoc, onSnapshot, query, where, doc, updateDoc } from 'firebase/firestore'
+import { collection, addDoc, onSnapshot, query, where, doc, updateDoc, deleteField } from 'firebase/firestore'
 import { getDb } from '../lib/firebase'
 import type { Order, BoothId } from '../domain/types'
 
@@ -23,5 +23,18 @@ export function subscribeAllOrders(cb: (orders: Order[]) => void): () => void {
 }
 
 export async function updateOrderStatus(id: string, patch: Partial<Order>): Promise<void> {
-  await updateDoc(doc(getDb(), 'orders', id), patch)
+  await updateDoc(doc(getDb(), 'orders', id), withDeletions(patch))
+}
+
+/**
+ * Firestore has no "write undefined": `updateDoc` rejects it outright, and
+ * simply omitting the key means merge, which keeps the old value. Undo needs a
+ * third thing — "this field should not exist" — and `deleteField()` is the
+ * sentinel for it. Keys holding a real value are passed through untouched, so a
+ * patch with nothing absent (every caller other than undo) is unaffected.
+ */
+function withDeletions(patch: Partial<Order>): Record<string, unknown> {
+  return Object.fromEntries(
+    Object.entries(patch).map(([key, value]) => [key, value === undefined ? deleteField() : value]),
+  )
 }
