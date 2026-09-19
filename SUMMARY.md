@@ -1,91 +1,105 @@
-# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-20_0025`
+# Round summary — `auto/Booth_Management_6_7/2026-09-20_0035`
 
 ## What I did
 
-- **ยกงานทั้ง tree ขึ้น branch นี้** — branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) โดยไม่มีอะไร
-  ถูกยกมาเลย ถ้าปล่อยไว้ PR จากรอบนี้จะ **เสนอลบงานของทั้ง 20 เกณฑ์ทิ้ง
-  (50 ไฟล์ · 15,608 บรรทัด)** ยกจาก `_2026-09-20_0015` (`92c8486`) ด้วย
-  `git checkout 92c8486 -- .` คำสั่งเดียว → commit `e90f0a2`
-- **ตรวจเงื่อนไขก่อนยกทั้ง tree สองชั้นคู่กัน** — `git merge-base HEAD 92c8486` คืน
-  **`735de75` = HEAD เอง** ✅ *และ* `git diff --name-status --diff-filter=D HEAD 92c8486`
-  คืน **ว่าง** ✅ สองชั้นนี้คู่กัน ไม่ใช่ชั้นใดชั้นหนึ่ง
-- **เลือกต้นทางด้วยการวัด ไม่ใช่ด้วยวันที่** — `src`/`docs` ของปลายสี่ตัวล่าสุด
-  (`_0015`·`_0005`·`_0040`·`_0030`) เท่ากันหมดทุกไบต์ (`665250c` / `ab2c756`)
-  → ปลายใหม่สุดเป็น superset จริง ไม่ใช่ carry ที่ยกมาไม่ครบ
-- **verify แล้วบันทึกผลรันจริง** — `npm test && npm run build` ผ่านทั้งคู่ แฮชตรงครบสามตัว
-- **อัปเดต `## Next task`** และ **ไม่ได้แตะ `src/` เลยสักบรรทัด** ไม่ได้เริ่มงานใหม่
+- **Carried the whole tree from the newest sibling branch `_2026-09-20_0025` (`6fe3aa5`).**
+  This branch was cut at **bare `main` (`735de75`)** and held **zero** of the twenty proven
+  acceptance criteria — 0 audit test files, 0 files in `docs/autopilot/`. Left alone, its PR
+  would have proposed **deleting all 50 files of accumulated work**. Carry: 50 files, +15639/−69.
+- **Verified the carry at five layers before trusting green** (details under Verification).
+- **Ran the Verify command** (`npm test && npm run build`): 59 files / 453 tests pass,
+  `tsc -b` clean, build emits all three expected bundle hashes unchanged.
+- **Recorded round 52 in `AUTOPILOT.md`** and left the standing `## Next task` instruction
+  in place, because it is still correct: there is no agent-actionable work left.
+- **Did not touch `src/` at all** — not one line.
 
 ## Why
 
-`## Next task` ในพรอมต์รอบนี้มาถึง **ว่างเปล่า** และ `AUTOPILOT.md` ในสำเนาทำงานตอนเริ่มรอบ
-เป็นของ `main` เปล่าๆ (ข้อความยังสั่งให้ทำเกณฑ์ **Undo** ซึ่งปิดไปตั้งแต่ปลายเดือนสิงหาคม)
-จึง **ล้าสมัย** — จึง **อ่านแผนฉบับจริงจากปลาย branch ใหม่สุดก่อน แล้วค่อยยก**
-แผนฉบับจริงระบุตรงตัวว่า เกณฑ์ครบ **20/20** แล้ว **ไม่มีงานที่ agent ทำต่อได้เอง
-ให้ยก → verify → แก้บรรทัดนั้น → หยุด อย่าหาเรื่องทำ** รอบนี้ทำตามนั้น — เป็นรอบที่ **51 ติด**
+The prompt's `## Next task` section arrived **empty** (the 68th time this branch was cut from
+bare main). An empty task means *stop* — but the plan text carried on the newest branch spells
+out the exact precedence for this case: **carry → verify → update the line → stop, don't invent
+work.** An uncarried branch is the one failure mode that loses everything, so the carry comes
+first even when there is no feature work.
 
-เหตุผลที่ยังต้องยกทั้งที่ไม่มีงาน: **branch เปล่า ≠ ไม่มีอะไรเสียหาย** PR ที่เปิดจาก bare main
-คือ PR ที่เสนอลบไฟล์เทสต์ 20 ไฟล์กับบันทึก 22 ฉบับทิ้ง **การยกคืองานที่ต้องทำทุกรอบ**
+Two non-obvious choices:
 
-เหตุผลที่กล้ายกทั้ง tree ด้วยคำสั่งเดียว: ถ้าไม่มีเงื่อนไข ancestor `checkout <tip> -- .`
-จะ **ลบไฟล์ที่ต้นทางไม่เคยมีเงียบๆ** แล้วเทสต์จะเขียวที่จำนวนที่ต่ำลง รอบนี้จึงยืนยัน
-สองชั้นคู่กัน (merge-base = HEAD + ไม่มีไฟล์ถูกลบ) ไม่ใช่เชื่อชั้นเดียว
+1. **A blanket `git checkout <tip> -- .` instead of path-by-path.** Normally that is dangerous:
+   it *removes* files the sibling never had. It is licensed here because
+   `git merge-base HEAD 6fe3aa5` returned **`735de75`, i.e. HEAD itself** — HEAD is a strict
+   ancestor and holds nothing the sibling lacks. `--diff-filter=D` independently returned empty.
+   (`merge` and `cherry-pick` are denied in this environment, so a path-scoped or blanket
+   checkout is the only available carry mechanism.)
+2. **I read the plan off the sibling branch tip *before* acting, not from the working copy.**
+   The `AUTOPILOT.md` that ships with bare main still instructs "do the Undo criterion", which
+   closed on `_2026-08-29`. Acting on the working copy would have meant writing a 37th Undo test
+   on top of 36 existing ones. The previous round flagged this trap explicitly; it is real.
 
 ## Verification
 
-รันเองทั้งสองคำสั่งตาม Verify command:
+Carry integrity (all five before running anything):
+
+| Check | Result |
+|---|---|
+| `git merge-base HEAD 6fe3aa5` | `735de75` = HEAD itself ✅ licenses blanket carry |
+| `git diff --diff-filter=D HEAD 6fe3aa5` | empty ✅ nothing would be deleted |
+| `git diff 6fe3aa5` after carry | empty ✅ |
+| `git status --porcelain -uall` | empty ✅ *before* running tests |
+| `HEAD^{tree}` vs origin tree | `ff92146` = `ff92146` ✅ whole tree identical |
+| `HEAD:src` / `HEAD:docs` | `665250c` / `ab2c756` ✅ match values recorded by `_0025` |
+| `main:src` (positive gate) | `5b6b233` — **differs**, so the carry really did change `src` ✅ |
+
+The untracked check matters: `changedPaths()` in the audit sweeps includes
+`git ls-files --others`, so any scratch file at the repo root reddens `frozenZones C1` and
+`diffScope S2` for free. I created no scratch files.
+
+Verify command output:
 
 ```
-npm test      → Test Files 59 passed (59) · Tests 453 passed (453) · 34.37s
-npm run build → tsc -b ผ่าน · 116 modules · built in 1.07s
-                dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
-                dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
-                PWA v1.3.0 · generateSW · precache 5 entries (849.13 KiB)
-                dist/sw.js · dist/workbox-9c191d2f.js
+npm test  →  Test Files  59 passed (59)
+             Tests      453 passed (453)
+npm run build → tsc -b clean; 116 modules transformed
+  dist/assets/index-bTUIGpdg.css   16.31 kB
+  dist/assets/index-CyVIMiFT.js   852.15 kB
+  PWA v1.3.0 generateSW, precache 5 entries (849.13 KiB)
+  dist/sw.js + dist/workbox-9c191d2f.js
 ```
 
-**แฮชตรงกับที่บันทึกไว้ครบทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` ·
-`workbox-9c191d2f.js`) → **44 รอบติดที่แฮชไม่ขยับ** · 453 เทสต์/59 ไฟล์ **นิ่งมา 47 รอบ**
-
-การยืนยันการยก (สามชั้นแรกทำ *ก่อน* commit):
-
-| ชั้น | คำสั่ง | ผล |
-|---|---|---|
-| ancestor | `git merge-base HEAD 92c8486` | `735de75` = **HEAD เอง** ✅ |
-| ไม่มีไฟล์ถูกลบ | `git diff --name-status --diff-filter=D HEAD 92c8486` | **ว่าง** ✅ |
-| ความครบ | `git diff 92c8486` หลัง checkout | **ว่าง** ✅ |
-| ทั้ง tree | `git rev-parse HEAD^{tree}` | `cf19fbf` = ของ `_0015` ✅ |
-| เฉพาะ src | `git rev-parse HEAD:src` | `665250c` ตรงกับจุดกำเนิด ✅ |
-| เฉพาะ docs | `git rev-parse HEAD:docs` | `ab2c756` ตรงกับจุดกำเนิด ✅ |
-| **ด่านฝั่งบวก** | `git rev-parse main:src` | `5b6b233` **ต่าง** ✅ |
-
-ด่านฝั่งบวกสำคัญ: ถ้าไม่มีบรรทัดนั้น "แฮชตรงกัน" อาจแปลว่าเทียบของกับตัวมันเอง
-
-**ตรวจไฟล์ untracked ก่อนรันเทสต์** — `git status --porcelain -uall` คืน **ว่าง** ✅
-(สคริปต์ scratch ที่รากทำ `frozenZones C1` + `uiOverhaulDiffScope S2` แดงได้ทุกรัน
-เพราะ `changedPaths()` รวม `git ls-files --others` — รอบนี้ไม่มีไฟล์แบบนั้น)
+All three content hashes (`index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`)
+are **identical to the values recorded by the previous round** — 45 consecutive rounds of stable
+hashes, and 48 rounds at 453 tests / 59 files. Hashes are the check that catches what a test
+count cannot: a stranded live mutation committed as "rescued work" keeps the count at 453.
 
 ## What I did NOT do
 
-- **ไม่ได้เริ่มงานใหม่** และ **ไม่ได้แตะ `src/` เลยสักบรรทัด** — เกณฑ์ครบ 20/20 แล้ว
-  และแผนสั่งห้ามหาเรื่องทำ การเปิดงานใหม่เองคือ scope creep ที่ unattended agent กู้คืนไม่ได้
-- **ไม่ได้ปิดช่องว่างที่บันทึกไว้** (export ของ HQ · icon ของ PWA · thermometer · Happy-Hour ·
-  ปิดซุ้ม/`countedCash` · passport · เสียง toast · cross-device race `E1` · radius inversion `G0`)
-  ทุกข้อเป็น **การตัดสินใจเชิงดีไซน์/ฟีเจอร์ ที่ต้องมีคนเลือก** ไม่ใช่การ audit
-- **ไม่ได้รัน mutation check** — รอบนี้ไม่ได้เขียนเทสต์ใหม่ จึงไม่มีอะไรให้พิสูจน์ความแข็งแรง
-- **ไม่ได้แก้ Verify command** และไม่ได้ลบ/ข้ามเทสต์ใดๆ
-- **ไม่ได้แก้ `AUTOPILOT.md` ฉบับล้าสมัยในสำเนาทำงานแบบแยกส่วน** — ปล่อยให้การยกทั้ง tree
-  ทับมันทั้งไฟล์ เพื่อไม่ให้เกิดฉบับที่สามที่ไม่ตรงกับปลาย branch ไหนเลย
+- **No `src/` change, no new tests, no new audit file.** All 20 criteria are ticked and proven;
+  adding a 21st audit would be inventing work, which the standing instruction forbids.
+- **Did not re-run the mutation checks.** They are recorded per-criterion in `docs/autopilot/`
+  with predicted-vs-measured tables. Re-running ~200 mutations was not this round's task and
+  would not fit alongside a carry.
+- **Did not change the standing `## Next task`** beyond appending this round's entry — it is
+  still accurate. **The next round genuinely needs a human to choose a direction.**
+- **Did not act on the six documented gaps** (export path, HQ device labeling, Happy-Hour
+  pricing override, passport stamps, cash reconciliation `countedCash`, offline
+  `hasPendingWrites`). Each is pinned by a test asserting the *absence*; building any of them
+  is a design decision and several are explicitly out of scope.
 
 ## Risk
 
-- 🚨 **ความเสี่ยงหลักของรอบนี้คือความเสี่ยงเชิงโครงสร้างที่ยังอยู่**: branch ถูกตัดจาก `main`
-  เปล่าๆ **เป็นครั้งที่ 67** เพราะ `auto/*` ไม่เคย merge กลับ `main` เลย ทุกอย่างจึงขึ้นกับ
-  การยกด้วยมือทุกรอบ **ถ้ารอบไหนยกพลาด PR จะเสนอลบงานทั้งหมด** — ผู้รีวิวควรดูว่า diff
-  ของ PR **ไม่มีบรรทัดที่ขึ้นต้นด้วย `-`** ในไฟล์ `*.audit.test.*`
-- ⚠️ **รอบนี้พิสูจน์ *ความเหมือน* ไม่ได้พิสูจน์ *ความถูกต้อง*** — tree hash ตรงแปลว่าได้ของ
-  เดียวกับ `_0015` เป๊ะ ถ้า `_0015` มีอะไรผิดอยู่แล้ว รอบนี้ก็ยกความผิดนั้นมาด้วยอย่างซื่อสัตย์
-  สิ่งที่กันไว้คือ **mutation ค้างใน `src/`** (tree ตรงกับจุดกำเนิดที่นิ่งมา 47 รอบ)
-- ⚠️ **453 เทสต์เขียว ไม่ได้แปลว่าแอปทำงานถูกบนของจริง** — บันทึกทุกฉบับเขียนไว้ตรงกันว่า
-  **ไม่มีพิกเซลไหนถูกวัด ไม่มี Firestore จริง ไม่มีเน็ต** คำว่า "realtime" · "กึ่งกลาง" ·
-  "อ่านง่าย" · "ไม่กี่วิ" **ยังต้องมีคนเปิดเครื่องจริงดู** ก่อนใช้งานในงานจริงของโรงเรียน
-- 📌 `dist/` ถูกสร้างจากการ build แต่ไม่ได้ถูก commit (อยู่ใน `.gitignore`)
+- **Verify passed, so nothing is being hidden here.** The honest risk is elsewhere.
+- **This is round 52 of a loop that produces no new engineering value.** The runner keeps
+  opening rounds on branches cut from bare main with an empty task. Each round spends a full
+  agent budget to re-carry an identical tree and re-print identical hashes. **A reviewer's most
+  useful action is to fix the runner (branch from the newest `auto/*` tip, not `main`) or give
+  a real next task** — not to review this diff.
+- **Branches never merge in this project.** 20 criteria are proven on a branch that has been
+  re-carried 52 times and never landed. All of it lives one `git checkout` away from being lost
+  if a round ever skips the carry. **Someone should merge this to `main`.**
+- **What the 453 tests do and do not prove.** They are *source-level and DOM-level* audits.
+  No pixel is measured, no viewport set, no stylesheet evaluated, no real Firestore contacted.
+  "Centered", "glanceable", "readable", "realtime", and "syncs back" are argued from declared
+  class names and push-subscription *shape* — the audit notes say so in each file, and that
+  honesty should survive summarization. Someone should still open the Display screen and look.
+- **The one gap worth a human decision soon:** `rounded-xl` (20px, spec-mandated) now exceeds
+  the untouched `rounded-2xl` (19.2px), so 8 cards that asked for rounder corners render
+  squarer than their neighbours. Pinned by `roundedScale G0`. The spec gives no `2xl` value, so
+  every fix is either a guessed number or 8 call-site edits — a design call, not an audit call.
