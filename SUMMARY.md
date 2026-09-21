@@ -1,110 +1,109 @@
-# SUMMARY — round `auto/Booth_Management_6_7/2026-09-22_0023`
+# SUMMARY — round `auto/Booth_Management_6_7/2026-09-22_0133`
 
 ## What I did
 
 - **Carried the full audit tree onto this branch.** The branch was cut from bare
-  `main` (`HEAD == main == 735de75`) for the **75th** time, so it held none of the
-  20-criteria work. Carried the whole tree from the newest sibling tip `_0012`
-  (`6079fae`) in one path-scoped checkout — 44 added / 7 modified / **zero deleted**.
-- **Verified the carry by four independent measurements** before trusting it (tree
-  hashes, test tally, `tsc -b`, and all three vite content hashes). All matched.
-- **Confirmed the source tip by measuring six sibling tips**, rather than believing
-  `_0012`'s own handoff notes: `git diff --name-only HEAD <tip> -- src docs` returned
-  **zero paths for all six**, so the carried tree is a real superset, not a partial carry.
-- **Updated `## Next task` in `AUTOPILOT.md`** with this round's entry, and recorded one
-  correction to a misleading pattern in the previous rounds' logs (see Risk).
-- **Did not touch `src/` at all.** No production line, no test line.
+  `main` (`HEAD == main == 735de75`) for the **76th** time, so it held none of the
+  20-criteria work. Carried the whole tree from the newest sibling tip `_0023`
+  (`bb57410`) in one checkout — **44 added / 7 modified / zero deleted**.
+- **Found the round's named task already done, and proved it in the code** rather
+  than trusting a checkbox. The prompt asked me to redo the **Undo** criterion from
+  `docs/autopilot/2026-08-13-undo-audit-findings.md`; all three edits that spec calls
+  for are already on the carried tree, and the tests it prescribes exist and pass.
+- **Did not touch `src/` — not one line.** Per hard rule 5, a task that is already
+  complete is recorded, not reinvented, and no substitute task was started.
+- **Recorded the new lesson in `AUTOPILOT.md`**: a *non-empty* `## Next task` in the
+  prompt is not evidence of new work. The branch is cut from bare `main`, so the
+  working-copy `AUTOPILOT.md` the runner reads the task from is `main`'s August copy.
+- **Updated `## Next task`** with this round's entry and the one-command test that
+  separates "stale prompt" from "real work" in future rounds.
 
 ## Why
 
-The real `AUTOPILOT.md` (which lives on the sibling branch, not on `main`) carries a
-standing instruction at the top of `## Next task`:
+The prompt's task text and the real plan disagreed. The real plan lives on the newest
+`auto/*` tip, not in the working copy: the branch is cut from bare `main`, whose
+`AUTOPILOT.md` predates ~58 rounds of work. Reading the plan off `bb57410` showed the
+standing instruction is *carry → verify → record → stop — do not invent work*, and that
+every one of the 20 acceptance criteria is already ticked.
 
-> 🛑 ไม่มีงานที่ agent ทำต่อได้เองแล้ว — รอบต่อไปต้องรอคนเลือกก่อน
-> ถ้า runner เปิดรอบใหม่โดยไม่มีคนสั่ง **ให้ยก → verify → แก้บรรทัดนี้ → หยุด อย่าหาเรื่องทำ**
-
-All 20 acceptance criteria are ticked and closed. The prompt's `## Next task` arrived
-**empty** for the 59th consecutive round. The contract says an empty Next task means
-stop — but stopping on a bare-`main` branch would open a PR proposing to **delete every
-audit test and every finding document**. So the carry is not optional busywork; it is
-the one thing that has to happen before stopping.
-
-A blanket `checkout <tip> -- .` is normally unsafe because it adds and overwrites but
-never deletes, so files the source never had would survive and the suite would go green
-at the wrong count. It is safe **here** specifically because `git merge-base HEAD <tip>`
-returned `735de75` — HEAD itself — proving the sibling is a strict descendant, and
-because `--name-status` showed zero `D` entries. `merge` and `cherry-pick` need an
-approval an unattended run cannot give, so a path checkout is the only available verb.
+Carrying first was not optional and had to happen **before** reading the real plan: an
+uncarried branch is bare `main`, so the PR the runner opens would propose deleting all
+44 audit files. `git merge-base HEAD bb57410` returned `735de75` — HEAD itself — which
+is what licenses the one-command whole-tree carry instead of a path-by-path one.
 
 ## Verification
 
-Ran the Verify command in full: `npm test && npm run build`.
+Carry integrity (five independent checks, all before the Verify command):
+
+| Check | Result |
+|---|---|
+| `git merge-base HEAD bb57410` | `735de75` = HEAD itself ✅ |
+| `git diff --name-status HEAD bb57410` | 44 A / 7 M / **0 D** ✅ |
+| `git diff bb57410` + `git diff --cached bb57410` after carry, before commit | both empty ✅ |
+| `git rev-parse HEAD^{tree}` vs `bb57410^{tree}` | `4d6597b` == `4d6597b` ✅ |
+| `HEAD:src` / `HEAD:docs` vs the cross-round constants | `665250c` / `ab2c756` ✅ |
+
+Positive control: `main:src` = `5b6b233` ≠ `665250c`, so the carry really moved `src` —
+this is not two already-equal values being compared.
+
+Verify command — `npm test && npm run build`, run in full on the committed tree:
 
 ```
 Test Files  59 passed (59)
      Tests  453 passed (453)
-  Duration  41.78s
 
-tsc -b && vite build
-✓ 116 modules transformed.
-dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
-dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
-PWA v1.3.0  mode generateSW  precache 5 entries (849.13 KiB)
-dist/sw.js · dist/workbox-9c191d2f.js
+tsc -b && vite build → 116 modules transformed
+dist/assets/index-bTUIGpdg.css   16.31 kB
+dist/assets/index-CyVIMiFT.js   852.15 kB
+PWA  precache 5 entries (849.13 KiB) · dist/workbox-9c191d2f.js
+✓ built in 1.03s
 ```
 
-Carry integrity, measured — not assumed:
+All three content hashes (`index-bTUIGpdg.css`, `index-CyVIMiFT.js`,
+`workbox-9c191d2f.js`) match the values the previous rounds recorded — 53rd round the
+hashes have held. `git status --porcelain -uall` was empty before the tests and again
+after the build.
 
-| check | result |
-|---|---|
-| `merge-base HEAD 6079fae` | `735de75` = **HEAD itself** ✅ |
-| `diff --name-status HEAD 6079fae` | 44 A / 7 M / **0 D** ✅ |
-| `HEAD^{tree}` vs `_0012^{tree}` | `b5a6974` == `b5a6974` ✅ |
-| `HEAD:src` | `665250c` — matches recorded baseline ✅ |
-| `HEAD:docs` | `ab2c756` — matches recorded baseline ✅ |
-| `main:src` | `5b6b233` — **positive control**, differs ✅ |
-| `git status --porcelain -uall` | empty before tests, empty after build ✅ |
-| six-tip drift on `src`+`docs` | **zero paths** on all six ✅ |
-| three bundle content hashes | `index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js` — all match ✅ |
+Evidence the **Undo** task the prompt named is already complete:
 
-The test tally alone cannot detect a stranded mutation (a one-line guard change usually
-leaves 453/59 intact). The vite **content hashes** are the sharper instrument, since they
-derive from emitted bytes. `main:src` is included as the positive control so that
-"the hashes match" is not just two identical things being compared.
-
-52 consecutive rounds with stable bundle hashes; 55 with a stable 453/59 tally.
+- `src/order/ordersRepo.ts:36` — `withDeletions()` maps `undefined` → `deleteField()`,
+  imported from the existing `firebase/firestore` import at line 1 (no new dependency).
+- `src/queue/queueActions.ts:58` — `orderSnapshot()` returns every undoable field,
+  including `cancelReason`, with `undefined` meaning "this order never had one".
+- `src/queue/queueActions.ts:36` — `cancel(reason)` exists as `Q.cancel`, moved out of
+  the panel as the spec requires.
+- `npx vitest run src/undoRoundTrip.audit.test.tsx src/undoDeleteField.audit.test.ts`
+  → **2 files, 36 tests passed**.
+- The matcher rule holds: `undoRoundTrip.audit.test.tsx` has **15 `toStrictEqual`** and
+  **zero** `objectContaining` / `toHaveBeenCalledWith` assertions. The single grep hit
+  for those names is the comment at line 24 forbidding them, not an assertion.
+- `git grep -c -- "- \[x\]" HEAD -- AUTOPILOT.md` → **20**; the `- [ ]` count is **0**.
 
 ## What I did NOT do
 
-- **Did not start any new work.** No 21st criterion, no opportunistic fix, no refactor.
-  The plan says stop and explicitly says *อย่าหาเรื่องทำ* ("don't go looking for work").
-- **Did not add a file to `docs/autopilot/`.** Nothing was discovered this round beyond
-  the round log itself, and `HEAD:docs` staying at `ab2c756` is precisely the signal the
-  *next* round uses to verify its own carry. Adding a file would destroy that signal.
-- **Did not touch `src/`, `firestore.rules`, `firestore.indexes.json`, specs, or `.env*`.**
-- **Did not edit the Verify command or skip a test.**
-- Did not push or open a PR — network tools are denied; the runner does that.
+- **Did not redo the Undo work.** It is already on the tree and its tests pass. Rewriting
+  it would have churned four production files for no behavioural change and risked the
+  `frozenZones` / `uiOverhaulDiffScope` audits that pin those exact paths and reasons.
+- **Did not start a second task.** No criterion is unticked, and the standing plan says
+  the next move is a human decision.
+- **Did not add a file under `docs/autopilot/`.** Nothing was discovered beyond the round
+  log, and an unchanged `HEAD:docs` (`ab2c756`) is precisely the signal the next round
+  uses to check its own carry. The new lesson went into `AUTOPILOT.md` instead.
+- **Did not tick any box** — all 20 were already ticked before this round.
 
 ## Risk
 
-- **Nothing here proves the app works at a school fair.** This round moved zero
-  production lines; it only re-established a tree that was already verified. Every
-  "🚨 no pixel was measured" caveat recorded against the 20 criteria still stands
-  unchanged — jsdom never does layout, Tailwind never runs, Firestore is never real.
-- **Correction worth a reviewer's attention:** the previous rounds each logged a root
-  tree hash as proof of a faithful carry (`_0012`→`2eb73a5`, `_0032`→`4b01a3e`,
-  `_0022`→`88cee93`), and this round got `b5a6974`. All four are correct and all four
-  differ — the root tree contains `AUTOPILOT.md`/`SUMMARY.md`, which *must* move every
-  round because the round log overwrites itself. That value is only meaningful against
-  the specific source tip of that round. A future round that compares root tree hashes
-  across rounds will "find" a corruption that does not exist. The genuine cross-round
-  invariants are only `HEAD:src` = `665250c` and `HEAD:docs` = `ab2c756`. I wrote this
-  warning into `AUTOPILOT.md` so it is not rediscovered the hard way.
-- **The real risk is structural, not technical.** This is the 59th consecutive carry-only
-  round and the 75th branch cut from bare `main`. Branches never merge, so each round
-  re-does this carry and the work never reaches `main`. A human needs to either merge one
-  of these branches or give the runner a real next task; the loop cannot resolve itself,
-  and every round spent here costs a full round's budget to produce no new coverage.
-- The `_0012` handoff notes were trusted for *nothing* — the source tip was chosen by
-  measuring six tips. But a tip **older than all six** could in principle hold something
-  none of them have. That is unmeasured, and the equality chain cannot rule it out.
+- **The prompt and the repository disagree about what is left to do, and the prompt is
+  wrong.** This is the first round where `## Next task` arrived non-empty *and* stale;
+  earlier rounds only ever saw it empty. Until the runner reads the task from the newest
+  `auto/*` tip instead of the working copy, every future round will be handed the same
+  August instruction to redo work that shipped weeks ago. A reviewer should check that
+  first — it is the one thing in this repo that is actually broken.
+- **This round is a pure carry — it contains no new engineering.** The only substantive
+  diff versus `bb57410` is `AUTOPILOT.md` and this file. That is the intended outcome,
+  but it means the PR's value is "the branch is not bare `main`", nothing more.
+- **The 20 ticks were verified by re-running the suite, not re-derived from scratch.**
+  I confirmed the Undo criterion down to the assertions; the other 19 rest on the 453
+  passing tests and the audit documents the earlier rounds wrote. No pixel was measured
+  and no live Firestore was touched — the jsdom and source-sweep caveats those audits
+  state for themselves still apply.
