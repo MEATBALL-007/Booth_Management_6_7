@@ -1,134 +1,110 @@
-# SUMMARY — รอบ `auto/Booth_Management_6_7/2026-09-22_0012`
-
-**รอบยก-verify-หยุด ครั้งที่ห้าสิบแปดติด · ไม่ได้แตะ `src/` เลยสักบรรทัด**
+# SUMMARY — round `auto/Booth_Management_6_7/2026-09-22_0023`
 
 ## What I did
 
-- **ยกทั้ง tree จาก `_2026-09-22_0002` (`e46a0ed`)** — branch นี้ถูกตัดจาก `main` เปล่าๆ
-  (`735de75`, 17 ส.ค.) `src/` **ไม่มีไฟล์ `*.audit.test.*` แม้แต่ไฟล์เดียว**
-  ยกแล้วได้ **50 path · ลบ 0 ไฟล์** (commit `13cfe47`)
-- **พิสูจน์ก่อนยกว่าใช้สูตรคำสั่งเดียวได้อย่างปลอดภัย** — `merge-base --is-ancestor HEAD e46a0ed`
-  คืน **จริง** แปลว่า HEAD เป็น ancestor แท้ของ tip ➡️ tree ของ tip มีแต่ *เพิ่ม* ไม่มี *ลด*
-  ยืนยันซ้ำด้วย `--diff-filter=D main..e46a0ed` ซึ่ง **ว่าง** ➡️ `checkout <tip> -- .`
-  ลบอะไรไม่ได้เลย **สองเงื่อนไขนี้คู่กัน ไม่ใช่ตัวใดตัวหนึ่ง**
-- **เลือกต้นทางด้วยการวัดหกปลาย ไม่ใช่เชื่อบันทึกของรอบก่อน** — `git diff --name-only
-  HEAD <tip> -- src docs` จาก `_0032`·`_0022`·`_0010`·`_0920_0035`·`_0919_0040`·`_0918_0038`
-  ได้ **ศูนย์ path ทั้งหกปลาย**
-- **รัน Verify command เต็มในรูปแบบ chained ตรงตัว** (`npm test && npm run build`)
-  แล้วเทียบกับค่าที่ `_0002` บันทึกไว้ — **ตรงทุกตัว รวมแฮชเนื้อบันเดิลทั้งสาม**
-- **อัปเดต `## Next task`** บันทึกรอบนี้ต่อท้ายคำสั่ง 🛑 ที่ยังมีผลอยู่
+- **Carried the full audit tree onto this branch.** The branch was cut from bare
+  `main` (`HEAD == main == 735de75`) for the **75th** time, so it held none of the
+  20-criteria work. Carried the whole tree from the newest sibling tip `_0012`
+  (`6079fae`) in one path-scoped checkout — 44 added / 7 modified / **zero deleted**.
+- **Verified the carry by four independent measurements** before trusting it (tree
+  hashes, test tally, `tsc -b`, and all three vite content hashes). All matched.
+- **Confirmed the source tip by measuring six sibling tips**, rather than believing
+  `_0012`'s own handoff notes: `git diff --name-only HEAD <tip> -- src docs` returned
+  **zero paths for all six**, so the carried tree is a real superset, not a partial carry.
+- **Updated `## Next task` in `AUTOPILOT.md`** with this round's entry, and recorded one
+  correction to a misleading pattern in the previous rounds' logs (see Risk).
+- **Did not touch `src/` at all.** No production line, no test line.
 
 ## Why
 
-คำสั่งใน `## Next task` **ฉบับจริง (อ่านได้หลังยกเท่านั้น)** ระบุชัดว่า
-🛑 **ไม่มีงานที่ agent ทำต่อได้เองแล้ว — เกณฑ์ครบ 20/20 ข้อ** และถ้า runner เปิดรอบใหม่
-โดยไม่มีคนสั่ง ให้ **ยก → verify → แก้บรรทัดนั้น → หยุด อย่าหาเรื่องทำ**
-`## Next task` ที่ส่งมาในพรอมต์รอบนี้ **ว่างเปล่า** จึงเข้าเงื่อนไขนั้นเป๊ะ
+The real `AUTOPILOT.md` (which lives on the sibling branch, not on `main`) carries a
+standing instruction at the top of `## Next task`:
 
-**ทำไมต้องยกก่อน ทั้งที่ "ไม่มีงาน" = น่าจะหยุดเฉยๆ ได้:** ถ้าไม่ยก branch นี้ก็คือ
-`main` เปล่าๆ และ PR ที่ runner เปิดจากมัน **จะเสนอลบเทสต์ audit ทั้ง 22 ไฟล์
-กับบันทึก 21 ไฟล์ทิ้ง** ➡️ การ "หยุดเฉยๆ" ไม่ใช่ no-op แต่เป็นการทำลาย
+> 🛑 ไม่มีงานที่ agent ทำต่อได้เองแล้ว — รอบต่อไปต้องรอคนเลือกก่อน
+> ถ้า runner เปิดรอบใหม่โดยไม่มีคนสั่ง **ให้ยก → verify → แก้บรรทัดนี้ → หยุด อย่าหาเรื่องทำ**
 
-**ทำไมต้องยกก่อน *อ่าน*:** working copy ก่อนยกถือ `AUTOPILOT.md` ฉบับของ `main` (17 ส.ค.)
-ซึ่งติ๊กไว้ **0 จาก 20 ข้อ** ทั้งที่ของจริงครบ 20/20 **agent ที่เชื่อไฟล์ในมือจะไปเขียน
-เทสต์ที่มีอยู่แล้วซ้ำ และแก้ `queueActions.ts`/`ordersRepo.ts` ทับงานที่เสร็จแล้ว**
-พรอมต์ส่ง `## Next task` มาว่าง ส่วนไฟล์ในดิสก์ติ๊ก 0/20 — **ทั้งสองแหล่งโกหกคนละแบบ**
-แหล่งจริงมีแหล่งเดียวคือ `AUTOPILOT.md` **บน tip ของ `auto/*` ที่ใหม่ที่สุด**
+All 20 acceptance criteria are ticked and closed. The prompt's `## Next task` arrived
+**empty** for the 59th consecutive round. The contract says an empty Next task means
+stop — but stopping on a bare-`main` branch would open a PR proposing to **delete every
+audit test and every finding document**. So the carry is not optional busywork; it is
+the one thing that has to happen before stopping.
 
-**ทำไมวัดหกปลาย:** `_0002` เองเป็น **รอบยกล้วน** (`d97f748` ยกจาก `_0032` + `e46a0ed`
-บันทึกรอบ) ➡️ การยกเป็น **ลูกโซ่** และปลายที่ใหม่ที่สุดอาจเป็น carry ที่ยกมาไม่ครบได้
-การวัดทุกปลายเทียบ **จุดอ้างอิงเดียว (HEAD)** อาศัย transitive equality
-จึงพิสูจน์ได้มากกว่าการไล่ข้อต่อทีละคู่ และ **ไม่มีชั้นไหนเป็นการเชื่อบันทึกของรอบก่อน**
+A blanket `checkout <tip> -- .` is normally unsafe because it adds and overwrites but
+never deletes, so files the source never had would survive and the suite would go green
+at the wrong count. It is safe **here** specifically because `git merge-base HEAD <tip>`
+returned `735de75` — HEAD itself — proving the sibling is a strict descendant, and
+because `--name-status` showed zero `D` entries. `merge` and `cherry-pick` need an
+approval an unattended run cannot give, so a path checkout is the only available verb.
 
 ## Verification
 
-รัน `npm test && npm run build` เอง (Verify command ตรงตัว) ผลที่พิมพ์ออกมา:
+Ran the Verify command in full: `npm test && npm run build`.
 
 ```
 Test Files  59 passed (59)
      Tests  453 passed (453)
-  Duration  34.65s
+  Duration  41.78s
 
 tsc -b && vite build
 ✓ 116 modules transformed.
 dist/assets/index-bTUIGpdg.css   16.31 kB │ gzip:   4.22 kB
 dist/assets/index-CyVIMiFT.js   852.15 kB │ gzip: 257.63 kB
-✓ built in 2.30s
-
-PWA v1.3.0 · mode generateSW · precache 5 entries (849.13 KiB)
-  dist/sw.js · dist/workbox-9c191d2f.js
+PWA v1.3.0  mode generateSW  precache 5 entries (849.13 KiB)
+dist/sw.js · dist/workbox-9c191d2f.js
 ```
 
-เทียบกับค่าที่ `_0002` บันทึกไว้ — **ตรงทั้งหมด**:
+Carry integrity, measured — not assumed:
 
-| ตรวจ | ที่บันทึกไว้ | ที่ได้จริง | |
-|---|---|---|---|
-| ไฟล์เทสต์ | 59 | 59 | ✅ |
-| เทสต์ | 453 | 453 | ✅ |
-| `tsc -b` | ผ่าน | ผ่าน | ✅ |
-| modules | 116 | 116 | ✅ |
-| css | 16.31 kB | 16.31 kB | ✅ |
-| PWA precache | 5 entries 849.13 KiB | 5 entries 849.13 KiB | ✅ |
-| แฮช css | `index-bTUIGpdg.css` | เท่ากัน | ✅ |
-| แฮช js | `index-CyVIMiFT.js` | เท่ากัน | ✅ |
-| แฮช workbox | `workbox-9c191d2f.js` | เท่ากัน | ✅ |
+| check | result |
+|---|---|
+| `merge-base HEAD 6079fae` | `735de75` = **HEAD itself** ✅ |
+| `diff --name-status HEAD 6079fae` | 44 A / 7 M / **0 D** ✅ |
+| `HEAD^{tree}` vs `_0012^{tree}` | `b5a6974` == `b5a6974` ✅ |
+| `HEAD:src` | `665250c` — matches recorded baseline ✅ |
+| `HEAD:docs` | `ab2c756` — matches recorded baseline ✅ |
+| `main:src` | `5b6b233` — **positive control**, differs ✅ |
+| `git status --porcelain -uall` | empty before tests, empty after build ✅ |
+| six-tip drift on `src`+`docs` | **zero paths** on all six ✅ |
+| three bundle content hashes | `index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js` — all match ✅ |
 
-**tree hash ทั้งสี่ตัวตรงกับที่บันทึกไว้เป๊ะ** (วัดทันทีหลัง commit การยก ก่อนแก้เอกสาร):
+The test tally alone cannot detect a stranded mutation (a one-line guard change usually
+leaves 453/59 intact). The vite **content hashes** are the sharper instrument, since they
+derive from emitted bytes. `main:src` is included as the positive control so that
+"the hashes match" is not just two identical things being compared.
 
-| | ค่า | |
-|---|---|---|
-| `HEAD^{tree}` | `2eb73a5` (= tree ของ `_0002` ทั้งก้อน) | ✅ |
-| `HEAD:src` | `665250c` | ✅ |
-| `HEAD:docs` | `ab2c756` | ✅ |
-| `main:src` | `5b6b233` | ✅ **ด่านฝั่งบวก** |
-
-`main:src` คือด่านฝั่งบวก: มันต่างจาก `HEAD:src` จริง **จึงพิสูจน์ว่าการยกเปลี่ยน `src`
-จริงๆ** ไม่ใช่การเทียบค่าที่เท่ากันอยู่แล้วแบบ vacuous
-
-**ทำไมต้องดูแฮชบันเดิล ไม่ใช่แค่จำนวนเทสต์:** จำนวนเทสต์มองไม่เห็น mutation ที่ค้างอยู่
-(รอบที่ตายกลางทางแล้ว runner commit ทิ้งไว้เป็น "rescued work" — เคยเกิดมาแล้วสามครั้ง)
-แต่ vite แฮช **เนื้อ** ของบันเดิล ➡️ ซอร์สขยับหนึ่งไบต์ แฮชขยับทันที
-
-ชั้นตรวจอื่น: `git diff e46a0ed` หลังยกก่อน commit **ว่างทั้ง worktree และ index** ·
-`git status --porcelain -uall` **ว่างทั้งก่อนรันเทสต์และหลัง build** (ไม่มีไฟล์ harness
-untracked ค้างที่ราก — รอบนี้อ่านแผนด้วย `Read`/`Grep` ตรงๆ ไม่ได้เขียนไฟล์ชั่วคราวที่รากเลย)
-
-➡️ **ห้าสิบเอ็ดรอบติดที่แฮชนิ่ง · 453 เทสต์/59 ไฟล์ นิ่งมาห้าสิบสี่รอบ**
+52 consecutive rounds with stable bundle hashes; 55 with a stable 453/59 tally.
 
 ## What I did NOT do
 
-- **ไม่ได้แตะ `src/` เลยสักบรรทัด** — และไม่ได้เริ่มเกณฑ์ข้อใหม่ เพราะครบ 20/20 แล้ว
-  และคำสั่งห้ามหาเรื่องทำไว้ตรงตัว
-- **ไม่ได้เพิ่มไฟล์ใน `docs/autopilot/`** — จงใจ เพราะรอบนี้ไม่มีสิ่งค้นพบใหม่นอกจาก round log
-  และการเพิ่มไฟล์จะทำให้ `HEAD:docs` ขยับ **ซึ่งเป็นสัญญาณที่รอบถัดไปใช้ตรวจการยก**
-- **ไม่ได้รัน mutation check ใหม่** — ไม่มีเทสต์ใหม่ให้พิสูจน์ความแข็งแรง
-- **ไม่ได้ push / ไม่ได้เปิด PR** — ทำไม่ได้ และไม่ใช่หน้าที่รอบนี้
+- **Did not start any new work.** No 21st criterion, no opportunistic fix, no refactor.
+  The plan says stop and explicitly says *อย่าหาเรื่องทำ* ("don't go looking for work").
+- **Did not add a file to `docs/autopilot/`.** Nothing was discovered this round beyond
+  the round log itself, and `HEAD:docs` staying at `ab2c756` is precisely the signal the
+  *next* round uses to verify its own carry. Adding a file would destroy that signal.
+- **Did not touch `src/`, `firestore.rules`, `firestore.indexes.json`, specs, or `.env*`.**
+- **Did not edit the Verify command or skip a test.**
+- Did not push or open a PR — network tools are denied; the runner does that.
 
 ## Risk
 
-⚠️ **สิ่งที่รอบนี้พิสูจน์ คือ "ยกครบและ build ได้ผลเดิม" ไม่ใช่ "ระบบถูกต้อง"**
-เทสต์ 453 ตัวที่เขียวคือชุดเดิมที่ `_0002` รันเขียว **รอบนี้ไม่ได้เพิ่มหลักประกันใหม่ให้ใคร**
-
-⚠️ **เกณฑ์ที่ติ๊กครบ 20/20 ไม่ได้แปลว่าฟีเจอร์ครบ** — หลายข้อปิดใน **ฐานะช่องว่างที่บันทึกไว้**
-ของที่ยัง *ไม่มี* และถูกปักหมุดไว้ (**ห้ามลบเทสต์เหล่านี้ — ถ้ามันแดงแปลว่ามีคนสร้างของจริงแล้ว
-= นั่นคือการแก้ ไม่ใช่การถดถอย**):
-Happy-Hour pricing · ปุ่มปิดซุ้ม + `countedCash`/`diff` · Passport ทั้งข้อ ·
-donation thermometer (แถบ %) · PWA icons (`icons: []` ➡️ ติดตั้งลงหน้าจอโฮมไม่ได้) ·
-export path ของ HQ · เสียงของ alert toast · การกันสองเครื่องเขียนชนกัน (`idempotency E1`)
-
-⚠️ **ไม่มีพิกเซลไหนถูกวัด ไม่มี Firestore จริงถูกเรียก ไม่มีเน็ต** ทั้งชุด —
-เกณฑ์ที่พูดถึง "อ่านง่าย" · "กึ่งกลาง" · "ภายในไม่กี่วิ" · "sync กลับได้"
-พิสูจน์ได้แค่ **รูปทรงและค่าที่ประกาศไว้ในซอร์ส** ตามที่แต่ละบันทึกเขียนกำกับไว้ตรงๆ
-**ควรมีคนเปิดจอจริงดูด้วยตา และถือสองเครื่องยืนวัดในงานจริง**
-
-🚨 **ระบบนี้กำลังวนอยู่กับที่ — นี่คือรอบที่ห้าสิบแปดติดที่ไม่มีงานใหม่**
-branch ถูกตัดจาก `main` เปล่าๆ เป็นครั้งที่เจ็ดสิบสี่ และไม่มีรอบไหนถูก merge กลับ `main` เลย
-➡️ **ต้นเหตุไม่ได้อยู่ที่ agent แต่อยู่ที่ pipeline: PR ไม่ถูก merge และ runner
-ก็ตัด branch ใหม่จาก `main` ทุกครั้ง** ทุกรอบจึงต้องยกงานเดิมซ้ำเพื่อไม่ให้ PR เสนอลบทิ้ง
-**คนต้อง merge PR สักตัวหนึ่ง หรือสั่งงานข้อใหม่ มิฉะนั้นวงจรนี้จะวนต่อไปไม่รู้จบ**
-และ **ลูกโซ่การยกยาวขึ้นทุกรอบ** — `_0002` เองก็เป็นรอบยกล้วน (`d97f748` + `e46a0ed`)
-ทำให้ทุกรอบต้องจ่ายค่าตรวจข้ามข้อต่อเพิ่มขึ้นเรื่อยๆ เพียงเพื่อรักษาสถานะเดิม
-
-📌 **สำหรับ reviewer:** ดิฟฟ์ของ PR นี้ใหญ่ แต่ **ไม่มีบรรทัดไหนเป็นของใหม่**
-ทุกบรรทัดคือ `e46a0ed` ยกมาทั้งก้อน ตรวจได้ด้วย `git diff e46a0ed HEAD -- src docs`
-ซึ่งต้อง **ว่าง** · ส่วนที่เป็นของรอบนี้จริงๆ มีแค่ `AUTOPILOT.md` กับ `SUMMARY.md`
+- **Nothing here proves the app works at a school fair.** This round moved zero
+  production lines; it only re-established a tree that was already verified. Every
+  "🚨 no pixel was measured" caveat recorded against the 20 criteria still stands
+  unchanged — jsdom never does layout, Tailwind never runs, Firestore is never real.
+- **Correction worth a reviewer's attention:** the previous rounds each logged a root
+  tree hash as proof of a faithful carry (`_0012`→`2eb73a5`, `_0032`→`4b01a3e`,
+  `_0022`→`88cee93`), and this round got `b5a6974`. All four are correct and all four
+  differ — the root tree contains `AUTOPILOT.md`/`SUMMARY.md`, which *must* move every
+  round because the round log overwrites itself. That value is only meaningful against
+  the specific source tip of that round. A future round that compares root tree hashes
+  across rounds will "find" a corruption that does not exist. The genuine cross-round
+  invariants are only `HEAD:src` = `665250c` and `HEAD:docs` = `ab2c756`. I wrote this
+  warning into `AUTOPILOT.md` so it is not rediscovered the hard way.
+- **The real risk is structural, not technical.** This is the 59th consecutive carry-only
+  round and the 75th branch cut from bare `main`. Branches never merge, so each round
+  re-does this carry and the work never reaches `main`. A human needs to either merge one
+  of these branches or give the runner a real next task; the loop cannot resolve itself,
+  and every round spent here costs a full round's budget to produce no new coverage.
+- The `_0012` handoff notes were trusted for *nothing* — the source tip was chosen by
+  measuring six tips. But a tip **older than all six** could in principle hold something
+  none of them have. That is unmeasured, and the equality chain cannot rule it out.
