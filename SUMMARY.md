@@ -1,20 +1,20 @@
-# SUMMARY — round `auto/Booth_Management_6_7/2026-10-01_0019`
+# SUMMARY — round `auto/Booth_Management_6_7/2026-10-01_0029`
 
 ## What I did
-- Copied the full audit tree from `auto/Booth_Management_6_7/2026-10-01_0009` (`3f53108`) onto this branch. The runner again cut this branch from bare `main` (`735de75`), so it started with none of the audit work. Commit: `chore: carry the twenty proven criteria from …_2026-10-01_0009 (3f53108)`.
+- Copied the full audit tree from `auto/Booth_Management_6_7/2026-10-01_0019` (`c2cb0de`) onto this branch. The runner again cut this branch from bare `main` (`735de75`), so it started with none of the audit work. Commit: `chore: carry the twenty proven criteria from …_2026-10-01_0019 (c2cb0de)`.
 - Ran the Verify command (`npm test && npm run build`). Both passed.
-- Added a round-79 entry to the `## Next task` log in `AUTOPILOT.md`. The instruction itself is unchanged: all 20 criteria are ticked, and a person has to choose the next task.
+- Added a round-80 entry to the `## Next task` log in `AUTOPILOT.md`. The instruction itself is unchanged: all 20 criteria are ticked, and a person has to choose the next task.
 
 ## Why
 - The prompt's `## Next task` was empty. For that case, the plan says to carry the work over, verify, record the round and stop. Without the carry, this branch's PR would be bare `main`, and it would propose deleting every audit test and doc.
-- A whole-tree checkout was safe here. `main` has not moved (still `735de75`), and `git merge-base HEAD 3f53108` returned HEAD itself, so the carry cannot revert anything on `main`.
-- I checked that `_0009` holds everything the older tips hold: `git diff --name-status --diff-filter=D <older-tip> 3f53108` printed nothing for `_2026-09-30_0859` (`4e74ea9`) and `_2026-09-29_0037` (`90fcb6d`).
-- `_0009` is a finished round with its own log entry and SUMMARY, not a dead one. Its only commits past `main` are the carry and its `docs(autopilot)` record, which touches only `AUTOPILOT.md` and `SUMMARY.md`.
+- A whole-tree checkout was safe here. `main` has not moved (still `735de75`), and `git merge-base HEAD c2cb0de` returned HEAD itself, so the carry cannot revert anything on `main`.
+- I checked across the joint that `_0019` still holds everything the previous tip holds. `git diff --name-status --diff-filter=D 3f53108 c2cb0de` printed nothing, and the full diff between those two tips covers only `AUTOPILOT.md` and `SUMMARY.md`.
+- `_0019` is a finished round with its own log entry and SUMMARY, not a dead one. Its only commits past `main` are the carry and its `docs(autopilot)` record.
 
 ## Verification
-- After the checkout, `git diff --cached --stat 3f53108` printed nothing. After the commit, `HEAD^{tree}` = `a2cdb37` = `3f53108^{tree}`.
+- After the checkout, `git diff --cached --stat c2cb0de` printed nothing. After the commit, `HEAD^{tree}` = `bddd315` = `c2cb0de^{tree}`.
 - `HEAD:src` = `665250c`, the same as every earlier carry tip. As a control, `main:src` = `5b6b233`, which shows the check can tell the two trees apart. `HEAD:docs` = `ab2c756`, unchanged.
-- `npm test && npm run build`, run exactly as written with no pipe, so the chain's exit status counts:
+- `npm test && npm run build`, run exactly as written with no pipe (an earlier run piped through `tail` only to preview the output):
   - `npm test`: **59 files passed, 453 tests passed**.
   - `npm run build`: `tsc -b` passed. Vite transformed 116 modules and emitted `index-bTUIGpdg.css` and `index-CyVIMiFT.js`. PWA v1.3.0 (generateSW) made 5 precache entries (849.13 KiB) and wrote `dist/sw.js` and `dist/workbox-9c191d2f.js`. All three hashes match earlier rounds. The only warning was the usual one about a chunk over 500 kB.
 - `git status --porcelain -uall` after the build: empty. `AUTOPILOT.md` has 20 ticked boxes and 0 unticked.
@@ -25,4 +25,4 @@
 
 ## Risk
 - Low. The only changes are the carry and edits to `AUTOPILOT.md` and `SUMMARY.md`. The matching bundle hashes show the production source is unchanged, and the matching test count covers the tests. Neither shows the code is *correct*, only that this is the same tree earlier rounds verified.
-- The runner still cuts every round's branch from bare `main` (95 times now). Rounds will keep repeating this carry until someone merges one of these branches into `main` or sets a new Next task.
+- The runner still cuts every round's branch from bare `main` (96 times now). Rounds will keep repeating this carry until someone merges one of these branches into `main` or sets a new Next task.
