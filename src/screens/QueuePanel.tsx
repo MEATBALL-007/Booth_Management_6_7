@@ -7,6 +7,13 @@ import { Button } from '../ui/Button'
 import { Panel } from '../ui/Panel'
 import { QueueNumber } from '../ui/QueueNumber'
 
+// ยกเลิกได้เฉพาะ order ที่ยังอยู่ในคิว — ที่ done/cancelled ไปแล้วต้องไม่ถูกเขียนทับ
+// (แผงยกเลิกเปิดค้างไว้ได้นานกว่าการ์ดที่เปิดมัน อีกเครื่องอาจปิดงานใบนั้นไปแล้ว)
+const cancelPatch = (order: Order, why: string): Partial<Order> | null =>
+  order.status === 'waiting' || order.status === 'serving' || order.status === 'skipped'
+    ? { status: 'cancelled', cancelReason: why }
+    : null
+
 export function QueuePanel({ booth, station }: { booth: BoothId; station: Station }) {
   const [orders, setOrders] = useState<Order[]>([])
   const [cancelId, setCancelId] = useState<string | null>(null)
@@ -37,7 +44,7 @@ export function QueuePanel({ booth, station }: { booth: BoothId; station: Statio
   const confirmCancel = () => {
     if (!cancelId || !reason.trim()) return
     const order = mine.find((o) => o.id === cancelId)
-    if (order) apply(order, { status: 'cancelled', cancelReason: reason.trim() }, L('queue.cancel').th)
+    if (order) apply(order, cancelPatch(order, reason.trim()), L('queue.cancel').th)
     setCancelId(null); setReason('')
   }
   const itemSummary = (o: Order) => o.items.map((it) => `${it.name} ×${it.qty}${it.options?.length ? ` · ${it.options.map((op) => op.label).join(' · ')}` : ''}`).join(' , ')
