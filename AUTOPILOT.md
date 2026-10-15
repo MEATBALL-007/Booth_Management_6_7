@@ -15,10 +15,19 @@
 **จาก `2026-08-04-queue-pro-upgrade-design.md`**
 
 - [ ] Undo: ทำ action ใดๆ แล้วกดย้อนกลับ → order คืนสถานะ+เวลาเดิม (ครบทุก action)
-      — ⚠️ รอบวันที่ 2026-08-13 **ทำงานนี้เสร็จแล้วและเจอบั๊กจริง แต่โค้ดถูกลบทิ้งเพราะบั๊กของ runner เอง**
-      (agent commit ไม่ได้เพราะเครื่องไม่มี git identity แล้ว runner สั่ง `checkout --force` ทับ)
-      **ผลการวิเคราะห์ทั้งหมดรอดมาแล้วที่ `docs/autopilot/2026-08-13-undo-audit-findings.md`**
-      ซึ่งระบุบั๊ก ไฟล์ที่ต้องแก้ และวิธีเขียนเทสต์ไว้ครบ — ใช้เป็นสเปกทำซ้ำได้เลย ไม่ต้องวิเคราะห์ใหม่
+      — ✅ **งานนี้ทำเสร็จแล้วจริง และ commit ไว้เรียบร้อยแล้ว** ที่ branch
+      `auto/Booth_Management_6_7/2026-08-13_1553` (commit `5ce7f61` + `cc85ddd`, push ขึ้น origin แล้ว)
+      แต่ **ยังไม่ถูก merge เข้า main** — main จึงยังไม่มีโค้ดนี้
+      — ⚠️ ข้อความเดิมตรงนี้ที่ว่า "โค้ดถูกลบทิ้งเพราะบั๊กของ runner" **ไม่เป็นความจริง**
+      git identity เสียจริงตอนกลางวันของ 2026-08-13 แต่ถูกแก้ในวันเดียวกัน แล้วงานถูก commit
+      เมื่อ 15:59 น. ของวันนั้นเอง ข้อความเดิมถูกเขียนจาก SUMMARY ของรอบที่ล้มกลางคัน
+      จึงค้างอยู่ที่สถานะ "commit ไม่ได้" และไม่เคยถูกอัปเดตอีกเลย
+      — รอบ 2026-08-15 ตรวจสอบแล้ว: เอา source ของ branch นั้นมารันจริง ได้ `npm test` = **144 ผ่าน**
+      และ `npm run build` ผ่าน (main = 131) งานนั้นสมบูรณ์และเขียว
+      — **ห้ามทำซ้ำ** การทำซ้ำ = เปิด PR ที่แก้ไฟล์ชุดเดียวกันซ้อนกันสองอัน สิ่งที่ต้องทำคือ merge PR นั้น
+      ติ๊กช่องนี้ตอน merge เข้า main แล้ว (branch 1553 ติ๊กไว้ให้แล้วใน commit ของมันเอง)
+      — `docs/autopilot/2026-08-13-undo-audit-findings.md` ยังเป็นบันทึกการวิเคราะห์ที่ถูกต้องอยู่
+      แต่หัวข้อ Risk ข้อ 1 ของมัน (เรื่อง commit ไม่ได้) ล้าสมัยแล้ว
 - [ ] No-show: ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
 - [ ] ประกาศซ้ำ: กดบน serving → Display เล่นเสียง+ไฟสำหรับเลขนั้นอีกครั้ง (announcedAt เด้ง)
 - [ ] เรียกเจาะจง: กด "เรียก" บน waiting เลขใดก็ได้ → serving (ข้ามลำดับได้)
@@ -62,22 +71,25 @@ npm test && npm run build
 
 ## Next task
 
-ทำข้อ **Undo** ซ้ำ โดยใช้ `docs/autopilot/2026-08-13-undo-audit-findings.md` เป็นสเปก
-— เอกสารนั้นวิเคราะห์เสร็จแล้ว ระบุครบว่าบั๊กคืออะไร แก้ที่ไฟล์ไหนบ้าง และทำไมเทสต์เดิม 129 ตัว
-ถึงจับไม่ได้ **อย่าวิเคราะห์ใหม่ ให้ลงมือทำตามนั้นเลย** งานรอบนี้จึงควรเร็วกว่ารอบก่อนมาก
+**งานของคน ไม่ใช่ของ agent: merge branch `auto/Booth_Management_6_7/2026-08-13_1553` เข้า main**
 
-สรุปสิ่งที่ต้องทำ (รายละเอียดอยู่ในเอกสาร):
-1. `src/queue/queueActions.ts` — `orderSnapshot` ต้องคืน field ที่ undo ได้ **ครบทุกตัว**
-   โดย `undefined` แปลว่า "field นี้ไม่เคยมี ให้ลบทิ้ง"
-2. `src/order/ordersRepo.ts` — `updateOrderStatus` แปลง `undefined` เป็น `deleteField()`
-   (import จาก `firebase/firestore` ที่มีอยู่แล้ว — ห้ามเพิ่ม dependency)
-3. `src/screens/QueuePanel.tsx` — ย้าย patch ของ "ยกเลิก" ออกมาเป็น `Q.cancel(reason)`
-4. เทสต์: ใช้ `toStrictEqual` บน `updateOrderStatus.mock.calls` — **ห้ามใช้ `objectContaining`
-   หรือ `toHaveBeenCalledWith`** เพราะทั้งคู่มองข้าม field ส่วนเกิน ซึ่งคือตัวบั๊กพอดี
+branch นั้นมีข้อ Undo ครบแล้วทั้งหมด (โค้ด 3 ไฟล์ + เทสต์ใหม่ 13 ตัว + ติ๊ก checkbox ให้แล้ว)
+push ขึ้น origin แล้วตั้งแต่ 2026-08-13 และรอบ 2026-08-15 ตรวจซ้ำแล้วว่า **144 tests เขียว + build ผ่าน**
+agent push เองไม่ได้ (ไม่มีสิทธิ์ push/gh) จึงต้องให้คนหรือ runner เป็นคน merge
 
-**commit ระหว่างทางเป็นระยะ** — เครื่องมี git identity แล้ว ไม่มีอะไรขวางการ commit อีก
+**เมื่อ merge แล้ว** เกณฑ์ข้อถัดไปคือ **No-show**:
 
-จบรอบแล้วอัปเดตบรรทัดนี้เป็นเกณฑ์ข้อถัดไป (ข้อ No-show)
+> ข้าม serving → skipped (หายจากจอลูกค้า, ขึ้นโซนพักไว้); เรียกซ้ำ → serving + Display ประกาศ (chime+flash)
+
+ครึ่งแรกฝั่ง logic (`skip` / `recall` ใน `src/queue/queueActions.ts`) มีเทสต์ครอบอยู่แล้ว
+ส่วนที่ยัง **ไม่เคยถูกตรวจ** คือฝั่ง Display ใน `src/screens/DisplayScreen.tsx`:
+(ก) order สถานะ `skipped` ต้องไม่โผล่บนจอลูกค้า และ (ข) `recall` ต้องทำให้ Display ประกาศซ้ำ
+(chime + flash) ให้เริ่มจากอ่าน `src/screens/DisplayScreen.test.tsx` ว่าคลุมอะไรไปแล้วบ้าง
+
+**ถ้ารอบถัดไปยังเห็นบรรทัดนี้อยู่ และ 1553 ยังไม่ถูก merge** — อย่าทำข้อ Undo ซ้ำเด็ดขาด
+ให้ข้ามไปทำ No-show ได้เลย โดยแตกจาก main ตามปกติ แต่พึงรู้ว่า 1553 แก้ `queueActions.ts`,
+`queueActions.test.ts`, `QueuePanel.tsx`, `QueuePanel.test.tsx`, `ordersRepo.*` ค้างไว้อยู่
+ถ้างาน No-show ต้องแตะไฟล์เดียวกัน จะ conflict ตอน merge — เลี่ยงได้ให้เลี่ยง
 
 ---
 
