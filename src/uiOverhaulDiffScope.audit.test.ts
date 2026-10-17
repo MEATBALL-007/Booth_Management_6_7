@@ -390,4 +390,6 @@ test('P1: no src/ui, Tailwind/CSS or .tsx file added or removed a direct Firesto
       .map((line) => `${path}: ${line}`),
   )
   expect(offenders).toStrictEqual([])
-})
+  // One `git diff` spawn per scanned path, twice over — on a loaded Windows host
+  // that lands right on vitest's 5s default (measured 5057ms and 9756ms).
+}, 30_000)
