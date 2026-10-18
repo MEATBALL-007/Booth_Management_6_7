@@ -21,7 +21,7 @@
 - I didn't add a file to `docs/autopilot/`. `HEAD:docs` stays `ab2c756`, so the next round has a stable value to compare against.
 
 ## Risk
-- I ran Verify once, after the carry and before committing the `AUTOPILOT.md`/`SUMMARY.md` edits. Some audit tests read the git diff, and edits to those two files land in it. Earlier rounds re-ran Verify after the same kind of edit and stayed green. I haven't re-run it after this commit, so the runner's own Verify run is the check on that.
+- I ran Verify twice: once after the carry, and again after committing the `AUTOPILOT.md`/`SUMMARY.md` edits, because some audit tests read the git diff. Both runs gave 59 files · 453 tests (`TEST_OK`) and `BUILD_OK`. The only commit after the second run edits this paragraph.
 - The git-spawning tests have flaked on this host before (`Test timed out` on an unchanged tree). If one fails, it's host speed, not a regression.
 - Matching hashes prove the carried source is unchanged. They don't prove it's correct. A person still needs to decide the open gaps listed in `AUTOPILOT.md`: PWA icons, HQ export, Happy-Hour, cash close, passport, the two-device write race, and `rounded-xl`/`2xl`.
 - This is the 150th carry-only round in a row. Nothing will move until someone merges one of these branches into `main` or writes a new `## Next task`.
