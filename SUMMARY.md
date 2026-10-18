@@ -20,6 +20,6 @@
 - I didn't add a file to `docs/autopilot/`.
 
 ## Risk
-- I ran Verify once, before committing the `AUTOPILOT.md`/`SUMMARY.md` edits. Some audit tests read the git diff, but those two files are outside `src/` and earlier rounds re-ran after the same kind of docs commit and stayed green. I've re-run after committing; see the note below.
+- I ran Verify twice: once after the carry, and again after committing the `AUTOPILOT.md`/`SUMMARY.md` edits, because some audit tests read the git diff. Both runs gave 59 files · 453 tests (`TEST_OK`) and `BUILD_OK` with the same three hashes. The only commit after the second run edits this paragraph. Two green runs don't prove the git-spawning tests are stable on this host. If one fails with `Test timed out` on an unchanged tree, it's the known host-speed issue, not a regression.
 - Matching hashes show the carried source is unchanged. They don't show it is correct. The open gaps listed in `AUTOPILOT.md` still need a person to decide them: PWA icons, HQ export, Happy-Hour, cash close, passport, the two-device write race, and `rounded-xl`/`2xl`.
 - This makes 149 rounds in a row that only carried. Nothing moves until someone merges one of these branches into `main` or writes a new `## Next task`.
