@@ -20,7 +20,7 @@
 - I didn't add a file to `docs/autopilot/`. `HEAD:docs` stays `ab2c756`, so the next round has a stable value to compare against.
 
 ## Risk
-- Some audit tests read the git diff, and my docs commit edits `AUTOPILOT.md` and `SUMMARY.md`. I re-ran Verify after that commit; the result is in the line below.
+- Some audit tests read the git diff, and my docs commit edits `AUTOPILOT.md` and `SUMMARY.md`. I re-ran Verify after that commit: 59 files and 453 tests passed, and `npm run build` exited 0 (`TEST-OK`, `BUILD-OK`). This last edit touches only `SUMMARY.md`.
 - The git-spawning tests have flaked on this host before (`Test timed out` on an unchanged tree). If one fails in the runner's check, it's host speed, not a regression.
 - Matching hashes prove the carried source is unchanged. They don't prove it's correct. A person still needs to decide the open gaps listed in `AUTOPILOT.md`: PWA icons, HQ export, Happy-Hour, cash close, passport, the two-device write race, and `rounded-xl`/`2xl`.
 - This is the 158th carry-only round in a row. Nothing will change until someone merges one of these branches into `main` or writes a new `## Next task`.
