@@ -1,33 +1,28 @@
-# SUMMARY — round `auto/Booth_Management_6_7/2026-10-21_0028`
+# SUMMARY — round `_2026-10-22_0001`
 
 ## What I did
-- Copied the full audit tree from `auto/Booth_Management_6_7/2026-10-21_0018` (`03ac72a`) onto this branch. The runner cut this branch from bare `main` (`735de75`), so it started with none of the audit work. Commit: `chore(autopilot): carry tree from _2026-10-21_0018 (03ac72a)`.
-- Ran Verify on the carried tree. The first `npm test` run failed with two timeouts: `roundedScale.audit.test.ts` S1 and U0 (`Test timed out in 5000ms`). The next two runs passed.
-- Gave just those two tests a `}, 30_000)` per-test timeout. This is the same fix round `_2026-10-18_0024` applied to `uiOverhaulDiffScope` P1. No assertion changed, and no production code changed. Commit: `test(roundedScale): per-test 30s timeout on S1/U0, the first git-spawning callers`.
-- Added a round-159 entry to the `## Next task` log in `AUTOPILOT.md`. The instruction itself is unchanged (🛑 "an agent has no task it can pick by itself; wait for a person"). All 20 criteria are still ticked; zero unticked.
+- Carried the whole tree from `auto/Booth_Management_6_7/2026-10-21_0028` (`50590e0`) onto this branch in one commit (`e24a7d1`). The runner cut this branch from bare `main` (`735de75`), so without the carry the PR would propose deleting all 20 proven criteria's tests and docs.
+- Ran Verify (`npm test`, then `npm run build`, separately and unpiped): both exit 0.
+- Added this round's block under `## Next task` in `AUTOPILOT.md`. The instruction itself is unchanged: stop and wait for a human to choose the next task.
+- I did not touch `src/` at all, production or tests.
 
 ## Why
-- The `## Next task` in the prompt was empty. For that case, the plan on the newest branch says: carry the work over, verify, record the round, stop. Without the carry, this branch's PR would be bare `main` and would propose deleting every audit test and doc (50 paths).
-- The whole-tree `git checkout 03ac72a -- .` was safe. `git merge-base HEAD 03ac72a` returned HEAD (`735de75`), so the carry can't revert anything on `main`. `--diff-filter=D HEAD 03ac72a` printed nothing. Between the previous tip (`5b2ad27`) and this one, only `AUTOPILOT.md` and `SUMMARY.md` changed, so no leftover experimental change (mutation) came along.
-- About the timeout fix: at first I held off, because the plan says not to look for work and later rounds check each carry against `HEAD:src`. I changed my mind for two reasons. A flaky Verify lets the runner's own check fail at random and hold this PR back. And the project's standing guidance for exactly this failure is a per-test timeout on the affected test only. Both tests call `sourceFiles()`, which spawns `git ls-files`, and each is the first such caller in its `describe` block. The source was byte-identical to a tip that passed last round. Run 1 took 53s of test time against 29–37s for later runs, so the host was slow.
+- `## Next task` arrived empty and all 20 criteria are ticked (`git grep -c "- [x]"` = 20, no unticked boxes). The plan says to carry, verify, record, and stop, so I did not look for other work.
+- A whole-tree checkout is only safe if the source branch is a strict descendant of HEAD. `git merge-base HEAD 50590e0` returned HEAD itself, and `--diff-filter=D` showed no deletions against HEAD or the three previous tips.
 
 ## Verification
-- Tree hashes right after the carry: `HEAD:` = `03ac72a:` = `e9da229`, `HEAD:src` = `6255f5a`, `HEAD:docs` = `ab2c756`. These match the previous rounds.
-- Before the fix:
-  - `npm test` run 1: **2 failed | 451 passed (453)**. S1 took 5097ms and U0 took 5114ms.
-  - Run 2: 453 passed.
-  - Run 3, the full `npm test && npm run build`: passed, `VERIFY_OK`.
-  - Run 4, after the docs commit: passed, `VERIFY_OK`.
-- After the fix (`HEAD:src` = `6ebef4b`), full Verify with no pipe: **59 files · 453 passed**, `tsc -b` passed, vite transformed 116 modules, PWA v1.3.0 generateSW precached 5 entries (849.13 KiB), printed `VERIFY_OK`. The bundle hashes didn't change (`index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`), as expected for a test-only edit.
+- `git diff --cached --stat 50590e0` after the checkout: empty. `HEAD:` = `50590e0:` = `a58fd80`, so the whole tree is byte-identical to the source tip.
+- `HEAD:src` = `6ebef4b`, which is what `_0028` said to expect after its `roundedScale` timeout fix. `HEAD:docs` = `ab2c756`, unchanged. The control `main:src` = `5b6b233`, so the hash check can tell trees apart.
+- The joint `03ac72a..50590e0` (`_0018` → `_0028`) touches only `AUTOPILOT.md`, `SUMMARY.md`, and the 2-line timeout change in `src/roundedScale.audit.test.ts` (`ce159c5`). No mutation was left behind.
+- `npm test`: **59 files · 453 tests passed** (36.35s).
+- `npm run build`: `tsc -b` passed · vite 116 modules · PWA v1.3.0 generateSW, precache 5 entries 849.13 KiB · `BUILD_OK`.
+- Bundle hashes match the recorded ones: `index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`.
 
 ## What I did NOT do
-- I changed no production code under `src/`, because no task was assigned.
-- I didn't raise the suite-wide `testTimeout`. That would hide a real hang in any other test.
-- I didn't add a timeout to U1. It spawns git too, but it runs after U0, by which point the slow first call has already happened. It has never timed out.
-- I didn't add a file to `docs/autopilot/`. `HEAD:docs` stays `ab2c756`.
+- No new task. "Next task" is empty by design; choosing the next piece of work (e.g. the recorded gaps: export, PWA icons, two-device write race, Happy-Hour, cash reconciliation, passport, radius `xl`/`2xl` inversion) is a human decision.
+- No file added to `docs/autopilot/`. This round has no findings, and adding one would move `HEAD:docs` off `ab2c756`, which the next round uses to check the carry.
 
 ## Risk
-- **The next carry should expect `HEAD:src` = `6ebef4b`, not `6255f5a`.** The `AUTOPILOT.md` entry says this, but a round that trusts the older notes will think the carry is wrong.
-- The timeout fix is backed by one green run after the change. The flake hit 1 of 4 runs before the fix, so one green run can't prove it's gone. Other git-spawning audits (`frozenZones`, `neonClarity`, `responsiveTouchTargets`) could still hit 5s on a slow host.
-- Matching hashes prove the carried source is unchanged. They don't prove it's correct. A person still needs to decide the open gaps listed in `AUTOPILOT.md`: PWA icons, HQ export, Happy-Hour, cash close, passport, the two-device write race, and `rounded-xl`/`2xl`.
-- This is the 159th carry-only round in a row. Nothing will change until someone merges one of these branches into `main` or writes a new `## Next task`.
+- Low. The tree is byte-identical to the source tip, and the suite and build are green with matching hashes.
+- The git-spawning audit tests have flaked at the 5s timeout on this machine before. This run had no flake (one run, all green). One green run doesn't prove the flake is gone.
+- Matching hashes prove the carried source is *unchanged*, not that it is *correct*. Each criterion's own audit doc lists its caveats, e.g. no pixels were measured and realtime/sync was not tested against a real Firestore.
