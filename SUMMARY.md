@@ -1,29 +1,38 @@
-# SUMMARY — round `_2026-10-22_0031`
+# SUMMARY — round `_2026-10-23_0009`
 
 ## What I did
-- Carried the whole tree from `auto/Booth_Management_6_7/2026-10-22_0021` (`c7ea9be`) onto this branch in one commit (`d2aed16`). The runner cut this branch from bare `main` (`735de75`), so without the carry the PR would propose deleting the tests and docs behind all 20 proven criteria.
-- Ran Verify (`npm test`, then `npm run build`, separately and unpiped). Both exited 0.
-- Added this round's block under `## Next task` in `AUTOPILOT.md`. The instruction itself is unchanged: stop and wait for a human to choose the next task.
-- I did not touch `src/` at all, production or tests.
+- `## Next task` came in empty, so this was a carry-only round: carry, verify, record, stop.
+- Carried the whole tree from the newest sibling `auto/Booth_Management_6_7/2026-10-22_0031` (`3b18240`) in one command and committed it as `chore(autopilot): carry tree from _2026-10-22_0031 (3b18240)`.
+- Ran Verify (`npm test`, then `npm run build`, unpiped). Both exited 0.
+- Added one round entry for `_2026-10-23_0009` under `## Next task` in `AUTOPILOT.md`. The instruction is unchanged: no agent task remains, and the next round must wait for a human to pick one.
 
 ## Why
-- `## Next task` arrived empty and all 20 criteria are ticked (`git grep -c "- [x]"` = 20, unticked = 0). The plan says to carry, verify, record, and stop, so I did not look for other work.
-- A whole-tree checkout is only safe if the source branch is a strict descendant of HEAD. `git merge-base HEAD c7ea9be` returned HEAD itself, and `--diff-filter=D` against `c7ea9be`, `11479c4`, `0e8469f`, and `50590e0` showed no deletions.
+- The runner cuts every round from bare `main` (`735de75`). A round that skips the carry produces a PR that would delete all 20 criteria's audit tests and docs if merged.
+- A whole-tree checkout was safe here for three reasons:
+  - `git merge-base HEAD 3b18240` returned HEAD itself.
+  - `main` has not moved since the siblings forked from it.
+  - `--diff-filter=D` showed no deletions when compared against HEAD, `c7ea9be`, `50590e0` or `c200a82`.
 
 ## Verification
-- `git diff --cached --stat c7ea9be` after the checkout printed nothing. `HEAD:` = `c7ea9be:` = `d04b9f6`, so the whole tree was byte-identical to the source tip at carry time.
-- `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`, the same values the previous round recorded. The control `main:src` = `5b6b233` shows the hash check can tell trees apart.
-- The joint `11479c4..c7ea9be` (`_0011` → `_0021`) touches only `AUTOPILOT.md` and `SUMMARY.md`, so no mutation was left behind.
-- `npm test`: **59 files · 453 tests passed** (66.95s).
-- `npm run build`: `tsc -b` passed · vite 116 modules · PWA generateSW, precache 5 entries 849.13 KiB · `BUILD_OK`.
-- The bundle hashes match the recorded ones: `index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`.
+- After the carry, `git diff --stat --cached 3b18240` was empty, and `HEAD:` equalled `3b18240:` (tree `8f9c44d`).
+- `HEAD:src` = `6ebef4b`, the same as the last five tips (`_0031`, `_0021`, `_0011`, `_0001`, `_10-21_0028`). The control `main:src` = `5b6b233`. `HEAD:docs` = `ab2c756`.
+- `npm test`: **59 files · 453 tests passed**, 41.18s, `TEST-OK`.
+- `npm run build`:
+  - `tsc -b` passed; vite transformed 116 modules.
+  - PWA v1.3.0 generateSW: precache 5 entries (849.13 KiB), `BUILD-OK`.
+  - Bundle hashes `index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js` match the hashes recorded by earlier rounds.
+- `git grep -c "- [x]"` in `AUTOPILOT.md` = 20, and there are 0 unticked boxes.
 
 ## What I did NOT do
-- No new task. "Next task" is empty by design. Picking the next piece of work is a human decision; the recorded gaps are export, PWA icons, the two-device write race, Happy-Hour, cash reconciliation, passport, and the radius `xl`/`2xl` inversion.
-- No file added to `docs/autopilot/`. This round has no findings, and a new file would move `HEAD:docs` off `ab2c756`, which the next round uses to check its carry.
+- I did not touch `src/`, `docs/`, specs, rules or config. There was no task to do, and inventing one would break rule 5.
+- I did not add a file to `docs/autopilot/`, so `HEAD:docs` stays `ab2c756` for the next round to compare against.
 
 ## Risk
-- Low. The tree is byte-identical to the source tip, and the suite and build are green with matching hashes.
-- The git-spawning audit tests have hit the 5s timeout on this machine before. This run had no flake, but one green run doesn't prove the flake is gone.
-- Matching hashes prove the carried source is *unchanged*, not that it is *correct*. Each criterion's audit doc lists its own caveats, for example that no pixels were measured and realtime/sync was never tested against a real Firestore.
-- `firestore.rules` is out of scope and I didn't touch it, but earlier reviews noted that its allow-all window expired on 2026-09-30. If the deployed rules match the file, every read and write is denied right now. Someone needs to check the deployed rules by hand before the booths go live again.
+- This is low risk because the commit carries already-verified content byte-for-byte.
+- Matching hashes only prove the tree is *unchanged*, not that it is *correct*. The open gaps recorded in `AUTOPILOT.md` still stand:
+  - the two-device write race (`idempotency E1`)
+  - empty PWA icons
+  - no export path
+  - the Happy-Hour, cash-close and Passport features don't exist
+  - the `rounded-xl` > `rounded-2xl` radius inversion
+- The project keeps producing carry-only rounds (this is the 164th in a row) until a person picks the next task.
