@@ -1,22 +1,23 @@
-# SUMMARY — round `_2026-10-25_0004`
+# SUMMARY — round `_2026-10-25_0014`
 
 ## What I did
 - `## Next task` came in empty, so this was a carry-only round: carry, verify, record, stop.
-- Carried the whole tree from the newest sibling `auto/Booth_Management_6_7/2026-10-24_0034` (`7d4fa3c`) in one command and committed it as `chore(autopilot): carry tree from _2026-10-24_0034 (7d4fa3c)`.
+- Carried the whole tree from the newest sibling `auto/Booth_Management_6_7/2026-10-25_0004` (`2d1dbd0`) in one command and committed it as `chore(autopilot): carry tree from _2026-10-25_0004 (2d1dbd0)`.
 - Ran Verify: `npm test`, then `npm run build`, run separately and unpiped. Both exited 0.
-- Added one round entry for `_2026-10-25_0004` under `## Next task` in `AUTOPILOT.md`. The instruction itself is unchanged: no agent task remains, and the next round must wait for a human to pick one.
+- Added one round entry for `_2026-10-25_0014` under `## Next task` in `AUTOPILOT.md`. The instruction itself is unchanged: no agent task remains, and the next round must wait for a human to pick one.
 
 ## Why
 - The runner cuts every round from bare `main` (`735de75`). A round that skips the carry produces a PR that would delete all 20 criteria's audit tests and docs if merged.
 - A whole-tree checkout was safe here for three reasons:
-  - `git merge-base HEAD 7d4fa3c` returned HEAD itself (`735de75`).
+  - `git merge-base HEAD 2d1dbd0` returned HEAD itself (`735de75`).
   - `main` has not moved (`main` is still `735de75`).
-  - `--diff-filter=D` from the `_2026-10-24_0024`, `_2026-10-24_0014` and `_2026-10-23_0039` tips to `7d4fa3c` listed no deletions, so the source branch dropped nothing those rounds had.
+  - `--diff-filter=D` from the `_2026-10-24_0034`, `_2026-10-24_0024` and `_2026-10-24_0014` tips to `2d1dbd0` listed no deletions, so the source branch dropped nothing those rounds had.
+- The source tip's own carry commit (`e0980ab`) and docs commit (`2d1dbd0`) touch no `src/` beyond the carry; `2d1dbd0` changes only `AUTOPILOT.md` and `SUMMARY.md` relative to `7d4fa3c`.
 
 ## Verification
-- After the carry commit, `git diff --stat 7d4fa3c HEAD` was empty (tree byte-identical to the source tip).
+- After the carry commit, `git diff --stat 2d1dbd0 HEAD` was empty (tree byte-identical to the source tip).
 - `HEAD:src` = `6ebef4b` (same as the last several tips). `HEAD:docs` = `ab2c756`.
-- `npm test`: **59 files · 453 tests passed**, 35.19s, no timeouts.
+- `npm test`: **59 files · 453 tests passed**, 43.45s, no timeouts.
 - `npm run build`:
   - `tsc -b` passed; vite transformed 116 modules.
   - PWA v1.3.0 generateSW: precache 5 entries (849.13 KiB), `dist/sw.js` generated.
@@ -35,4 +36,4 @@
   - no export path for HQ
   - the Happy-Hour, cash-close and Passport features don't exist
   - the `rounded-xl` > `rounded-2xl` radius inversion
-- The project keeps producing carry-only rounds (this is the 172nd in a row) until a person picks the next task. Each one costs a full test + build run and adds nothing new. A human needs to either merge one carried branch into `main` or write a real `## Next task`.
+- The project keeps producing carry-only rounds (this is the 173rd in a row) until a person picks the next task. Each one costs a full test + build run and adds nothing new. A human needs to either merge one carried branch into `main` or write a real `## Next task`.
