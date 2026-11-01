@@ -14,7 +14,7 @@
 - **Tree hashes:** `HEAD:src` = `6ebef4b`, `HEAD:docs` = `ab2c756`. Both match the values earlier rounds recorded.
 - **`npm test`:** passed, printed `TEST_OK` (run unpiped with `&& echo … || echo …`, output not written into the repo).
 - **`npm run build`:** `tsc -b` + vite + PWA passed, printed `BUILD_OK`. Asset hashes `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` match previous rounds; `dist/sw.js` was generated.
-- Verify was run on the carried tree before the docs commit. This round's only later changes are `AUTOPILOT.md` and this file; I re-ran Verify after committing them (see the final commit's re-run note below).
+- **Post-docs re-run:** I ran Verify once more after committing `AUTOPILOT.md` and this file, because those paths show up in the audit tests' `changedPaths()`. It printed `TEST_OK` and `BUILD_OK`, with the same three asset hashes, and the working tree was clean afterwards.
 
 ## What I did NOT do
 - I didn't touch `src/`, specs, rules, config or `docs/`. No file added to `docs/autopilot/`.
