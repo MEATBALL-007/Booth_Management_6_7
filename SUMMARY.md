@@ -15,7 +15,7 @@
 - **Tree hashes:** `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`, the same values earlier rounds recorded. `main:src` = `5b6b233` is different, which shows the hash really distinguishes trees.
 - **`npm test`:** I ran it twice with `--reporter=dot`, which runs the same tests with less output. The first run's exit code, read unpiped, gave `TEST_OK`. The second printed `Test Files 59 passed (59)` and `Tests 453 passed (453)`.
 - **`npm run build`:** `tsc -b` passed, vite transformed 116 modules, and PWA v1.3.0 generateSW precached 5 entries and generated `dist/sw.js`. Result: `BUILD_OK`. The asset hashes `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` match previous rounds. `git status --short` was empty after the build.
-- **Post-docs re-run:** pending. I'll fill this line in after committing this file and running Verify again.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (both paths show up in the audit tests' `changedPaths()`), I re-ran Verify on a clean tree. `npm test -- --reporter=dot` printed 59/59 files and 453/453 tests. Then the exact command `npm test && npm run build`, with its exit code read unpiped, printed `VERIFY_OK`.
 
 ## What I did NOT do
 - I didn't touch `src/`, specs, rules, config or `docs/`. I didn't add a file to `docs/autopilot/`, so `HEAD:docs` stays at `ab2c756` for the next round to compare against.
