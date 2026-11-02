@@ -15,7 +15,7 @@
 - **Tree hashes:** `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`, the same values earlier rounds recorded.
 - **`npm test -- --reporter=dot`:** printed `Test Files 59 passed (59)` and `Tests 453 passed (453)`.
 - **`npm run build`:** exit code read unpiped, printed `BUILD_OK`. Output assets `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` match previous rounds. `git status --short` was empty after the build.
-- **Post-docs re-run:** pending — written after this file is committed (see the line below).
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file, I ran the exact command `npm test && npm run build` on a clean tree. It printed `Test Files 59 passed (59)`, `Tests 453 passed (453)`, and the exit code read unpiped gave `VERIFY_OK`.
 
 ## What I did NOT do
 - I didn't touch `src/`, specs, rules, config or `docs/`. I didn't add a file to `docs/autopilot/`, so `HEAD:docs` stays at `ab2c756`.
