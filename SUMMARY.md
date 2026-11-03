@@ -15,7 +15,8 @@
 - **Tree hashes:** `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`, the same values earlier rounds recorded. `main:src` = `5b6b233` is different, which shows the hash distinguishes trees.
 - **`npm test -- --reporter=dot`:** `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`. I read the exit code with `&& … ||` and no pipe.
 - **`npm run build`:** `tsc -b` passed, vite transformed 116 modules, and PWA v1.3.0 generateSW precached 5 entries (849.13 KiB). It printed `BUILD_OK`. The assets `index-bTUIGpdg.css` (16.31 kB), `index-CyVIMiFT.js` (852.15 kB) and `workbox-9c191d2f.js` match previous rounds.
-- **Post-docs re-run:** pending. Filled in below after it runs.
+- **Tick count:** `git grep -c -e "^- \[x\]" HEAD -- AUTOPILOT.md` printed 20.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file, I ran `npm test -- --reporter=dot` and then `npm run build` on a clean tree. The tests printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`. The build printed `BUILD_OK`, with `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` again. I read both exit codes with `&& … ||` and no pipe.
 
 ## What I did NOT do
 - I didn't touch `src/`, specs, rules, config or `docs/`. I added no file to `docs/autopilot/`, so `HEAD:docs` stays at `ab2c756`.
