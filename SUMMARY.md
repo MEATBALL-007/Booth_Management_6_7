@@ -15,7 +15,8 @@
 - **Tree hashes:** `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`, the same values earlier rounds recorded.
 - **`npm test -- --reporter=dot`:** printed `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then `TEST_OK` (exit code read with `&& … ||`, no pipe).
 - **`npm run build`:** `tsc -b` passed, vite transformed 116 modules, and PWA v1.3.0 generateSW precached 5 entries. It printed `BUILD_OK`. The output assets `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` match previous rounds. `git status --short` was empty after the build.
-- **Post-docs re-run:** pending. I'll fill this in after committing these docs and running Verify again.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file, I ran `npm test -- --reporter=dot` and then `npm run build` on a clean tree. The tests printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`. The build printed `BUILD_OK`, and `dist/assets` again held `index-bTUIGpdg.css` and `index-CyVIMiFT.js`. Both exit codes were read with `&& … ||` and no pipe. `git status --short` was empty afterwards.
+- **Tick count:** `git grep -c -e "^- \[x\]" HEAD -- AUTOPILOT.md` printed 20, and the same command for `^- \[ \]` matched nothing. The unanchored pattern prints 21 because one ledger line quotes the pattern, so it isn't an extra criterion.
 
 ## What I did NOT do
 - I didn't touch `src/`, specs, rules, config or `docs/`. I didn't add a file to `docs/autopilot/`, so `HEAD:docs` stays at `ab2c756`.
