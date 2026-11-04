@@ -16,7 +16,7 @@
 - **After the carry commit:** `HEAD:` = `b2540d9:` = `62e7eb0`, `HEAD:src` = `6ebef4b`, `HEAD:docs` = `ab2c756`. The control `main:src` = `5b6b233` is different, which shows the hash comparison can tell trees apart. 20 acceptance boxes are ticked at line start and none are open.
 - **`npm test`:** `Test Files 59 passed (59)`, `Tests 453 passed (453)`, and a separate unpiped run printed `TEST_OK`.
 - **`npm run build`:** an unpiped run printed `BUILD_OK`. PWA v1.3.0 generateSW precached 5 entries (849.13 KiB). `dist/assets` holds `index-bTUIGpdg.css` and `index-CyVIMiFT.js`, plus `workbox-9c191d2f.js`, which match the hashes the previous rounds recorded.
-- **Post-docs re-run:** pending. I'll fill this in after committing this file and re-running Verify.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`f4957a6`), I re-ran on a clean tree. An unpiped `npm test` printed `TEST_OK`, and a second run showed `Test Files 59 passed (59)` and `Tests 453 passed (453)`. An unpiped `npm run build` printed `BUILD_OK`, producing the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`.
 
 ## What I did NOT do
 - I did not start any new work. All 20 criteria are ticked. The remaining gaps (export, PWA icons, the two-device write race, Happy-Hour, cash close, Passport, the `2xl` radius inversion) are design or human decisions, recorded in `AUTOPILOT.md`.
