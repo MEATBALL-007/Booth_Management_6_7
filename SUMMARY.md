@@ -16,7 +16,7 @@
 - **After the carry commit:** `HEAD:` = `fc8e25f:` = `99f8a47`, `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`. 20 acceptance boxes at line start are ticked and none are open.
 - **`npm test`:** `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`. I read the exit code with `&& … ||` and no pipe.
 - **`npm run build`:** `tsc -b` passed, vite transformed 116 modules, and PWA v1.3.0 generateSW precached 5 entries (849.13 KiB). It printed `BUILD_OK`. The assets `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` match the previous round's.
-- **Post-docs re-run:** PENDING. I write this line after the docs commit and the re-run.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`7fdcbdc`), I ran `npm test -- --reporter=dot` and then `npm run build` on a clean tree. The tests printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`. The build printed `BUILD_OK`, with `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` again. I read both exit codes with `&& … ||` and no pipe.
 
 ## What I did NOT do
 - I did not start any new work. All 20 criteria are ticked, and the remaining gaps (export, PWA icons, two-device write race, Happy-Hour, cash close, Passport, `2xl` radius inversion) are design or human decisions recorded in `AUTOPILOT.md`.
