@@ -16,7 +16,7 @@
 - **After the carry commit:** `HEAD:` and `c6dc708:` are both `cafcca5`. `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`. As a control, `main:src` = `5b6b233` differs. `git grep -c "^- \[x\]"` counts 20 ticked boxes and `"^- \[ \]"` counts none.
 - **`npm test`:** `Test Files 59 passed (59)`, `Tests 453 passed (453)`, and the unpiped `&& echo` printed `TEST_OK`.
 - **`npm run build`:** printed `BUILD_OK` unpiped. The output was `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, the same three hashes previous rounds recorded. PWA v1.3.0 generateSW, precache 5 entries.
-- **Post-docs re-run:** pending — not yet run at the time this line was committed.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`e397317`), I re-ran Verify on a clean tree, unpiped. `npm test` showed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and printed `TEST_OK`. `npm run build` printed `BUILD_OK` and produced the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. The remaining gaps (export, PWA icons, the two-device write race, Happy-Hour, cash close, Passport, the `2xl` radius inversion) need design or human decisions, and they're recorded in `AUTOPILOT.md`.
