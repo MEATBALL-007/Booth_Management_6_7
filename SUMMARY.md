@@ -15,7 +15,7 @@
 ## Verification
 - **Carry:** `git diff --stat --cached c515703` was empty before the commit. After it, `HEAD:` = `c515703:` = `3ca339e`, `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`. As a control, `main:src` = `5b6b233` is different. `AUTOPILOT.md` has 20 ticked boxes.
 - **Verify** (`npm test && npm run build && echo VERIFY_OK || echo VERIFY_FAIL`, unpiped): `Test Files 59 passed (59)`, `Tests 453 passed (453)`. `tsc -b` passed. Vite transformed 116 modules and emitted `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, the same three hashes earlier rounds recorded. PWA v1.3.0 generateSW precached 5 entries. The run printed `VERIFY_OK`.
-- **Post-docs re-run:** pending. It runs after this file is committed, and this line gets updated with what it prints.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file, I re-ran Verify on a clean tree, unpiped. It showed `Test Files 59 passed (59)` and `Tests 453 passed (453)`, built the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, and printed `VERIFY_OK`.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. The remaining gaps (export, PWA icons, the two-device write race, Happy-Hour, cash close, Passport, the `2xl` radius inversion) need design or human decisions, and they are recorded in `AUTOPILOT.md`.
