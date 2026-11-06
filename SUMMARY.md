@@ -16,7 +16,7 @@
 - **Before carrying:** `main..a0716f8` is the previous round's carry commit plus two docs commits. `a0716f8:src` = `1c5c502:src` = `c6dc708:src` = `6ebef4b`; `a0716f8:docs` = `1c5c502:docs` = `ab2c756`. After the checkout, `git diff --stat --cached a0716f8` was empty.
 - **After the carry commit:** `HEAD:` and `a0716f8:` are both `38754a5`. `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`. As a control, `main:src` = `5b6b233` differs. `AUTOPILOT.md` has 20 ticked boxes.
 - **Verify** (`npm test && npm run build && echo VERIFY_OK || echo VERIFY_FAIL`, unpiped): `Test Files 59 passed (59)`, `Tests 453 passed (453)`; `tsc -b` passed; vite transformed 116 modules and emitted `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, the same three hashes previous rounds recorded. PWA v1.3.0 generateSW, precache 5 entries. It printed `VERIFY_OK`.
-- **Post-docs re-run:** pending. Filled in below after committing this file.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`e828f35`), I re-ran Verify on a clean tree, unpiped. It showed `Test Files 59 passed (59)`, `Tests 453 passed (453)`, built the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, and printed `VERIFY_OK`.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. The remaining gaps (export, PWA icons, the two-device write race, Happy-Hour, cash close, Passport, the `2xl` radius inversion) need design or human decisions, and they're recorded in `AUTOPILOT.md`.
