@@ -16,7 +16,7 @@
 - **Verify**, run as two unpiped steps:
   - `npm test && echo TEST_OK` gave `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then printed `TEST_OK`.
   - `npm run build && echo BUILD_OK` passed `tsc -b`, transformed 116 modules, emitted `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, and printed `BUILD_OK`. PWA v1.3.0 generateSW precached 5 entries. These are the same three bundle hashes as last round. The only warning was vite's usual chunk-size notice (>500 kB).
-- **Post-docs re-run:** pending. I'll fill this in after re-running Verify on the committed docs.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`1c89fbf`), I re-ran Verify unpiped on a clean tree. `npm test` gave `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then printed `TEST_OK`. `npm run build` emitted the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` and printed `BUILD_OK`.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. The gaps that remain need a design or human decision: export, PWA icons, the two-device write race, Happy-Hour, the cash close, Passport, and the `2xl` radius inversion. They're recorded in `AUTOPILOT.md`.
