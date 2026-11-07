@@ -15,7 +15,7 @@
 ## Verification
 - **Carry:** `git diff --stat --cached f088d1f` was empty before the commit. After it, `HEAD:` = `f088d1f:` = `6ee6daa`, `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`. As a control, `main:src` = `5b6b233` is different. `AUTOPILOT.md` has 20 ticked boxes (anchored count).
 - **Verify**, run as two steps with unpiped exit checks. `npm test` showed `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then printed `TEST_OK`. `npm run build` passed `tsc -b`, and vite transformed 116 modules. It emitted `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, the same three hashes earlier rounds recorded. PWA v1.3.0 generateSW precached 5 entries, and the step printed `BUILD_OK`. The only warning was vite's usual chunk-size notice (>500 kB).
-- **Post-docs re-run:** pending. It runs after this file is committed.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file, I re-ran Verify on a clean tree. `npm test` showed `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then printed `TEST_OK`. `npm run build` printed `BUILD_OK` and emitted the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. The remaining gaps need design or human decisions: export, PWA icons, the two-device write race, Happy-Hour, cash close, Passport, and the `2xl` radius inversion. They are recorded in `AUTOPILOT.md`.
