@@ -583,13 +583,14 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
-✅ **รอบ `_2026-11-09_0008` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยยี่สิบเจ็ดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+✅ **รอบ `_2026-11-09_0018` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยยี่สิบแปดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
 รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่เปลี่ยนคำสั่งหยุดด้านบน
-ยกทั้ง tree จาก `_2026-11-08_0038` (`a5d237f`) (commit `92aa13a` `chore(autopilot): carry tree from _2026-11-08_0038`)
-เช็ค: `merge-base HEAD a5d237f` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
-`git diff --stat 15576d1 a5d237f` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ · `--diff-filter=DR HEAD a5d237f` ว่าง ✅ ·
-`git diff --quiet HEAD a5d237f` หลัง commit ยก ✅ · `HEAD:` = `a5d237f:` = **`7d37610`** ✅ · `HEAD:src` = **`6ebef4b`** (= `15576d1:src` = `598431c:src`) ✅ · `HEAD:docs` = **`ab2c756`** ✅ · ติ๊ก 20 · ช่องว่าง 0 ✅
+ยกทั้ง tree จาก `_2026-11-09_0008` (`0fd6e05`) (commit `130d23f` `chore(autopilot): carry tree from _2026-11-09_0008`)
+เช็ค: `merge-base HEAD 0fd6e05` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
+`git diff --stat a5d237f 0fd6e05` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ ·
+`--diff-filter=D` จาก `a5d237f` / `598431c` / `55f775a` / `HEAD` → `0fd6e05` **ว่างทั้งสี่** ✅ ·
+`git diff --quiet HEAD 0fd6e05` หลัง commit ยก ✅ · `HEAD:` = `0fd6e05:` = **`7b53f08`** ✅ · `HEAD:src` = **`6ebef4b`** (= `a5d237f:src` = `55f775a:src`) ✅ · `HEAD:docs` = **`ab2c756`** ✅ · `main:src` = `5b6b233` (control) ✅ · ติ๊ก 20 · ช่องว่าง 0 ✅
 ผลรันจริง (ไม่ pipe exit code): `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** พิมพ์ `TEST_OK` · `npm run build` → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · พิมพ์ `BUILD_OK`
 ✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`)
 🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** — งานของคน ไม่ใช่ agent
