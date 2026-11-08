@@ -44,8 +44,11 @@ test('reannounce bumps announcedAt on a serving order only', () => {
   expect(reannounce(o({ status: 'skipped' }), 100)).toBeNull()
 })
 
-test('orderSnapshot captures only defined mutable fields (for undo)', () => {
-  expect(orderSnapshot(o({ status: 'serving', servingAt: 5 }))).toEqual({ status: 'serving', servingAt: 5 })
+test('orderSnapshot captures every mutable field, undefined meaning it was absent (for undo)', () => {
+  // `toStrictEqual`, not `toEqual`: the latter treats an undefined-valued key as
+  // an absent one, which is the very distinction undo depends on.
+  expect(orderSnapshot(o({ status: 'serving', servingAt: 5 })))
+    .toStrictEqual({ status: 'serving', servingAt: 5, doneAt: undefined, announcedAt: undefined, cancelReason: undefined })
   expect(orderSnapshot(o({ status: 'done', servingAt: 5, doneAt: 9, announcedAt: 5, cancelReason: 'x' })))
-    .toEqual({ status: 'done', servingAt: 5, doneAt: 9, announcedAt: 5, cancelReason: 'x' })
+    .toStrictEqual({ status: 'done', servingAt: 5, doneAt: 9, announcedAt: 5, cancelReason: 'x' })
 })
