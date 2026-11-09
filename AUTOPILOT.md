@@ -583,14 +583,14 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
-✅ **รอบ `_2026-11-09_0039` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยสามสิบติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+✅ **รอบ `_2026-11-10_0009` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยสามสิบเอ็ดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
 รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่เปลี่ยนคำสั่งหยุดด้านบน
-ยกทั้ง tree จาก `_2026-11-09_0028` (`2f1962c`) (commit `0cb7569` `chore(autopilot): carry tree from _2026-11-09_0028`)
-เช็ค: `merge-base HEAD 2f1962c` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
-`git diff --stat 364e8ea 2f1962c` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ ·
-`--diff-filter=D` จาก `HEAD`(ก่อนยก) / `364e8ea` / `0fd6e05` / `a5d237f` → tree ที่ยกแล้ว **ว่างทั้งสี่** ✅ ·
-`git diff --quiet HEAD 2f1962c` หลัง commit ยก ✅ · `HEAD:` = `2f1962c:` = **`d6a9e0b`** ✅ · `HEAD:src` = **`6ebef4b`** (= `364e8ea:src`) ✅ · `HEAD:docs` = **`ab2c756`** ✅ · `main:src` = `5b6b233` (control) ✅ · ติ๊ก 20 · ช่องว่าง 0 ✅
+ยกทั้ง tree จาก `_2026-11-09_0039` (`b44b7cc`) (commit `0a19a23` `chore(autopilot): carry tree from _2026-11-09_0039`)
+เช็ค: `merge-base HEAD b44b7cc` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
+`git diff --stat 2f1962c b44b7cc` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ ·
+`--diff-filter=D` จาก `HEAD`(ก่อนยก) / `364e8ea` → `b44b7cc` **ว่างทั้งสอง** ✅ ·
+`git diff --quiet HEAD b44b7cc` หลัง commit ยก ✅ · `HEAD:` = `b44b7cc:` = **`bfa6b74`** ✅ · `HEAD:src` = **`6ebef4b`** (= `364e8ea:src`) ✅ · `HEAD:docs` = **`ab2c756`** ✅ · `main:src` = `5b6b233` (control) ✅ · ติ๊ก 20 · ช่องว่าง 0 ✅
 ผลรันจริง (ไม่ pipe exit code): `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** พิมพ์ `TEST_OK` · `npm run build` → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · พิมพ์ `BUILD_OK`
 ✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`)
 🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** (อ่านซ้ำรอบนี้) — งานของคน ไม่ใช่ agent
