@@ -17,7 +17,7 @@
 - **Verify**, run as two unpiped steps with output sent to the git-ignored `vitest-out.local` / `build-out.local`:
   - `npm test > vitest-out.local 2>&1 && echo TEST_OK || echo TEST_FAIL` printed `TEST_OK`. The log shows `Test Files 59 passed (59)` and `Tests 453 passed (453)`.
   - `npm run build > build-out.local 2>&1 && echo BUILD_OK || echo BUILD_FAIL` printed `BUILD_OK`. The log shows `tsc -b` passing, 116 modules transformed, `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`, and PWA precache 5 entries. All three bundle hashes match last round.
-- **Post-docs re-run:** pending — filled in after it actually runs.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`95465a7`), I re-ran Verify unpiped on a clean tree. `npm test` printed `TEST_OK` (`Test Files 59 passed (59)`, `Tests 453 passed (453)`). `npm run build` printed `BUILD_OK` and emitted the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, with precache 5 entries.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. What's left needs a design or human decision: export, PWA icons, the two-device write race, Happy-Hour, the cash close, Passport, and the `2xl` radius inversion. These are recorded in `AUTOPILOT.md`.
