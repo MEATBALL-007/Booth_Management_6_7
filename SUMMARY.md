@@ -17,7 +17,7 @@
 - **Verify** ran as two separate unpiped steps:
   - `npm test > /dev/null 2>&1 && echo TEST_OK || echo TEST_FAIL` printed `TEST_OK`. A second run, piped only to read the tally, showed `Test Files 59 passed (59)` and `Tests 453 passed (453)`.
   - `npm run build > /dev/null 2>&1 && echo BUILD_OK || echo BUILD_FAIL` printed `BUILD_OK`. A preceding run showed PWA v1.3.0 generateSW, precache 5 entries, `dist/workbox-9c191d2f.js`. `dist/assets` holds `index-bTUIGpdg.css` and `index-CyVIMiFT.js`. All three bundle hashes match last round.
-- **Post-docs re-run:** pending — filled in after the docs commit.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`7387225`), I re-ran Verify on a clean tree. `npm test` printed `TEST_OK` (`Test Files 59 passed (59)`, `Tests 453 passed (453)`). `npm run build` printed `BUILD_OK` and emitted the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. What's left needs a design call or a person's decision: export, PWA icons, the two-device write race, Happy-Hour, the cash close, Passport, and the `2xl` radius inversion. These are recorded in `AUTOPILOT.md`.
