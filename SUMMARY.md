@@ -23,7 +23,7 @@
 - **Verify:** I ran test and build as two separate unpiped commands. I couldn't redirect output to a log because writes outside the repo are denied.
   - `npm test && echo TEST_OK || echo TEST_FAIL` printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`.
   - `npm run build && echo BUILD_OK || echo BUILD_FAIL` printed `BUILD_OK`. `tsc -b` passed, vite transformed 116 modules, and PWA generateSW precached 5 entries. The bundle files were `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, the same three hashes as last round. `git status --porcelain` was clean afterwards.
-- **Post-docs re-run:** pending. I'll fill this in after running Verify again on the committed docs.
+- **Post-docs re-run:** after committing the docs (`1154e48`), I ran Verify again on a clean tree. `npm test` printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`. `npm run build` printed `BUILD_OK` and produced the same three hashes: `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`. The only later change is this line and the matching line in `AUTOPILOT.md`. Both are docs, and neither is read by a test except as a changed path.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked, and what's left needs a person to decide (see Risk).
