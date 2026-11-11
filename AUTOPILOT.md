@@ -583,19 +583,22 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
-✅ **รอบ `_2026-11-11_0041` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยสามสิบแปดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
-`## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
-รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่เปลี่ยนคำสั่งหยุดด้านบน
-ยกทั้ง tree จาก `_2026-11-11_0029` (`f8769af`) (commit `chore(autopilot): carry tree from _2026-11-11_0029 (f8769af)`)
-เช็ค: `merge-base HEAD f8769af` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
-`git diff --stat 1c4b66f f8769af` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ ·
-`--diff-filter=D` จาก `HEAD` (`735de75`) → `f8769af` **ว่าง** ✅ ·
-`git diff --stat --cached f8769af` ว่างหลังยก ✅ · `HEAD:` = `f8769af:` = **`0bff555`** ✅ · `HEAD:src` = **`6ebef4b`** ✅ · `HEAD:docs` = **`ab2c756`** ✅ · `main:src` = `5b6b233` (control) ✅ · ติ๊ก 20 ✅
+✅ **รอบ `_2026-11-12_0016` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยสามสิบเก้าติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+`## Next task` ในพรอมต์ **ไม่ว่าง** — สั่ง "ทำข้อ **Undo** ซ้ำ" = **ข้อความเก่าจาก `main`** ตรงกับกับดักที่บรรทัดบนเตือนไว้เป๊ะ
+branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด**
+ยกทั้ง tree จาก `_2026-11-11_0041` (`464d65b`) (commit `chore(autopilot): carry tree from _2026-11-11_0041 (464d65b)`)
+เช็ค: `merge-base HEAD 464d65b` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
+`git diff --stat f8769af 464d65b` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ ·
+`--diff-filter=DR` จาก `HEAD` (`735de75`) → `464d65b` **ว่าง** ✅ ·
+`git diff --stat HEAD 464d65b` ว่างหลัง commit ยก ✅ · `HEAD:` = `464d65b:` = **`2febc58`** ✅ · `HEAD:src` = **`6ebef4b`** ✅ · `HEAD:docs` = **`ab2c756`** ✅ · `main:src` = `5b6b233` (control) ✅ · ติ๊ก 20 ✅
+ตรวจของจริงตามสเปก Undo อีกรอบ: `ordersRepo.ts:36` `withDeletions` ✅ · `queueActions.ts:58` `orderSnapshot` (รวม `cancelReason`) ✅ · `queueActions.ts:36` `cancel(reason)` ✅ · `QueuePanel.tsx:69` เรียก `Q.cancel` ✅
+📌 แก้ข้อความรอบก่อนให้ตรง: `toHaveBeenCalledWith` **มี 2 จุดจริง** ใน `undoDeleteField.audit.test.ts:46,78`
+แต่เป็น assertion บน `doc()` (path) กับ `addDoc` **ไม่ใช่บน patch ของ `updateOrderStatus`** ที่สเปกห้าม — สเปกยังผ่าน
 ผลรันจริง (ไม่ pipe exit code): `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** พิมพ์ `TEST_OK` · `npm run build` → พิมพ์ `BUILD_OK`
 ✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`)
-🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** (อ่านซ้ำรอบนี้) — งานของคน ไม่ใช่ agent
+🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** — งานของคน ไม่ใช่ agent
 📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
-📌 Verify ซ้ำหลัง commit docs (`5dc153f`) → `TEST_OK` 453/453 · `BUILD_OK` · แฮชเดิมทั้งสามตัว
+📌 Verify ซ้ำหลัง commit docs → pending (ดู SUMMARY.md)
 
 ✅ **รอบ `_2026-11-08_0006` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยยี่สิบสามติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
