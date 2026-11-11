@@ -23,7 +23,7 @@
 - **Verify** ran as two separate unpiped steps:
   - `npm test > /dev/null 2>&1 && echo TEST_OK || echo TEST_FAIL` printed `TEST_OK`. A second, piped run showed `Test Files 59 passed (59)` and `Tests 453 passed (453)`.
   - `npm run build > /dev/null 2>&1 && echo BUILD_OK || echo BUILD_FAIL` printed `BUILD_OK`. The output was `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, plus `sw.js` and `manifest.webmanifest`. All three hashes match last round. `git status --porcelain` was clean after the build.
-- **Post-docs re-run:** pending. It runs after this file is committed, and its result is filled in below.
+- **Post-docs re-run:** after committing `AUTOPILOT.md` and this file (`6d74b63`), I re-ran Verify on a clean tree. `npm test` printed `TEST_OK`, and `npm run build` printed `BUILD_OK`. The build emitted the same `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, and `git status --porcelain` stayed clean. I didn't re-read the tally on this run because the unpiped exit code was the check.
 
 ## What I did NOT do
 - I didn't start any new work. All 20 criteria are ticked. What's left needs a person to decide: export, PWA icons, the two-device write race, and the open items recorded in `AUTOPILOT.md`.

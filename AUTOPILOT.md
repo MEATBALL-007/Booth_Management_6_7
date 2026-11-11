@@ -598,7 +598,7 @@ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) รอ�
 ✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`)
 🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** — งานของคน ไม่ใช่ agent
 📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
-📌 Verify ซ้ำหลัง commit docs → pending (ดู SUMMARY.md)
+📌 Verify ซ้ำหลัง commit docs (`6d74b63`) → `TEST_OK` · `BUILD_OK` · แฮชเดิมทั้งสามตัว · tree สะอาด
 
 ✅ **รอบ `_2026-11-08_0006` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยยี่สิบสามติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
