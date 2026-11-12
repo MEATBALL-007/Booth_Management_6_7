@@ -583,6 +583,24 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
+✅ **รอบ `_2026-11-13_0006` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยสี่สิบเอ็ดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+`## Next task` ในพรอมต์ **ไม่ว่าง** — สั่ง "ทำข้อ **Undo** ซ้ำ" = **ข้อความเก่าจาก `main`** ตรงกับกับดักด้านบนเป๊ะ
+branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด**
+ยกทั้ง tree จาก `_2026-11-12_0026` (`1a480ba`) (commit `chore(autopilot): carry tree from _2026-11-12_0026 (1a480ba)`)
+เช็ค: `merge-base HEAD 1a480ba` = HEAD (`735de75`) ✅ · `main` ยังเป็น `735de75` ✅ ·
+`--diff-filter=DR` จาก `HEAD` (`735de75`) → `1a480ba` **ว่าง** ✅ ·
+`git diff --stat 6f24609 1a480ba` = แค่ `AUTOPILOT.md`/`SUMMARY.md` ✅ ·
+`git diff --stat --cached 1a480ba` ว่างก่อน commit · `git diff --stat HEAD 1a480ba` ว่างหลัง commit ✅ ·
+`HEAD:` = `1a480ba:` = **`300ea14`** ✅ · `HEAD:src` = **`6ebef4b`** ✅ · `HEAD:docs` = **`ab2c756`** ✅ · `main:src` = `5b6b233` (control) ✅ · ติ๊กจริง 20 ✅
+📌 `git grep -c -- "- \[x\]"` ได้ **21** ไม่ใช่ 20 — ตัวที่เกินคือ *บันทึก* บรรทัด ~1158 ที่อ้างถึง "ติ๊ก `- [x]` = 20" ไม่ใช่ checkbox
+ไล่ด้วย Grep แล้วได้ checkbox จริงที่บรรทัด 17–498 ครบ 20 ตัว ➡️ อย่าตกใจกับเลข 21
+ตรวจของจริงตามสเปก Undo อีกรอบ: `ordersRepo.ts:36` `withDeletions` (`undefined → deleteField()`) ✅ · `queueActions.ts:58` `orderSnapshot` ✅ · `queueActions.ts:36` `cancel(reason)` ✅ · `QueuePanel.tsx:69` เรียก `Q.cancel` ✅
+ผลรันจริง (ไม่ pipe exit code): `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** พิมพ์ `TEST_OK` · `npm run build` → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · พิมพ์ `BUILD_OK`
+✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`)
+🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** — งานของคน ไม่ใช่ agent
+📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
+📌 Verify ซ้ำหลัง commit docs → *รอผล (pending)*
+
 ✅ **รอบ `_2026-11-12_0026` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยสี่สิบติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** (ไม่ใช่ข้อความ Undo เก่าแบบรอบ `_0016`) และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
 รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่เปลี่ยนคำสั่งหยุดด้านบน
