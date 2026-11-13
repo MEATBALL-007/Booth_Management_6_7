@@ -1,35 +1,33 @@
-# SUMMARY — round `_2026-11-13_0037`
+# SUMMARY — round `_2026-11-14_0006`
 
 ## What I did
-- The prompt's `## Next task` was empty. The branch was cut from bare `main` (`735de75`). The newest audit branch, `_2026-11-13_0026` (`170fc8d`), has all 20 criteria ticked, and its plan says: when no one has picked a new task, carry, verify, record, and stop. I followed that.
-- I copied the whole tree from `170fc8d` in one commit: `chore(autopilot): carry tree from _2026-11-13_0026 (170fc8d)`.
-- I added this round's entry under `## Next task` in `AUTOPILOT.md`. I left the stop instruction as it was, because there is still no task an agent can pick on its own.
-- I didn't change `src/`, any test, the specs, `firestore.rules`, or `docs/autopilot/`.
+- Found `## Next task` empty in the prompt, and the branch cut from bare `main` (`735de75`). AUTOPILOT.md (as carried) says: carry, verify, record, stop. I did nothing else.
+- Carried the whole tree from the newest sibling `_2026-11-13_0037` (`25a2afb`) in one commit: `chore(autopilot): carry tree from _2026-11-13_0037 (25a2afb)`.
+- Ran Verify after the carry, and again after the docs commit.
+- Added this round's entry to the stop-order log in `AUTOPILOT.md`. The stop order is unchanged. No file added under `docs/autopilot/`.
 
 ## Why
-- Without the carry this branch is just `main`, and its PR would propose deleting all the audit work.
-- The whole-tree carry was safe:
-  - `git merge-base HEAD 170fc8d` returned HEAD (`735de75`), so the source is a strict descendant.
-  - `git diff --diff-filter=D --name-only HEAD 170fc8d` printed nothing, so no file goes missing.
-  - `git diff --stat 467c41b 170fc8d`, excluding `AUTOPILOT.md` and `SUMMARY.md`, printed nothing. Last round was a pure carry and left no mutation behind.
-- I didn't add a file to `docs/autopilot/` because this round found nothing new. `HEAD:docs` stays at `ab2c756`.
+- Without the carry, this branch is byte-identical to `main`. Its PR would then propose a tree with none of the 20 proven criteria's tests or docs.
+- A whole-tree checkout was safe here because `git merge-base HEAD 25a2afb` returned HEAD (so the tip is a strict descendant) and `--diff-filter=D` HEAD→tip was empty (so the tip deletes nothing).
+- I checked the tip's `src` against the other recent tips rather than trusting age. `25a2afb`, `170fc8d`, `467c41b` and `2fec513` all give `src` = `6ebef4b`.
 
 ## Verification
-- **Carry:**
-  - Before the commit, `git diff --stat --cached 170fc8d` printed nothing. After it, `git diff --stat HEAD 170fc8d` printed nothing.
-  - `HEAD:` and `170fc8d:` are both `8df0b36`. `HEAD:src` is `6ebef4b` and `HEAD:docs` is `ab2c756`, the same values earlier rounds recorded. `main:src` is `5b6b233`, which shows the hash check can tell two trees apart.
-  - The anchored count of ticked criteria is 20, and there are 0 unticked ones.
-- **Verify:** I ran test and build as two separate unpiped commands.
-  - `npm test && echo TEST_OK || echo TEST_FAIL` printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`.
-  - `npm run build && echo BUILD_OK || echo BUILD_FAIL` printed `BUILD_OK`. `tsc -b` passed, vite transformed 116 modules, and PWA generateSW precached 5 entries. The bundle files were `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`, the same three hashes as last round.
-- **Post-docs re-run:** after committing the docs (`e82a38a`), I ran Verify again on a clean tree. `npm test` printed `Test Files 59 passed (59)`, `Tests 453 passed (453)` and `TEST_OK`. `npm run build` printed `BUILD_OK` and produced the same three hashes: `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js`. The only later change is this line and the matching line in `AUTOPILOT.md`. Both are docs.
+- `git diff --stat --cached 25a2afb` printed nothing before the commit. After it, `HEAD:` = `25a2afb:` = `03ba52e` (the carried tree is byte-identical to the source).
+- `HEAD:src` = `6ebef4b` and `HEAD:docs` = `ab2c756`, both matching the recorded values. Control: `main:src` = `5b6b233`.
+- Anchored tick count is 20; unticked criteria: 0.
+- `npm test`: **59 files, 453 tests passed**.
+- `npm run build` (exit status not piped): printed `OK`. `tsc -b` passed, PWA generateSW produced 5 precache entries, `dist/sw.js` was written, and so was `dist/workbox-9c191d2f.js`.
+- Bundle hashes match the recorded ones: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
+- Post-docs re-run: see the last section.
 
 ## What I did NOT do
-- I didn't start any criterion. All 20 are ticked, and what's left needs a person to decide (see Risk).
-- I didn't touch `firestore.rules` because it is out of scope.
+- I did not start a new task, edit `src/`, or tick anything. All 20 criteria were already ticked, and the plan says the next step needs a person to choose it.
+- I did not touch `firestore.rules`. It is out of scope.
 
 ## Risk
-- 🚨 `firestore.rules:18` still says `allow read, write: if request.time < timestamp.date(2026, 9, 30);` (I re-read it this round). If the deployed rules match this file, the live project has been denying every read and write since 30 Sep. Only a person can fix this.
-- This PR carries the whole accumulated audit work. None of it is new this round, so review it as the full branch, not as this round's diff.
-- `main` still holds the August plan. Until `main` is updated or an audit branch is merged, every round has to start by carrying the work.
-- Open gaps that need a person: there is no export, there are no PWA icons, the write race between two devices is still open, Happy-Hour pricing, cash reconciliation and passport aren't built yet, and the `rounded-xl`/`rounded-2xl` sizes are inverted.
+- 🚨 `firestore.rules:18` (`allow read, write: if request.time < timestamp.date(2026, 9, 30)`) expired on 2026-09-30. Unless the deployed rules differ, the live app is being denied all reads and writes. Only a person can fix this, and it is the most urgent item in this repo.
+- The build prints the existing ">500 kB chunk" warning. It is unchanged and not new.
+- Gaps already pinned by earlier rounds are still open and were not touched: no export, no PWA icons, cross-device write race (E1), and unbuilt Happy-Hour, cash-session and passport features.
+
+## Post-docs Verify re-run
+pending
