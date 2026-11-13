@@ -30,4 +30,4 @@
 - Gaps already pinned by earlier rounds are still open and were not touched: no export, no PWA icons, cross-device write race (E1), and unbuilt Happy-Hour, cash-session and passport features.
 
 ## Post-docs Verify re-run
-pending
+- I re-ran Verify after the docs commit (`cddd03e`). `npm test`: **59 files, 453 tests passed**. `npm run build` (not piped) printed `BUILD_OK`. The same `index-bTUIGpdg.css` and `index-CyVIMiFT.js` were produced, and the working tree was clean.
