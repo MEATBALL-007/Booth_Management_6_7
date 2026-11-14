@@ -18,7 +18,7 @@
 - `npm run build`: `tsc -b` passed; vite transformed 116 modules; PWA generateSW produced 5 precache entries; printed `BUILD_OK`.
 - All three bundle hashes match the previous rounds: `index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`.
 - Anchored tick count in `AUTOPILOT.md`: 20 ticked, 0 open.
-- Post-docs Verify re-run: _pending_
+- Post-docs Verify re-run (after commit `e95c1a3`): **59 files · 453 tests** `TEST_OK` · `BUILD_OK` · same three bundle hashes.
 
 ## What I did NOT do
 - I started no new work, because the plan explicitly waits for a person to choose the next step. The candidates are the recorded open gaps: no export path, the Happy-Hour / cash-reconciliation / passport features that were never built, no PWA icons, the cross-device write race (`idempotency E1`), and the `rounded-xl` > `rounded-2xl` inversion.
