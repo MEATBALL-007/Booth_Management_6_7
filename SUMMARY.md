@@ -16,7 +16,7 @@
 - `npm test`: **59 files, 453 tests passed**, printed `TEST_OK`.
 - `npm run build`: `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, printed `BUILD_OK`.
 - All three bundle hashes match previous rounds: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
-- Verify re-run after the docs commit: pending (filled in below once it has actually been run).
+- Verify re-run after the docs commit (`3c1f08e`): **59 files, 453 tests**, `TEST_OK`, `BUILD_OK`, same three bundle hashes.
 
 ## What I did NOT do
 - I started no new work, because the plan says to wait for a person to choose the next step. The candidates are the gaps already recorded: no export path; Happy-Hour pricing, cash reconciliation and the passport feature were never built; the PWA has no icons; two devices can still double-write (`idempotency E1`); and `rounded-xl` renders rounder than `rounded-2xl`.
