@@ -15,7 +15,7 @@
 - `npm test`: **59 files, 453 tests passed**, printed `TEST_OK`.
 - `npm run build`: `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, printed `BUILD_OK`.
 - All three bundle hashes match previous rounds: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
-- Verify re-run after the docs commit: pending (written last, below).
+- Verify re-run after the docs commit (`8fb6526`): **59 files, 453 tests**, `TEST_OK`, `BUILD_OK`, same three bundle hashes.
 
 ## What I did NOT do
 - I did not start any new work. The plan says a person must choose the next step. The known open gaps are:
