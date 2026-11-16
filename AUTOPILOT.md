@@ -583,6 +583,21 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
+✅ **รอบ `_2026-11-17_0002` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยห้าสิบหกติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+`## Next task` ในพรอมต์มาถึง **ไม่ว่าง — เป็นข้อความเก่า "ทำข้อ Undo ซ้ำ"** (กรณีเดียวกับ `_2026-09-22_0133` ด้านบน)
+และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยกก่อน แล้วตรวจ: ติ๊ก (anchored) **20** · ช่องว่าง **0**
+✅ **ยืนยันในโค้ดที่ยกมา ไม่ได้เชื่อ checkbox**: `ordersRepo.ts:36` `withDeletions()` (`undefined → deleteField()`) ·
+`queueActions.ts:58` `orderSnapshot()` รวม `cancelReason` · `queueActions.ts:36` `cancel(reason)` · `QueuePanel.tsx:69` ใช้ `Q.cancel` ·
+`toStrictEqual` 15+3 จุดในเทสต์ undo สองไฟล์ · `toHaveBeenCalledWith` สองจุดใน `undoDeleteField` ปัก `doc()`/`addDoc` **ไม่ใช่ patch** ➡️ งานที่สั่ง **เสร็จแล้ว** — กฎข้อ 5: บันทึกแล้วหยุด
+ยกทั้ง tree จาก `_2026-11-16_0027` (`6c095f9`) (commit `chore(autopilot): carry tree from _2026-11-16_0027 (6c095f9)`)
+เช็ค: `merge-base HEAD 6c095f9` = HEAD (`735de75`) ✅ · `--diff-filter=D HEAD 6c095f9` **ว่าง** ✅ · `git diff --cached --stat 6c095f9` ว่างก่อน commit ✅ ·
+`HEAD:` = `6c095f9:` = **`759c574`** · `HEAD:src` = **`6ebef4b`** ✅ · `HEAD:docs` = **`ab2c756`** ✅
+ผลรันจริง: `npm test` (ไม่ redirect) → **59 ไฟล์ · 453 เทสต์ ผ่าน** พิมพ์ `TEST_OK` · `npm run build` (ไม่ pipe) → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · พิมพ์ `BUILD_OK`
+✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`) · รันแรกเขียวเลย
+🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** (อ่านซ้ำรอบนี้) — งานของคน ไม่ใช่ agent
+📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
+📌 Verify ซ้ำหลัง commit docs → *รอผล* (เขียนทีหลัง)
+
 ✅ **รอบ `_2026-11-16_0027` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยห้าสิบห้าติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`)
 รอบนี้จึง **ยกงาน → verify → บันทึก → หยุด ไม่ได้แตะ `src/` เลยสักบรรทัด** และไม่เปลี่ยนคำสั่งหยุดด้านบน
