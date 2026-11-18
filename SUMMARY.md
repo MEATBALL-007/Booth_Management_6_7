@@ -25,7 +25,7 @@
 
 - `npm test`: **59 files · 453 tests passed** (`TEST_OK`).
 - `npm run build`: **`BUILD_OK`**. `tsc -b` passed, vite transformed 116 modules, and the PWA plugin (generateSW) wrote 5 precache entries. The bundle hashes match the recorded ones: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
-- Post-docs Verify re-run: pending; I fill this in after the run.
+- Post-docs Verify re-run, after `219ae0f`: **59 files · 453 tests** (`TEST_OK`) · `BUILD_OK` · the same three bundle hashes.
 
 ## What I did NOT do
 - I started no new work. Every remaining item needs a human decision:
