@@ -583,6 +583,20 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
+✅ **รอบ `_2026-11-20_0007` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยหกสิบแปดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+`## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยก → verify → บันทึก → หยุด **ไม่แตะ `src/`**
+ยกทั้ง tree จาก `_2026-11-19_0037` (`b75a4f7`) (commit `chore(autopilot): carry tree from _2026-11-19_0037 (b75a4f7)`)
+เช็ค: `main` ไม่ขยับ (ยัง `735de75`) ✅ · `merge-base HEAD b75a4f7` = HEAD ✅ · `--diff-filter=D` จาก HEAD / `f2ef5f3` ไป `b75a4f7` **ว่างทั้งสอง** ✅ · `git diff --stat f2ef5f3 b75a4f7` = แค่ `AUTOPILOT.md` + `SUMMARY.md` ✅ ·
+`:src` ของ `b75a4f7` `f2ef5f3` `0e9652d` `ed17b0d` `bec84bd` = **`6ebef4b`** ทั้งห้า (control `main:src` = `5b6b233`) ✅ ·
+`git diff --cached --stat b75a4f7` ว่างก่อน commit ✅ · `HEAD:` = `b75a4f7:` = **`959d1c4`** · `HEAD:src` = **`6ebef4b`** ✅ · `HEAD:docs` = **`ab2c756`** ✅
+ติ๊ก (anchored) **20** · ช่องว่าง **0**
+ผลรันจริง: `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** · `npm run build` (ไม่ pipe) → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · `BUILD_OK`
+✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`) · รันแรกเขียวเลย
+⚠️ รัน `npm test` รอบแรกผ่าน `| tail` (พลาด — `TEST_OK` ที่ได้มาจาก exit code ของ `tail`) ตัวเลข 453/453 อ่านจาก output จริง · รันซ้ำหลัง commit docs แบบไม่ pipe
+🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** (อ่านซ้ำรอบนี้) — งานของคน ไม่ใช่ agent
+📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
+📌 Verify ซ้ำหลัง commit docs (ไม่ pipe ทั้งคู่) → _pending — เติมหลังรันจริง_
+
 ✅ **รอบ `_2026-11-19_0037` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยหกสิบเจ็ดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยก → verify → บันทึก → หยุด **ไม่แตะ `src/`**
 ยกทั้ง tree จาก `_2026-11-19_0027` (`f2ef5f3`) (commit `chore(autopilot): carry tree from _2026-11-19_0027 (f2ef5f3)`)
