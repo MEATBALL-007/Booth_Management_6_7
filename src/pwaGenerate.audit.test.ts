@@ -507,4 +507,6 @@ test('I2: GAP LOCATION — there is no icon asset anywhere in the repo to point 
     .map((l) => l.trim())
     .filter(Boolean)
   expect(tracked).toStrictEqual([])
-})
+  // Per-test timeout only: `git ls-files` hit vitest's 5s default on this host
+  // with an unchanged tree (round _2026-11-21_0035). No assertion changed.
+}, 30_000)
