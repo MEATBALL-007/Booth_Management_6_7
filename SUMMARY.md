@@ -21,7 +21,7 @@
 - First `npm test`: 1 failed (I2 timeout) and 452 passed → `TEST_FAIL`.
 - After the I2 timeout fix: `npm test` gave **59 files, 453 tests passed** (`TEST_OK`). `npm run build` gave **`BUILD_OK`**: `tsc -b` passed, vite transformed 116 modules, and PWA generateSW wrote 5 precache entries. The bundle hashes match the recorded ones (`index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`). That was expected, because test files never enter the bundle.
 - Ticked criteria: **20 of 20**.
-- Post-docs Verify re-run: _pending — filled in after it actually runs._
+- Post-docs Verify re-run after `165b991`, both commands unpiped: **59 files, 453 tests** (`TEST_OK`) and `BUILD_OK`, with the same three bundle hashes.
 
 ## What I did NOT do
 - Started no new work. Every open item needs a person to decide it: export, PWA icons, telling presence rows apart, Happy-Hour pricing, cash close-out, passport, the cross-device write race, and the `rounded-xl`/`2xl` inversion.
