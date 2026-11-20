@@ -583,6 +583,22 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
+✅ **รอบ `_2026-11-21_0035` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยเจ็ดสิบสี่ติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+`## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยก → verify → บันทึก → หยุด
+ยกทั้ง tree จาก `_2026-11-21_0025` (`de7aedd`) (commit `chore(autopilot): carry tree from _2026-11-21_0025 (de7aedd)`)
+เช็ค: `main` ไม่ขยับ (ยัง `735de75`) ✅ · `merge-base HEAD de7aedd` = HEAD ✅ · `--diff-filter=D` จาก `8858e26` / `85251d6` ไป `de7aedd` **ว่างทั้งสอง** ✅ · `git diff --stat 8858e26 de7aedd` (ไม่นับ `AUTOPILOT.md`/`SUMMARY.md`) **ว่าง** ✅ ·
+`:src` ของ `de7aedd` `8858e26` `85251d6` = **`6ebef4b`** ทั้งสาม (control `main:src` = `5b6b233`) ✅ · `HEAD:` = `de7aedd:` = **`b8bc032`** หลัง commit carry ✅ · `HEAD:docs` = **`ab2c756`** ✅
+🚨 **Verify รันแรกแดง 1 ตัว: `pwaGenerate` I2 `Test timed out in 5000ms` (5100ms)** บน tree ที่เหมือน source ทุกไบต์
+➡️ สปีชีส์เดิมของ `uiOverhaulDiffScope P1` / `roundedScale S1/U0` (เทสต์ที่ spawn `git` ตัวแรกในไฟล์) **ไม่ใช่การถดถอย**
+แก้ตามสูตรเดิม: **timeout ต่อเทสต์ `30_000` ที่ I2 ตัวเดียว** ไม่แตะ assertion ไม่แตะ `testTimeout` global
+➡️ **`HEAD:src` ย้ายจาก `6ebef4b` เป็น `64301b9` — ตั้งใจ** รอบหน้าให้เทียบกับ **`64301b9`**
+ติ๊ก (anchored) **20** · ช่องว่าง **0**
+ผลรันจริงหลังแก้ (ไม่ pipe ทั้งคู่): `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** `TEST_OK` · `npm run build` → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · `BUILD_OK`
+✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`) — คาดไว้แล้ว เพราะไฟล์เทสต์ไม่เข้า bundle
+🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** (อ่านซ้ำรอบนี้) — งานของคน ไม่ใช่ agent
+📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
+📌 Verify ซ้ำหลัง commit docs: _pending — กรอกหลังรันจริง_
+
 ✅ **รอบ `_2026-11-21_0025` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยเจ็ดสิบสามติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยก → verify → บันทึก → หยุด **ไม่แตะ `src/`**
 ยกทั้ง tree จาก `_2026-11-21_0015` (`8858e26`) (commit `chore(autopilot): carry tree from _2026-11-21_0015 (8858e26)` = `1a97c37`)
