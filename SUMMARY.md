@@ -33,7 +33,7 @@
   - `src/queue/queueActions.ts:36` has `cancel(reason)`.
 - `npm test`: **59 files, 453 tests passed** (`TEST_OK`).
 - `npm run build`: **`BUILD_OK`**. `tsc -b` passed, vite transformed 116 modules, and PWA generateSW wrote 5 precache entries. The bundle hashes match the recorded ones: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
-- Post-docs Verify re-run: *pending (filled in after it actually runs)*.
+- Post-docs Verify re-run after `1a95bc6`, both commands unpiped: **59 files, 453 tests** (`TEST_OK`) and `BUILD_OK`, with the same three bundle hashes.
 
 ## What I did NOT do
 - Did not re-implement Undo. It is already on the carried tree with 36 dedicated tests, and the earlier mutation check is recorded in `docs/autopilot/2026-08-29-undo-carry-and-mutation-check.md`.
