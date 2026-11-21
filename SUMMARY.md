@@ -1,30 +1,27 @@
-# SUMMARY — round `_2026-11-22_0005`
+# SUMMARY — round `_2026-11-22_0015`
 
 ## What I did
-- The prompt's `## Next task` was **empty**, and the runner cut this branch from bare `main` (`735de75`). The plan on the newest sibling branch covers that case: carry, verify, record, stop.
-- Carried the whole tree from the newest sibling, `auto/Booth_Management_6_7/2026-11-21_0035` (`70bff37`), in commit `chore(autopilot): carry tree from _2026-11-21_0035 (70bff37)`.
-- Ran Verify. Both commands passed on the first try; no test timed out this round.
-- Added this round's entry under `## Next task` in `AUTOPILOT.md`. The standing instruction stays the same: wait for a person to choose the next job.
+- `## Next task` arrived **empty**, and the branch was cut from bare `main` (`735de75`). I followed the plan's standing order: carry, verify, record, stop. I did not touch `src/`.
+- Carried the whole tree from `_2026-11-22_0005` (`e570f43`) in one commit: `chore(autopilot): carry tree from _2026-11-22_0005 (e570f43)`.
+- Added this round's entry to the round log under `## Next task` in `AUTOPILOT.md`. The `🛑` stop line itself still holds, so I left it as it was.
 
 ## Why
-- Without the carry, this branch would be identical to `main`, and its PR would propose deleting all 453 tests' worth of audit work.
-- The whole-tree checkout was safe because:
-  1. `main` has not moved (`735de75`), and `merge-base HEAD 70bff37` returns HEAD.
-  2. `--diff-filter=D` lists nothing missing from `de7aedd` (`_0025`) or `85251d6` (`_2026-11-20_0040`).
-  3. The diff `de7aedd..70bff37`, excluding `AUTOPILOT.md` and `SUMMARY.md`, is exactly one file: `src/pwaGenerate.audit.test.ts` (the I2 per-test timeout that `_0035` added on purpose).
+- Without the carry this branch is byte-identical to `main`, and its PR would propose deleting all 20 proven criteria (453 tests and the `docs/autopilot/` findings).
+- A whole-tree checkout is only safe if the source is a strict descendant of HEAD, so I checked first. `git merge-base HEAD e570f43` returned HEAD itself, and `git diff --diff-filter=D --name-only HEAD e570f43` came back empty. The only difference between `70bff37` and `e570f43` is `AUTOPILOT.md`/`SUMMARY.md`, so no `src/` change came along with the newest tip.
+- I added no file under `docs/autopilot/` because a pure carry has no findings, and `HEAD:docs` (`ab2c756`) is the value the next round checks against.
 
 ## Verification
-- Right after the carry commit: `HEAD:` = `70bff37:` = `17241f4`, so the whole tree matched the source. `HEAD:src` = `64301b9` (the value `_0035` said to expect; `main:src` = `5b6b233` as control). `HEAD:docs` = `ab2c756`, unchanged.
-- `npm test` (unpiped): **59 files, 453 tests passed**, `TEST_OK`.
-- `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, PWA generateSW wrote 5 precache entries, `BUILD_OK`. The bundle hashes match the recorded ones: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
-- Ticked criteria (anchored count): **20 of 20**.
-- Post-docs Verify re-run after `a9a0f3a`, both commands unpiped: **59 files, 453 tests** (`TEST_OK`) and `BUILD_OK`, with the same three bundle hashes.
+- After the carry checkout, `git diff --stat --cached e570f43` was empty. After committing, `HEAD:` = `e570f43:` = `6547b25`, so the whole repo is byte-identical to the source.
+- `HEAD:src` = `64301b9` (control: `main:src` = `5b6b233`) and `HEAD:docs` = `ab2c756`. Both match the recorded values.
+- `npm test` (unpiped) printed `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then `TEST_OK`.
+- `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, and PWA generateSW produced 5 precache entries. Assets: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`, all three the same as recorded. Ended with `BUILD_OK`.
+- Ticked criteria (anchored grep): 20. Unticked: 0.
+- Verify re-run after the docs commit: see the post-docs line in `AUTOPILOT.md` (filled in after that run).
 
 ## What I did NOT do
-- Started no new work. Every open item needs a person to decide it: export, PWA icons, telling presence rows apart, Happy-Hour pricing, cash close-out, passport, the cross-device write race, and the `rounded-xl`/`2xl` inversion.
-- Did not touch `src/`, `firestore.rules` (out of scope), or the global `testTimeout`, and did not add a `docs/autopilot/` file.
+- I did not invent a task. All 20 criteria are ticked, and the remaining open items need a person to decide (Happy-Hour, cash close, passport, export, PWA icons, the cross-device write race).
+- I did not touch `firestore.rules` (out of scope).
 
 ## Risk
-- One clean run does not prove the git-spawning tests are free of 5 s timeouts. Others still run on the default and could flake the way I2 did last round.
-- 🚨 `firestore.rules:18` still reads `allow read, write: if request.time < timestamp.date(2026, 9, 30);` (re-read this round). That date has passed, so production denies every read and write. A person has to fix this; the agent is not allowed to.
-- 🔁 The runner keeps cutting branches from `main`. Until a person merges one carried branch into `main`, every round will keep getting an empty or stale task.
+- 🚨 `firestore.rules:18` is still `allow read, write: if request.time < timestamp.date(2026, 9, 30);`. That date has passed, so this catch-all rule now denies every read and write it covers. A person has to fix this; the agent is not allowed to.
+- The matching hashes prove the carried source is the same as last round's. They do not prove it is correct.
