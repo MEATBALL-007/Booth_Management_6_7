@@ -16,7 +16,7 @@
 - `npm test` (unpiped) printed `Test Files 59 passed (59)` and `Tests 453 passed (453)`, then `TEST_OK`.
 - `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, and PWA generateSW produced 5 precache entries. Assets: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`, all three the same as recorded. Ended with `BUILD_OK`.
 - Ticked criteria (anchored grep): 20. Unticked: 0.
-- Verify re-run after the docs commit: see the post-docs line in `AUTOPILOT.md` (filled in after that run).
+- Re-ran Verify (unpiped) after the docs commit `5b13683`: 59 files and 453 tests passed with `TEST_OK`, then `BUILD_OK` with the same three asset hashes.
 
 ## What I did NOT do
 - I did not invent a task. All 20 criteria are ticked, and the remaining open items need a person to decide (Happy-Hour, cash close, passport, export, PWA icons, the cross-device write race).
