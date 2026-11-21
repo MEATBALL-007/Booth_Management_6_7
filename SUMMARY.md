@@ -18,7 +18,7 @@
 - `npm test` (unpiped): **59 files, 453 tests passed**, `TEST_OK`.
 - `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, PWA generateSW wrote 5 precache entries, `BUILD_OK`. The bundle hashes match the recorded ones: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
 - Ticked criteria (anchored count): **20 of 20**.
-- Post-docs Verify re-run: pending (filled in after it runs).
+- Post-docs Verify re-run after `a9a0f3a`, both commands unpiped: **59 files, 453 tests** (`TEST_OK`) and `BUILD_OK`, with the same three bundle hashes.
 
 ## What I did NOT do
 - Started no new work. Every open item needs a person to decide it: export, PWA icons, telling presence rows apart, Happy-Hour pricing, cash close-out, passport, the cross-device write race, and the `rounded-xl`/`2xl` inversion.
