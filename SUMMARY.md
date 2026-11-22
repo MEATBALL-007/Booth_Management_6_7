@@ -16,7 +16,7 @@
 - Ticked criteria (`git grep -c -- "^- \[x\]"`): 20.
 - `npm test` (unpiped): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`.
 - `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, then `BUILD_OK`. The asset hashes `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` all match what the last round recorded.
-- Post-docs Verify re-run: pending. I fill this in only after it has actually run.
+- I re-ran Verify (unpiped) after the docs commit `a95ac22`: 59 files and 453 tests passed with `TEST_OK`, then `BUILD_OK` with the same three asset hashes.
 
 ## What I did NOT do
 - I did not pick a task. The open items are Happy-Hour, cash close, passport, export, PWA icons and the cross-device write race. All of them need a person to choose.
