@@ -16,7 +16,7 @@
 - Ticked criteria (`git grep -c -- "^- \[x\]"`): 20. Unticked (`^- \[ \]`): 0.
 - `npm test` (unpiped): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`.
 - `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, ended with `BUILD_OK`. Asset hashes: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`, `workbox-9c191d2f.js`, all three the same as recorded.
-- Post-docs Verify re-run: pending (filled in after it runs).
+- I re-ran Verify (unpiped) after the docs commit `6afc855`: 59 files and 453 tests passed with `TEST_OK`, then `BUILD_OK` with the same three asset hashes.
 
 ## What I did NOT do
 - I did not redo Undo. It is done, and the prompt's instruction is a leftover from `main`.
