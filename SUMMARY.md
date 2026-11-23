@@ -15,7 +15,7 @@
 - Ticked criteria (`git grep -c -- "^- \[x\]" HEAD -- AUTOPILOT.md`): 20. Unticked (`^- \[ \]`): 0. `main` is still `735de75`.
 - `npm test` (unpiped): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`. My command accidentally ran the suite twice; the first run's output went to `tail -0` and was discarded, so only the second, unpiped run is reported here.
 - `npm run build` (unpiped): `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, then `BUILD_OK`. The asset hashes `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` all match what the last round recorded.
-- Post-docs re-run: pending, filled in after the run.
+- Post-docs re-run, after the docs commit `79c1c3e` (both unpiped): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, `TEST_OK`; then `BUILD_OK` with the same three asset hashes.
 
 ## What I did NOT do
 - I did no work on `src/` and added no file to `docs/autopilot/`. The task was empty, and the plan says to stop.
