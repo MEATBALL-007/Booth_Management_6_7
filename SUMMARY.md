@@ -15,7 +15,7 @@
 - Ticked criteria (`git grep -c -- "^- \[x\]" HEAD -- AUTOPILOT.md`): 20. Unticked: 0. `main` is still `735de75`.
 - `npm test` (unpiped, run on its own): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`. No timeouts.
 - `npm run build` (unpiped, run on its own): `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, then `BUILD_OK`. The asset hashes `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` all match the last recorded round.
-- Post-docs re-run: pending. I fill this line in after Verify has run on the docs commit.
+- Post-docs re-run, after the docs commit `eb9cc7f` (both unpiped, separate calls): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, `TEST_OK`; then `BUILD_OK` with the same three asset hashes.
 
 ## What I did NOT do
 - I did no work on `src/` and added no file to `docs/autopilot/`. The task was empty, and the plan says to stop.
