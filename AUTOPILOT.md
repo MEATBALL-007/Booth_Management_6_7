@@ -583,6 +583,19 @@ npm test && npm run build
 ➡️ **กฎข้อ 5 ของพรอมต์ใช้ตรงนี้พอดี: งานที่สั่งมา "เสร็จไปแล้ว" ให้บันทึกแล้วหยุด
 ห้ามหางานแทน และห้ามเขียนทับของเดิมให้ดู "มีความคืบหน้า"**
 
+✅ **รอบ `_2026-11-25_0011` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยแปดสิบเจ็ดติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
+`## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยก → verify → บันทึก → หยุด **ไม่แตะ `src/`**
+ยกทั้ง tree จาก `_2026-11-25_0001` (`d0791fc`) (commit `chore(autopilot): carry tree from _2026-11-25_0001 (d0791fc)`)
+เช็ค: `main` ไม่ขยับ (ยัง `735de75`) ✅ · `merge-base HEAD d0791fc` = HEAD ✅ · `--diff-filter=D` จาก HEAD/`d4f183e`/`59513d4` ไป `d0791fc` **ว่าง** ✅ ·
+`diff --stat` จาก `d4f183e` ไป `d0791fc` (exclude `AUTOPILOT.md`/`SUMMARY.md`) **ว่าง** ✅ · `diff --stat --cached d0791fc` หลัง checkout **ว่าง** ✅ ·
+`HEAD:` = `d0791fc:` = **`4a5ca5c`** หลัง commit carry ✅ · `HEAD:src` = **`64301b9`** (control `main:src` = `5b6b233`) ✅ · `HEAD:docs` = **`ab2c756`** ✅
+ติ๊ก (anchored) **20** · ช่องว่าง **0**
+ผลรันจริง (ไม่ pipe, test กับ build แยกคำสั่ง): `npm test` → **59 ไฟล์ · 453 เทสต์ ผ่าน** `TEST_OK` · `npm run build` → `tsc -b` ผ่าน · vite 116 modules · PWA generateSW 5 entries · `BUILD_OK`
+✅ **แฮชตรงทั้งสามตัว** (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`) · **ไม่มีเทสต์ timeout รอบนี้**
+🚨 **`firestore.rules:18` หมดอายุ 2026-09-30 ยังอยู่** (อ่านซ้ำรอบนี้) — งานของคน ไม่ใช่ agent
+📌 ไม่เพิ่มไฟล์ใน `docs/autopilot/` — `HEAD:docs` ยังเป็น **`ab2c756`**
+📌 Verify ซ้ำหลัง commit docs → *pending (กรอกหลังรันจริง)*
+
 ✅ **รอบ `_2026-11-25_0001` ทำตามคำสั่งนี้แล้ว — เป็นรอบที่สองร้อยแปดสิบหกติดที่ทำตามคำสั่งนี้** (นับต่อจากบันทึกรอบก่อน ไม่ได้นับใหม่)
 `## Next task` ในพรอมต์มาถึง **ว่างเปล่า** และ branch ถูกตัดจาก `main` เปล่าๆ (`735de75`) ➡️ ยก → verify → บันทึก → หยุด **ไม่แตะ `src/`**
 ยกทั้ง tree จาก `_2026-11-24_0031` (`d4f183e`) (commit `chore(autopilot): carry tree from _2026-11-24_0031 (d4f183e)`)
