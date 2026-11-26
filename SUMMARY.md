@@ -1,26 +1,48 @@
-# SUMMARY — round `_2026-11-25_0032`
+# SUMMARY — round `_2026-11-27_0002`
 
 ## What I did
-- The prompt's `## Next task` was empty, and the runner cut this branch from bare `main` (`735de75`). The plan's `🛑` line says no work is left that an agent can do on its own, so I carried, verified, recorded and stopped. I did not touch `src/`.
-- I carried the whole tree from the newest branch, `_2026-11-25_0021` (`86a050d`), in one commit: `chore(autopilot): carry tree from _2026-11-25_0021 (86a050d)`.
-- I added this round's entry to the round log under `## Next task` in `AUTOPILOT.md` and left the `🛑` instruction unchanged.
+- Did **not** re-do Undo. The prompt's "Next task" (re-implement Undo from
+  `docs/autopilot/2026-08-13-undo-audit-findings.md`) is the stale text from `main`'s
+  `AUTOPILOT.md`. The newest branch `_2026-11-25_0032` (`3478006`) already has Undo ticked,
+  fixed and tested, and has all 20 criteria ticked. This is the case recorded as the lesson
+  from `_2026-09-22_0133`.
+- Copied the whole tree from `_2026-11-25_0032` (`3478006`) onto this branch, which was cut
+  from bare `main` (`735de75`), in commit `chore(autopilot): carry tree from _2026-11-25_0032 (3478006)`.
+- Added this round's entry under `## Next task` in `AUTOPILOT.md`. The Next task itself is
+  unchanged: no work is left that an agent can pick on its own, so a person has to choose
+  the next step.
 
 ## Why
-- Without the carry, this branch would be byte-identical to `main`, and its PR would propose deleting all 20 proven criteria, the 453 tests and the `docs/autopilot/` findings.
-- A whole-tree checkout is only safe from a strict descendant. `git merge-base HEAD 86a050d` returned HEAD (`735de75`), and `git diff --diff-filter=D --name-only HEAD 86a050d` was empty, so the source drops nothing that's on this branch.
-- With "Next task" empty, hard rule 1 rules out substitute work. Every remaining open item needs a person to decide it.
+- Hard rule 5: if the task is already done, record that and stop. Do not make up a
+  substitute task.
+- Not copying the tree would leave this branch as bare `main`, and its PR would propose
+  deleting all the audit work (about 18,700 lines).
+- I checked that Undo is really done on the copied tree:
+  - `ordersRepo.ts` has `withDeletions()` (`undefined` → `deleteField()`).
+  - `queueActions.ts` has a full `orderSnapshot()` and `cancel(reason)`.
+  - Undo is proven by `undoRoundTrip.audit.test.tsx` and `undoDeleteField.audit.test.ts`.
+  - The previous rounds' records show these use `toStrictEqual`.
 
 ## Verification
-- After the checkout, `git diff --stat --cached 86a050d` was empty. After the commit, `HEAD:` and `86a050d:` were both `7db09c7`. `HEAD:src` = `64301b9`, the same at `_2026-11-25_0021`, `_0011`, `_0001` and `_2026-11-24_0031`. The control `main:src` = `5b6b233`. `HEAD:docs` = `ab2c756`.
-- Ticked criteria (`git grep -c -- "^- \[x\]" HEAD -- AUTOPILOT.md`): 20. Unticked: 0. `main` is still `735de75`.
-- `npm test` (unpiped, run on its own): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, then `TEST_OK`. No timeouts.
-- `npm run build` (unpiped, run on its own): `tsc -b` passed, vite transformed 116 modules, PWA generateSW produced 5 precache entries, then `BUILD_OK`. The asset hashes `index-bTUIGpdg.css`, `index-CyVIMiFT.js` and `workbox-9c191d2f.js` all match the last recorded round.
-- Post-docs re-run, after the docs commit `9ee5f69` (both unpiped, separate calls): `Test Files 59 passed (59)`, `Tests 453 passed (453)`, `TEST_OK`; then `BUILD_OK` with the same three asset hashes.
+- `merge-base HEAD 3478006` = HEAD. `--diff-filter=D` HEAD→`3478006` is empty.
+  `diff --stat --cached 3478006` is empty.
+- Tree hashes: `HEAD:` = `3478006:` = `ada083d`. `HEAD:src` = `64301b9`. `HEAD:docs` = `ab2c756`.
+- Ticks (anchored `^- \[x\]`): **20**. Unticked: **0**.
+- `npm test` (no pipe): **59 files, 453 tests passed**, `TEST_OK`.
+- `npm run build` (separate call): `tsc -b` passed, vite built 116 modules, PWA generateSW
+  made 5 precache entries, `BUILD_OK`.
+- Bundle hashes match the earlier rounds: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`,
+  `workbox-9c191d2f.js`.
+- Re-run after the docs commit: pending (filled in below once run).
 
 ## What I did NOT do
-- I did no work on `src/` and added no file to `docs/autopilot/`. The task was empty, and the plan says to stop.
-- I did not act on the open gaps: no export, Happy-Hour/cash-close/passport not built, no PWA icons, the cross-device write race, and the `xl`>`2xl` radius inversion. Each one needs a design or product decision.
+- Did not touch `src/`, the tests or `docs/autopilot/`. Nothing was left to do. I added no
+  new docs file, so `HEAD:docs` stays the signal for the next round.
+- Did not edit `firestore.rules`. It is out of scope.
 
 ## Risk
-- 🚨 `firestore.rules:18` allows reads and writes only while `request.time < timestamp.date(2026, 9, 30)`. I re-read the line this round. That date has passed, so a deployed project denies every read and write. A person has to fix this, and it is out of scope for the agent.
-- This branch is a pure carry. Review it as "same tree as `_2026-11-25_0021`" plus the two root files, not as new work.
+- 🚨 `firestore.rules:18` still allows read/write only `if request.time < 2026-09-30`. That
+  date has passed, so production Firestore now denies every read and write. A person has to
+  fix this. It is out of scope for the agent.
+- The runner keeps cutting branches from bare `main` and passing `main`'s stale Next task.
+  Until someone merges an `auto/*` branch into `main`, every round will only copy the tree.
