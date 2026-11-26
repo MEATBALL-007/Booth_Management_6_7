@@ -27,7 +27,8 @@
   made 5 precache entries (849.13 KiB), `BUILD_OK`.
 - All three bundle hashes match the earlier rounds: `index-bTUIGpdg.css`,
   `index-CyVIMiFT.js`, `workbox-9c191d2f.js`.
-- Re-run after the docs commit: *pending, see the last line of this file.*
+- Re-run after the docs commit (`9d4f88c`, no pipe, test and build run as separate calls):
+  **59 files, 453 tests passed**, `TEST_OK`. Build `BUILD_OK`. All three bundle hashes match.
 
 ## What I did NOT do
 - Did not touch `src/`, the tests or `docs/autopilot/`. Nothing was left to do. I added no
@@ -42,5 +43,3 @@
   branch into `main`, every round will only copy the tree.
 - The build warns that the main JS chunk is 852 kB (over vite's 500 kB limit). This is
   not new, and the Verify command does not fail on it.
-
-Post-docs re-run: pending.
