@@ -33,7 +33,8 @@
   made 5 precache entries, `BUILD_OK`.
 - Bundle hashes match the earlier rounds: `index-bTUIGpdg.css`, `index-CyVIMiFT.js`,
   `workbox-9c191d2f.js`.
-- Re-run after the docs commit: pending (filled in below once run).
+- Re-run after the docs commit (`de6e54a`, no pipe, test and build run as separate calls):
+  **59 files, 453 tests passed**, `TEST_OK`. Build `BUILD_OK`. All three bundle hashes match.
 
 ## What I did NOT do
 - Did not touch `src/`, the tests or `docs/autopilot/`. Nothing was left to do. I added no
