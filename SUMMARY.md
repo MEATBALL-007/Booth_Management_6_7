@@ -44,4 +44,4 @@
   - HQ presence rows can't be told apart
 - Matching hashes prove the carried source is *unchanged*. They do not prove it is *correct*.
 
-Post-docs Verify re-run: pending.
+Post-docs Verify re-run (after docs commit `37facff`, both unpiped, separate calls): `npm test` → **59 files · 453 tests passed** `TEST_OK` · `npm run build` → `BUILD_OK`, all three hashes match again (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`).
