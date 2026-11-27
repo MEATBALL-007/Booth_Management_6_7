@@ -45,4 +45,4 @@
   - HQ presence rows can't be told apart
 - Matching hashes prove the carried source is *unchanged*. They do not prove it is *correct*.
 
-Post-docs Verify re-run: pending — this line is filled in after the docs commit with what the re-run actually printed.
+Post-docs Verify re-run (after docs commit `43a12e5`, both unpiped, separate calls): `npm test` → **59 files · 453 tests passed** `TEST_OK` · `npm run build` → `BUILD_OK`, all three hashes match again (`index-bTUIGpdg.css` · `index-CyVIMiFT.js` · `workbox-9c191d2f.js`).
